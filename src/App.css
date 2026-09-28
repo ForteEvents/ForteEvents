@@ -1,0 +1,391 @@
+/* =========================
+   GLOBAL
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f1e6;
+  color: #222;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* =========================
+   AUTH / LOGIN
+========================= */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 430px;
+  text-align: center;
+}
+
+.auth-logo {
+  width: 190px;
+  max-width: 70%;
+  height: auto;
+  display: block;
+  margin: 0 auto 20px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: none;
+border: 1px solid #e8dfcd;
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #c99a2e;
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+button[type="submit"] {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #c99a2e;
+  color: #fff;
+  font-weight: bold;
+}
+
+.link-button {
+  margin-top: 16px;
+  border: none;
+  background: transparent;
+  color: #9a741d;
+  font-weight: bold;
+}
+
+/* =========================
+   MAIN APP
+========================= */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f1e6;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+  width: 230px;
+  min-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 22px 16px;
+
+  background: #fff;
+  border-right: 1px solid #e5dcc8;
+
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 8px 24px;
+}
+
+.sidebar-logo img {
+  width: 125px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.nav-button,
+.logout-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+
+  padding: 12px 14px;
+  margin-bottom: 6px;
+
+  border-radius: 10px;
+
+  color: #333;
+  font-weight: 600;
+}
+
+.nav-button:hover {
+  background: #f7efd9;
+}
+
+.nav-button.active {
+  background: transparent;
+  color: #c99a2e;
+  font-weight: 700;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.logout-button {
+  background: #f3eee2;
+  color: #7d5d16;
+}
+
+.logout-button:hover {
+  background: #eadfc8;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+  width: calc(100% - 230px);
+  margin-left: 230px;
+
+  min-height: 100vh;
+
+  padding: 34px 42px 50px;
+
+  overflow-y: auto;
+}
+
+.main-content h1 {
+  margin: 0 0 24px;
+  font-size: 30px;
+  color: #2b2418;
+}
+
+.main-content h2 {
+  margin-top: 0;
+  color: #2b2418;
+}
+
+/* =========================
+   DASHBOARD LOGO
+========================= */
+
+.dashboard-logo {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+
+  display: block;
+
+  margin: 0 0 18px;
+}
+
+/* =========================
+   DASHBOARD CARD
+========================= */
+
+.main-content > .card {
+  max-width: 760px;
+}
+
+.main-content > .card p {
+  margin: 12px 0;
+  line-height: 1.6;
+}
+
+/* =========================
+   FORMS
+========================= */
+
+.main-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.main-content label {
+  margin-top: 8px;
+  font-weight: bold;
+  color: #4b402e;
+}
+
+/* =========================
+   EVENTS
+========================= */
+
+.events-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.event-card {
+  height: 100%;
+}
+
+.event-card p {
+  line-height: 1.5;
+}
+
+/* =========================
+   MESSAGES
+========================= */
+
+.message {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f7efd9;
+  color: #6d5317;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 800px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    min-height: auto;
+
+    border-right: none;
+    border-bottom: 1px solid #e5dcc8;
+
+    padding: 14px;
+  }
+
+  .sidebar-logo {
+    padding-bottom: 12px;
+  }
+
+  .sidebar-logo img {
+    width: 105px;
+  }
+
+  .sidebar-bottom {
+    margin-top: 10px;
+  }
+
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+
+    padding: 26px 18px 40px;
+  }
+
+  .dashboard-logo {
+    width: 125px;
+    margin-bottom: 14px;
+  }
+
+  .main-content h1 {
+    font-size: 26px;
+  }
+}
+
+/* =========================
+   SMALL PHONES
+========================= */
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 22px 14px 35px;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .dashboard-logo {
+    width: 110px;
+  }
+
+  .auth-logo {
+    width: 160px;
+  }
+}
+.main-content .card h2 {
+  background: transparent;
+  color: #2b2418;
+  text-shadow: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+/* FIX: Customer information card */
+.main-content > .card {
+  background: #ffffff !important;
+  color: #222222 !important;
+  border: 1px solid #e8dfcd;
+  box-shadow: none;
+}
+
+.main-content > .card h2 {
+  background: transparent !important;
+  color: #2b2418 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.main-content > .card p {
+  color: #333333 !important;
+}
