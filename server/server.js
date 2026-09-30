@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { createClient } from "@supabase/supabase-js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,79 +18,64 @@ dotenv.config({
 });
 
 const app = express();
+
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+  })
+);
+
 app.use(express.json());
 
 // ------------------------------------
 // BEEM CONFIGURATION
 // ------------------------------------
 
-const BEEM_API_KEY = process.env.BEEM_API_KEY?.trim();
-const BEEM_SECRET_KEY = process.env.BEEM_SECRET_KEY?.trim();
+const BEEM_API_KEY =
+  process.env.BEEM_API_KEY?.trim();
+
+const BEEM_SECRET_KEY =
+  process.env.BEEM_SECRET_KEY?.trim();
+
 const BEEM_SENDER_ID =
-  process.env.BEEM_SENDER_ID?.trim() || "ForteEvents";
+  process.env.BEEM_SENDER_ID?.trim() ||
+  "ForteEvents";
 
 // ------------------------------------
-// FORTEEVENTS CREDIT SYSTEM
-// ------------------------------------
-//
-// Hii ni balance ya ForteEvents platform.
-// Baadaye tutaunganisha na:
-// - customer accounts
-// - payments
-// - SMS packages
-// - automatic crediting
-//
-// Kwa sasa tunahifadhi credits kwenye file
-// ili zisipotee server ikizimwa.
+// SUPABASE CONFIGURATION
 // ------------------------------------
 
-const DATA_DIR = path.join(__dirname, "data");
-const CREDIT_FILE = path.join(DATA_DIR, "credits.json");
+const SUPABASE_URL =
+  process.env.SUPABASE_URL?.trim();
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
-if (!fs.existsSync(CREDIT_FILE)) {
-  fs.writeFileSync(
-    CREDIT_FILE,
-    JSON.stringify(
-      {
-        platformBalance: 0,
-        totalUsed: 0,
-        transactions: []
-      },
-      null,
-      2
-    )
+if (
+  !SUPABASE_URL ||
+  !SUPABASE_SERVICE_ROLE_KEY
+) {
+  console.error(
+    "WARNING: Supabase server credentials hazijawekwa."
   );
 }
 
-function readCredits() {
-  try {
-    const data = fs.readFileSync(CREDIT_FILE, "utf8");
-
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Credit file error:", error);
-
-    return {
-      platformBalance: 0,
-      totalUsed: 0,
-      transactions: []
-    };
-  }
-}
-
-function saveCredits(data) {
-  fs.writeFileSync(
-    CREDIT_FILE,
-    JSON.stringify(data, null, 2)
-  );
-}
+const supabaseAdmin =
+  SUPABASE_URL &&
+  SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      )
+    : null;
 
 // ------------------------------------
 // STARTUP LOG
@@ -99,15 +85,176 @@ console.log("");
 console.log("=================================");
 console.log("FORTEEVENTS BACKEND");
 console.log("=================================");
-console.log("API KEY:", Boolean(BEEM_API_KEY));
-console.log("SECRET:", Boolean(BEEM_SECRET_KEY));
-console.log("SENDER:", BEEM_SENDER_ID);
 console.log(
-  "FORTEEVENTS CREDITS:",
-  readCredits().platformBalance
+  "BEEM API KEY:",
+  Boolean(BEEM_API_KEY)
+);
+console.log(
+  "BEEM SECRET:",
+  Boolean(BEEM_SECRET_KEY)
+);
+console.log(
+  "BEEM SENDER:",
+  BEEM_SENDER_ID
+);
+console.log(
+  "SUPABASE:",
+  Boolean(supabaseAdmin)
 );
 console.log("=================================");
 console.log("");
+
+// ------------------------------------
+// AUTHENTICATION MIDDLEWARE
+// ------------------------------------
+
+async function requireAuth(
+  req,
+  res,
+  next
+) {
+  if (!supabaseAdmin) {
+    return res.status(500).json({
+      ok: false,
+      error:
+        "Supabase server configuration haijawekwa.",
+    });
+  }
+
+  const authorization =
+    req.headers.authorization || "";
+
+  if (
+    !authorization.startsWith(
+      "Bearer "
+    )
+  ) {
+    return res.status(401).json({
+      ok: false,
+      error:
+        "Login inahitajika.",
+    });
+  }
+
+  const token =
+    authorization
+      .slice(7)
+      .trim();
+
+  if (!token) {
+    return res.status(401).json({
+      ok: false,
+      error:
+        "Access token haipo.",
+    });
+  }
+
+  try {
+    const {
+      data,
+      error,
+    } =
+      await supabaseAdmin.auth.getUser(
+        token
+      );
+
+    if (
+      error ||
+      !data?.user
+    ) {
+      return res.status(401).json({
+        ok: false,
+        error:
+          "Session ya Login si sahihi au ime-expire.",
+      });
+    }
+
+    req.user = data.user;
+
+    next();
+  } catch (error) {
+    console.error(
+      "AUTH ERROR:",
+      error
+    );
+
+    return res.status(401).json({
+      ok: false,
+      error:
+        "Imeshindikana kuthibitisha Login.",
+    });
+  }
+}
+
+// ------------------------------------
+// ADMIN AUTHENTICATION
+// ------------------------------------
+
+async function requireAdmin(
+  req,
+  res,
+  next
+) {
+  await requireAuth(
+    req,
+    res,
+    async () => {
+      try {
+        const {
+          data: profile,
+          error,
+        } =
+          await supabaseAdmin
+            .from("profiles")
+            .select("id, role")
+            .eq(
+              "id",
+              req.user.id
+            )
+            .maybeSingle();
+
+        if (error) {
+          console.error(
+            "ADMIN PROFILE ERROR:",
+            error
+          );
+
+          return res.status(500).json({
+            ok: false,
+            error:
+              "Imeshindikana kukagua admin account.",
+          });
+        }
+
+        if (
+          !profile ||
+          profile.role !== "admin"
+        ) {
+          return res.status(403).json({
+            ok: false,
+            error:
+              "Huna ruhusa ya Admin.",
+          });
+        }
+
+        req.profile = profile;
+
+        next();
+      } catch (error) {
+        console.error(
+          "ADMIN AUTH ERROR:",
+          error
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            "Admin authorization failed.",
+        });
+      }
+    }
+  );
+}
 
 // ------------------------------------
 // HOME
@@ -116,8 +263,9 @@ console.log("");
 app.get("/", (req, res) => {
   res.json({
     ok: true,
-    message: "ForteEvents backend iko online",
-    port: PORT
+    message:
+      "ForteEvents backend iko online",
+    port: PORT,
   });
 });
 
@@ -125,557 +273,828 @@ app.get("/", (req, res) => {
 // HEALTH
 // ------------------------------------
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
-    online: true,
-    beemApiKey: Boolean(BEEM_API_KEY),
-    beemSecret: Boolean(BEEM_SECRET_KEY),
-    sender: BEEM_SENDER_ID
-  });
-});
-
-// ------------------------------------
-// BEEM AUTH TEST
-// ------------------------------------
-
-app.get("/api/beem-status", async (req, res) => {
-  if (!BEEM_API_KEY || !BEEM_SECRET_KEY) {
-    return res.status(500).json({
-      ok: false,
-      error:
-        "Beem credentials hazijawekwa kwenye server/.env"
+app.get(
+  "/api/health",
+  (req, res) => {
+    res.json({
+      ok: true,
+      online: true,
+      beemApiKey:
+        Boolean(BEEM_API_KEY),
+      beemSecret:
+        Boolean(BEEM_SECRET_KEY),
+      sender:
+        BEEM_SENDER_ID,
+      supabase:
+        Boolean(supabaseAdmin),
     });
   }
+);
 
-  try {
-    const credentials =
-      `${BEEM_API_KEY}:${BEEM_SECRET_KEY}`;
+// ------------------------------------
+// BEEM STATUS
+// ------------------------------------
 
-    const authorization = Buffer
-      .from(credentials, "utf8")
-      .toString("base64");
-
-    const response = await fetch(
-      "https://apisms.beem.africa/v1/send",
-      {
-        method: "POST",
-
-        headers: {
-          Authorization: `Basic ${authorization}`,
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          source_addr: BEEM_SENDER_ID,
-          encoding: 0,
-          schedule_time: "",
-          message:
-            "ForteEvents authentication test",
-          recipients: []
-        })
-      }
-    );
-
-    const text = await response.text();
-
-    let data;
-
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = {
-        raw: text
-      };
+app.get(
+  "/api/beem-status",
+  async (req, res) => {
+    if (
+      !BEEM_API_KEY ||
+      !BEEM_SECRET_KEY
+    ) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Beem credentials hazijawekwa kwenye server/.env",
+      });
     }
 
-    return res.json({
-      ok: response.ok,
-      beemStatus: response.status,
-      beemResponse: data
-    });
+    try {
+      const credentials =
+        `${BEEM_API_KEY}:${BEEM_SECRET_KEY}`;
 
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      error: error.message
-    });
+      const authorization =
+        Buffer.from(
+          credentials,
+          "utf8"
+        ).toString("base64");
+
+      const response =
+        await fetch(
+          "https://apisms.beem.africa/v1/send",
+          {
+            method: "POST",
+
+            headers: {
+              Authorization:
+                `Basic ${authorization}`,
+
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              source_addr:
+                BEEM_SENDER_ID,
+
+              encoding: 0,
+
+              schedule_time: "",
+
+              message:
+                "ForteEvents authentication test",
+
+              recipients: [],
+            }),
+          }
+        );
+
+      const text =
+        await response.text();
+
+      let data;
+
+      try {
+        data =
+          JSON.parse(text);
+      } catch {
+        data = {
+          raw: text,
+        };
+      }
+
+      return res.json({
+        ok: response.ok,
+        beemStatus:
+          response.status,
+        beemResponse:
+          data,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          error.message,
+      });
+    }
   }
-});
+);
 
 // ------------------------------------
 // EVENTS
 // ------------------------------------
+// Hizi endpoints zimeachwa kwa compatibility.
+// Mfumo mkuu wa events tayari unatumia Supabase.
 
 let events = [];
 
-app.get("/api/events", (req, res) => {
-  res.json({
-    ok: true,
-    events
-  });
-});
-
-app.post("/api/events", (req, res) => {
-  const {
-    name,
-    date,
-    location,
-    type
-  } = req.body;
-
-  if (
-    !name ||
-    !date ||
-    !location ||
-    !type
-  ) {
-    return res.status(400).json({
-      ok: false,
-      error:
-        "Jaza taarifa zote za event."
+app.get(
+  "/api/events",
+  requireAuth,
+  (req, res) => {
+    res.json({
+      ok: true,
+      events,
     });
   }
+);
 
-  const event = {
-    id: Date.now().toString(),
-    name,
-    date,
-    location,
-    type,
-    createdAt:
-      new Date().toISOString()
-  };
+app.post(
+  "/api/events",
+  requireAuth,
+  (req, res) => {
+    const {
+      name,
+      date,
+      location,
+      type,
+    } = req.body;
 
-  events.push(event);
+    if (
+      !name ||
+      !date ||
+      !location ||
+      !type
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Jaza taarifa zote za event.",
+      });
+    }
 
-  res.json({
-    ok: true,
-    event
-  });
-});
+    const event = {
+      id:
+        Date.now().toString(),
+
+      userId:
+        req.user.id,
+
+      name,
+      date,
+      location,
+      type,
+
+      createdAt:
+        new Date().toISOString(),
+    };
+
+    events.push(event);
+
+    res.json({
+      ok: true,
+      event,
+    });
+  }
+);
 
 // ------------------------------------
 // SMS HISTORY
 // ------------------------------------
+// Kwa sasa history ya zamani inabaki memory.
+// Tutaiunganisha na sms_history ya Supabase
+// baada ya kuthibitisha columns zake.
 
 let smsHistory = [];
 
-app.get("/api/sms/history", (req, res) => {
-  res.json({
-    ok: true,
-    history: smsHistory
-  });
-});
+app.get(
+  "/api/sms/history",
+  requireAuth,
+  (req, res) => {
+    const userHistory =
+      smsHistory.filter(
+        (item) =>
+          item.userId ===
+          req.user.id
+      );
 
-// ------------------------------------
-// FORTEEVENTS CREDIT BALANCE
-// ------------------------------------
-
-app.get("/api/sms/balance", (req, res) => {
-  const credits = readCredits();
-
-  res.json({
-    ok: true,
-    balance: credits.platformBalance,
-    used: credits.totalUsed,
-    source: "ForteEvents Credit System"
-  });
-});
-
-// ------------------------------------
-// ADD FORTEEVENTS CREDITS
-// ------------------------------------
-//
-// Hii endpoint ni ya mfumo wetu wa ndani.
-// Baadaye tutaiweka chini ya Admin authentication
-// na payment verification.
-// ------------------------------------
-
-app.post("/api/admin/credits/add", (req, res) => {
-  const {
-    amount,
-    reference
-  } = req.body;
-
-  const creditAmount = Number(amount);
-
-  if (
-    !Number.isFinite(creditAmount) ||
-    creditAmount <= 0
-  ) {
-    return res.status(400).json({
-      ok: false,
-      error:
-        "Credit amount lazima iwe namba kubwa kuliko 0."
+    res.json({
+      ok: true,
+      history:
+        userHistory,
     });
   }
+);
 
-  const credits = readCredits();
+// ------------------------------------
+// CUSTOMER SMS BALANCE
+// ------------------------------------
 
-  credits.platformBalance += creditAmount;
+app.get(
+  "/api/sms/balance",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const {
+        data: profile,
+        error,
+      } =
+        await supabaseAdmin
+          .from("profiles")
+          .select(
+            "id, sms_balance"
+          )
+          .eq(
+            "id",
+            req.user.id
+          )
+          .maybeSingle();
 
-  credits.transactions.push({
-    id: Date.now().toString(),
-    type: "CREDIT",
-    amount: creditAmount,
-    reference:
-      reference || "Manual credit",
-    createdAt:
-      new Date().toISOString()
-  });
+      if (error) {
+        console.error(
+          "BALANCE ERROR:",
+          error
+        );
 
-  saveCredits(credits);
+        return res.status(500).json({
+          ok: false,
+          error:
+            "Imeshindikana kusoma SMS balance.",
+        });
+      }
 
-  res.json({
-    ok: true,
-    message:
-      "ForteEvents credits zimeongezwa.",
-    balance:
-      credits.platformBalance
-  });
-});
+      if (!profile) {
+        return res.status(404).json({
+          ok: false,
+          error:
+            "Customer profile haijapatikana.",
+        });
+      }
+
+      const balance =
+        Number(
+          profile.sms_balance || 0
+        );
+
+      return res.json({
+        ok: true,
+        balance,
+        userId:
+          req.user.id,
+        source:
+          "Customer Supabase Profile",
+      });
+    } catch (error) {
+      console.error(
+        "BALANCE SERVER ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Server error wakati wa kusoma balance.",
+      });
+    }
+  }
+);
+
+// ------------------------------------
+// ADMIN: ADD CUSTOMER CREDITS
+// ------------------------------------
+
+app.post(
+  "/api/admin/credits/add",
+  requireAdmin,
+  async (req, res) => {
+    const {
+      userId,
+      amount,
+      reference,
+    } = req.body;
+
+    const creditAmount =
+      Number(amount);
+
+    if (
+      !userId ||
+      !Number.isFinite(
+        creditAmount
+      ) ||
+      creditAmount <= 0
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Tuma userId na amount kubwa kuliko 0.",
+      });
+    }
+
+    try {
+      const {
+        data: customer,
+        error:
+          customerError,
+      } =
+        await supabaseAdmin
+          .from("profiles")
+          .select(
+            "id, full_name, email, sms_balance"
+          )
+          .eq(
+            "id",
+            userId
+          )
+          .maybeSingle();
+
+      if (customerError) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            customerError.message,
+        });
+      }
+
+      if (!customer) {
+        return res.status(404).json({
+          ok: false,
+          error:
+            "Customer hajapatikana.",
+        });
+      }
+
+      const oldBalance =
+        Number(
+          customer.sms_balance || 0
+        );
+
+      const newBalance =
+        oldBalance +
+        creditAmount;
+
+      const {
+        data: updated,
+        error:
+          updateError,
+      } =
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            sms_balance:
+              newBalance,
+
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            userId
+          )
+          .select(
+            "id, full_name, email, sms_balance"
+          )
+          .single();
+
+      if (updateError) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            updateError.message,
+        });
+      }
+
+      return res.json({
+        ok: true,
+
+        message:
+          "Customer SMS credits zimeongezwa.",
+
+        customer:
+          updated,
+
+        added:
+          creditAmount,
+
+        previousBalance:
+          oldBalance,
+
+        balance:
+          Number(
+            updated.sms_balance
+          ),
+
+        reference:
+          reference ||
+          "Admin credit",
+      });
+    } catch (error) {
+      console.error(
+        "ADMIN CREDIT ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Imeshindikana kuongeza credits.",
+      });
+    }
+  }
+);
+
+// ------------------------------------
+// REFUND SMS CREDITS
+// ------------------------------------
+// Internal helper.
+// Inatumika pale Beem ikikataa SMS
+// baada ya credits kuwa reserved.
+
+async function refundCredits(
+  userId,
+  amount
+) {
+  const {
+    data: profile,
+    error:
+      readError,
+  } =
+    await supabaseAdmin
+      .from("profiles")
+      .select(
+        "sms_balance"
+      )
+      .eq(
+        "id",
+        userId
+      )
+      .single();
+
+  if (readError) {
+    throw readError;
+  }
+
+  const currentBalance =
+    Number(
+      profile.sms_balance || 0
+    );
+
+  const newBalance =
+    currentBalance +
+    amount;
+
+  const {
+    error:
+      updateError,
+  } =
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        sms_balance:
+          newBalance,
+
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq(
+        "id",
+        userId
+      );
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return newBalance;
+}
 
 // ------------------------------------
 // SEND SMS THROUGH BEEM
 // ------------------------------------
 
-app.post("/api/sms/send", async (req, res) => {
-  const {
-    recipients,
-    message,
-    sender,
-    eventId,
-    eventName
-  } = req.body;
+app.post(
+  "/api/sms/send",
+  requireAuth,
+  async (req, res) => {
+    const {
+      recipients,
+      message,
+      sender,
+      eventId,
+      eventName,
+    } = req.body;
 
-  // -------------------------------
-  // CREDENTIAL CHECK
-  // -------------------------------
+    // -------------------------------
+    // BEEM CREDENTIAL CHECK
+    // -------------------------------
 
-  if (
-    !BEEM_API_KEY ||
-    !BEEM_SECRET_KEY
-  ) {
-    return res.status(500).json({
-      ok: false,
-      error:
-        "Beem credentials hazipo kwenye server/.env"
-    });
-  }
-
-  // -------------------------------
-  // RECIPIENT CHECK
-  // -------------------------------
-
-  if (
-    !Array.isArray(recipients) ||
-    recipients.length === 0
-  ) {
-    return res.status(400).json({
-      ok: false,
-      error:
-        "Hakuna namba za kutuma SMS."
-    });
-  }
-
-  // -------------------------------
-  // MESSAGE CHECK
-  // -------------------------------
-
-  if (
-    !message ||
-    !message.trim()
-  ) {
-    return res.status(400).json({
-      ok: false,
-      error:
-        "Ujumbe wa SMS haujawekwa."
-    });
-  }
-
-  // -------------------------------
-  // CREDIT CHECK
-  // -------------------------------
-
-  const credits = readCredits();
-
-  const requiredCredits =
-    recipients.length;
-
-  if (
-    credits.platformBalance <
-    requiredCredits
-  ) {
-    return res.status(400).json({
-      ok: false,
-      error:
-        "ForteEvents SMS credits hazitoshi.",
-      balance:
-        credits.platformBalance,
-      required:
-        requiredCredits
-    });
-  }
-
-  try {
-
-    // -----------------------------
-    // FORMAT RECIPIENTS
-    // -----------------------------
-
-    const normalizedRecipients =
-      recipients.map(
-        (phone, index) => ({
-          recipient_id:
-            String(index + 1),
-
-          dest_addr:
-            String(phone).trim()
-        })
-      );
-
-    // -----------------------------
-    // AUTHORIZATION
-    // -----------------------------
-
-    const credentials =
-      `${BEEM_API_KEY}:${BEEM_SECRET_KEY}`;
-
-    const authorization =
-      Buffer
-        .from(credentials, "utf8")
-        .toString("base64");
-
-    // -----------------------------
-    // PAYLOAD
-    // -----------------------------
-
-    const payload = {
-      source_addr:
-        sender || BEEM_SENDER_ID,
-
-      encoding: 0,
-
-      schedule_time: "",
-
-      message:
-        message.trim(),
-
-      recipients:
-        normalizedRecipients
-    };
-
-    console.log("");
-    console.log(
-      "Sending SMS to Beem..."
-    );
-
-    console.log(
-      "Recipients:",
-      normalizedRecipients.length
-    );
-
-    console.log(
-      "Sender:",
-      payload.source_addr
-    );
-
-    // -----------------------------
-    // SEND TO BEEM
-    // -----------------------------
-
-    const response =
-      await fetch(
-        "https://apisms.beem.africa/v1/send",
-        {
-          method: "POST",
-
-          headers: {
-            Authorization:
-              `Basic ${authorization}`,
-
-            "Content-Type":
-              "application/json",
-
-            Accept:
-              "application/json"
-          },
-
-          body:
-            JSON.stringify(payload)
-        }
-      );
-
-    const text =
-      await response.text();
-
-    let beemData;
-
-    try {
-      beemData =
-        JSON.parse(text);
-    } catch {
-      beemData = {
-        raw: text
-      };
+    if (
+      !BEEM_API_KEY ||
+      !BEEM_SECRET_KEY
+    ) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Beem credentials hazipo kwenye server/.env",
+      });
     }
 
-    console.log(
-      "Beem HTTP status:",
-      response.status
-    );
+    // -------------------------------
+    // RECIPIENT CHECK
+    // -------------------------------
 
-    console.log(
-      "Beem response:",
-      beemData
-    );
+    if (
+      !Array.isArray(
+        recipients
+      ) ||
+      recipients.length === 0
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Hakuna namba za kutuma SMS.",
+      });
+    }
 
-    // -----------------------------
-    // BEEM REJECTED
-    // -----------------------------
+    // -------------------------------
+    // MESSAGE CHECK
+    // -------------------------------
 
-    if (!response.ok) {
-      return res
-        .status(response.status)
-        .json({
+    if (
+      !message ||
+      !message.trim()
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Ujumbe wa SMS haujawekwa.",
+      });
+    }
+
+    // -------------------------------
+    // LIMIT
+    // -------------------------------
+
+    if (
+      recipients.length > 1000
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Kwa sasa SMS moja haiwezi kuzidi recipients 1000.",
+      });
+    }
+
+    const requiredCredits =
+      recipients.length;
+
+    let reservedBalance =
+      null;
+
+    // -------------------------------
+    // RESERVE CUSTOMER CREDITS
+    // -------------------------------
+    // Hii inafanyika kabla ya Beem.
+    // Update ina condition ya balance,
+    // hivyo customer hawezi kutumia
+    // credits ambazo hana.
+
+    try {
+      const {
+        data: currentProfile,
+        error:
+          profileError,
+      } =
+        await supabaseAdmin
+          .from("profiles")
+          .select(
+            "id, sms_balance"
+          )
+          .eq(
+            "id",
+            req.user.id
+          )
+          .maybeSingle();
+
+      if (profileError) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            "Imeshindikana kusoma customer balance.",
+        });
+      }
+
+      if (!currentProfile) {
+        return res.status(404).json({
+          ok: false,
+          error:
+            "Customer profile haijapatikana.",
+        });
+      }
+
+console.log(
+  "CUSTOMER PROFILE:",
+  currentProfile
+);
+      const currentBalance =
+        Number(
+          currentProfile.sms_balance ||
+            0
+        );
+
+      if (
+        currentBalance <
+        requiredCredits
+      ) {
+        return res.status(400).json({
           ok: false,
 
           error:
-            "Beem imekataa ombi la SMS.",
+            "SMS credits zako hazitoshi.",
 
-          beemStatus:
-            response.status,
+          balance:
+            currentBalance,
 
-          beemResponse:
-            beemData
+          required:
+            requiredCredits,
         });
+      }
+
+      const newBalance =
+        currentBalance -
+        requiredCredits;
+
+      const {
+        data: updatedProfile,
+        error:
+          reserveError,
+      } =
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            sms_balance:
+              newBalance,
+
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            req.user.id
+          )
+          .gte(
+            "sms_balance",
+            requiredCredits
+          )
+          .select(
+            "id, sms_balance"
+          )
+          .maybeSingle();
+
+      if (
+        reserveError
+      ) {
+        console.error(
+          "CREDIT RESERVE ERROR:",
+          reserveError
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            "Imeshindikana kuhifadhi SMS credits.",
+        });
+      }
+
+      if (
+        !updatedProfile
+      ) {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "SMS credits zimebadilika. Tafadhali jaribu tena.",
+        });
+      }
+
+      reservedBalance =
+        Number(
+          updatedProfile.sms_balance
+        );
+    } catch (error) {
+      console.error(
+        "CREDIT CHECK ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Imeshindikana kukagua SMS credits.",
+      });
     }
 
-    // -----------------------------
-    // ONLY DEDUCT AFTER BEEM ACCEPTS
-    // -----------------------------
+    // -------------------------------
+    // SEND TO BEEM
+    // -------------------------------
 
-    const freshCredits =
-      readCredits();
+    try {
+      const normalizedRecipients =
+        recipients.map(
+          (phone, index) => ({
+            recipient_id:
+              String(
+                index + 1
+              ),
 
-    freshCredits.platformBalance -=
-      requiredCredits;
+            dest_addr:
+              String(phone).trim(),
+          })
+        );
 
-    freshCredits.totalUsed +=
-      requiredCredits;
+      const credentials =
+        `${BEEM_API_KEY}:${BEEM_SECRET_KEY}`;
 
-    freshCredits.transactions.push({
-      id:
-        Date.now().toString(),
+      const authorization =
+        Buffer.from(
+          credentials,
+          "utf8"
+        ).toString("base64");
 
-      type:
-        "SMS_USAGE",
+      const payload = {
+        source_addr:
+          sender ||
+          BEEM_SENDER_ID,
 
-      amount:
-        -requiredCredits,
+        encoding: 0,
 
-      eventId:
-        eventId || null,
+        schedule_time: "",
 
-      eventName:
-        eventName || null,
+        message:
+          message.trim(),
 
-      recipients:
-        requiredCredits,
+        recipients:
+          normalizedRecipients,
+      };
 
-      createdAt:
-        new Date().toISOString(),
+      console.log("");
+      console.log(
+        "Sending customer SMS to Beem..."
+      );
+      console.log(
+        "Customer:",
+        req.user.id
+      );
+      console.log(
+        "Recipients:",
+        normalizedRecipients.length
+      );
+      console.log(
+        "Sender:",
+        payload.source_addr
+      );
 
-      beemResponse:
+      const response =
+        await fetch(
+          "https://apisms.beem.africa/v1/send",
+          {
+            method: "POST",
+
+            headers: {
+              Authorization:
+                `Basic ${authorization}`,
+
+              "Content-Type":
+                "application/json",
+
+              Accept:
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(
+                payload
+              ),
+          }
+        );
+
+      const text =
+        await response.text();
+
+      let beemData;
+
+      try {
+        beemData =
+          JSON.parse(text);
+      } catch {
+        beemData = {
+          raw: text,
+        };
+      }
+
+      console.log(
+        "Beem HTTP status:",
+        response.status
+      );
+
+      console.log(
+        "Beem response:",
         beemData
-    });
+      );
 
-    saveCredits(
-      freshCredits
-    );
+      // -----------------------------
+      // BEEM REJECTED
+      // -----------------------------
 
-    // -----------------------------
-    // SMS HISTORY
-    // -----------------------------
-
-    const historyItem = {
-      id:
-        Date.now().toString(),
-
-      eventId:
-        eventId || null,
-
-      eventName:
-        eventName || null,
-
-      count:
-        requiredCredits,
-
-      createdAt:
-        new Date().toISOString(),
-
-      beemResponse:
-        beemData
-    };
-
-    smsHistory.push(
-      historyItem
-    );
-
-    // -----------------------------
-    // SUCCESS
-    // -----------------------------
-
-    return res.json({
-      ok: true,
-
-      message:
-        "SMS imetumwa kwa Beem.",
-
-      count:
-        requiredCredits,
-
-      balance:
-        freshCredits.platformBalance,
-
-      used:
-        freshCredits.totalUsed,
-
-      beemResponse:
-        beemData
-    });
-
-  } catch (error) {
-
-    console.error(
-      "SMS ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      ok: false,
-
-      error:
-        "Imeshindikana kuwasiliana na Beem.",
-
-      details:
-        error.message
-    });
-  }
-});
-
-// ------------------------------------
-// START SERVER
-// ------------------------------------
-
-app.listen(
-  PORT,
-  () => {
-    console.log("");
-    console.log(
-      `ForteEvents backend iko online kwenye port ${PORT}`
-    );
-    console.log("");
-  }
-);
+      if (!response.ok) {
+        try {
+          const refundedBalance =
+            await refundCre

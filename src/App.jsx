@@ -27,6 +27,11 @@ function App() {
   const [eventsLoading, setEventsLoading] = useState(false)
   const [eventMessage, setEventMessage] = useState('')
 
+const [smsRecipients, setSmsRecipients] = useState('')
+const [smsMessage, setSmsMessage] = useState('')
+const [smsSending, setSmsSending] = useState(false)
+const [smsMessageStatus, setSmsMessageStatus] = useState('')
+const [smsBalance, setSmsBalance] = useState(0)
   // =========================
   // AUTH
   // =========================
@@ -126,23 +131,46 @@ function App() {
       return
     }
 
-    const loadProfile = async () => {
-      const { data, error } =
-        await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+   const loadProfile = async () => {
+  const { data, error } =
+    await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
 
-      if (error) {
-        console.log(
-          'Profile error:',
-          error.message
-        )
-      } else {
-        setProfile(data)
-      }
+  if (error) {
+    console.log(
+      'Profile error:',
+      error.message
+    )
+  } else {
+    setProfile(data)
+  }
+
+  try {
+  const response = await fetch(
+  'https://forteevents.onrender.com/api/sms/balance',
+  {
+    headers: {
+      Authorization:
+        `Bearer ${session.access_token}`,
+    },
+  }
+)
+
+    const smsData = await response.json()
+
+    if (smsData.ok) {
+      setSmsBalance(smsData.balance ?? 0)
     }
+  } catch (error) {
+    console.log(
+      'SMS balance error:',
+      error.message
+    )
+  }
+}
 
     loadProfile()
   }, [session])
@@ -659,23 +687,121 @@ function App() {
         )}
 
         {/* SMS - TUTAANZA HAPA BAADAYE */}
-        {page === 'sms' && (
-          <>
-            <h1>SMS</h1>
+       {page === 'sms' && (
+  <>
+    <h1>SMS</h1>
 
-            <div className="card">
-              <p>
-                Mfumo wa SMS tunaujenga hatua kwa hatua.
-              </p>
+    <div className="card">
+      <h3>SMS Balance</h3>
 
-              <p>
-                SMS Balance:{' '}
-                {profile?.sms_balance ?? 0}
-              </p>
-            </div>
-          </>
-        )}
+      <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+        {profile?.sms_balance ?? 0} SMS
+      </p>
+    </div>
 
+    <div className="card">
+      <h3>Tuma SMS</h3>
+
+      <label>Namba za wapokeaji</label>
+
+      <textarea
+        value={smsRecipients}
+        onChange={(e) =>
+          setSmsRecipients(e.target.value)
+        }
+        placeholder="Mfano: 0754123456, 0712345678"
+        rows="3"
+      />
+
+      <label>Ujumbe</label>
+
+      <textarea
+        value={smsMessage}
+        onChange={(e) =>
+          setSmsMessage(e.target.value)
+        }
+        placeholder="Andika ujumbe wako hapa..."
+        rows="5"
+      />
+
+      <button
+       onClick={async () => {
+  setSmsMessageStatus('')
+  setSmsSending(true)
+
+  try {
+    const recipients = smsRecipients
+      .split(',')
+      .map((number) => number.trim())
+      .filter(Boolean)
+
+    const response = await fetch(
+      'https://forteevents.onrender.com/api/sms/send',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization:
+            `Bearer ${session.access_token}`,
+        },
+
+        body: JSON.stringify({
+          recipients,
+          message: smsMessage,
+        }),
+      }
+    )
+
+    const data = await response.json()
+
+    if (data.ok) {
+      setSmsMessageStatus(
+        'SMS imetumwa kikamilifu.'
+      )
+
+      setSmsBalance(
+        data.balance ?? 0
+      )
+
+      setProfile((old) =>
+        old
+          ? {
+              ...old,
+              sms_balance:
+                data.balance ?? 0,
+            }
+          : old
+      )
+
+      setSmsRecipients('')
+      setSmsMessage('')
+    } else {
+      setSmsMessageStatus(
+        data.error ||
+          data.message ||
+          'SMS haikutumwa.'
+      )
+    }
+  } catch (error) {
+    setSmsMessageStatus(
+      'Kuna tatizo la kuunganisha na SMS server.'
+    )
+  } finally {
+    setSmsSending(false)
+  }
+}}
+        disabled={smsSending}
+      >
+        {smsSending ? 'Inatuma...' : 'Tuma SMS'}
+      </button>
+
+     {smsMessageStatus && (
+        <p>{smsMessageStatus}</p>
+      )}
+    </div>
+  </>
+)}
       </main>
     </div>
   )
