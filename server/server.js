@@ -1094,7 +1094,197 @@ console.log(
       // BEEM REJECTED
       // -----------------------------
 
-      if (!response.ok) {
+if (!response.ok) {
         try {
           const refundedBalance =
-            await refundCre
+            await refundCredits(
+              req.user.id,
+              requiredCredits
+            );
+
+          console.log(
+            "SMS credits refunded:",
+            refundedBalance
+          );
+        } catch (refundError) {
+          console.error(
+            "REFUND ERROR:",
+            refundError
+          );
+        }
+
+        return res.status(400).json({
+          ok: false,
+          error:
+            "Beem imekataa kutuma SMS.",
+          beem:
+            beemData,
+          balance:
+            reservedBalance,
+        });
+      }
+
+      // -----------------------------
+      // SMS SENT SUCCESSFULLY
+      // -----------------------------
+
+      const finalBalance =
+        reservedBalance;
+
+      const historyItem = {
+        id:
+          Date.now().toString(),
+
+        userId:
+          req.user.id,
+
+        eventId:
+          eventId || null,
+
+        eventName:
+          eventName || null,
+
+        recipients:
+          normalizedRecipients,
+
+        message:
+          message.trim(),
+
+        sender:
+          payload.source_addr,
+
+        creditsUsed:
+          requiredCredits,
+
+        balanceAfter:
+          finalBalance,
+
+        status:
+          "sent",
+
+        createdAt:
+          new Date().toISOString(),
+
+        beemResponse:
+          beemData,
+      };
+
+      smsHistory.push(
+        historyItem
+      );
+
+      return res.json({
+        ok: true,
+
+        message:
+          "SMS imetumwa kikamilifu.",
+
+        balance:
+          finalBalance,
+
+        used:
+          requiredCredits,
+
+        recipients:
+          normalizedRecipients.length,
+
+        eventId:
+          eventId || null,
+
+        eventName:
+          eventName || null,
+
+        beem:
+          beemData,
+      });
+
+    } catch (error) {
+      console.error(
+        "SMS SEND ERROR:",
+        error
+      );
+
+      // Kama credits zilishapunguzwa
+      // lakini request ya Beem imefeli,
+      // jaribu kuzirudisha.
+      if (
+        reservedBalance !== null
+      ) {
+        try {
+          const refundedBalance =
+            await refundCredits(
+              req.user.id,
+              requiredCredits
+            );
+
+          console.log(
+            "Credits refunded after server error:",
+            refundedBalance
+          );
+        } catch (refundError) {
+          console.error(
+            "REFUND AFTER SERVER ERROR:",
+            refundError
+          );
+        }
+      }
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Imeshindikana kutuma SMS.",
+        details:
+          error.message,
+      });
+    }
+  }
+);
+
+// ------------------------------------
+// SERVER START
+// ------------------------------------
+
+
+app.listen(
+  PORT,
+  () => {
+    console.log(
+      "================================="
+    );
+
+    console.log(
+      "FORTEVENTS BACKEND"
+    );
+
+    console.log(
+      "================================="
+    );
+
+    console.log(
+      "API KEY:",
+      Boolean(
+        BEEM_API_KEY
+      )
+    );
+
+    console.log(
+      "SECRET:",
+      Boolean(
+        BEEM_SECRET_KEY
+      )
+    );
+
+    console.log(
+      "SENDER:",
+      BEEM_SENDER_ID
+    );
+
+    console.log(
+      "================================="
+    );
+
+    console.log(
+      `ForteEvents backend iko online kwenye port ${PORT}`
+    );
+  }
+);
