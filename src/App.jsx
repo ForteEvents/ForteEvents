@@ -157,6 +157,15 @@ function AdminCustomers({ session, onBack }) {
                   >
                     Customer Status
                   </th>
+
+<th
+  style={{
+    textAlign: 'left',
+    padding: '10px',
+  }}
+>
+  Actions
+</th>
                 </tr>
               </thead>
 
@@ -167,6 +176,87 @@ function AdminCustomers({ session, onBack }) {
                       {customer.full_name || '-'}
                     </td>
 
+<td style={{ padding: '10px' }}>
+  <button
+    className="primary-button"
+    onClick={async () => {
+      const amount = window.prompt(
+        `Ongeza SMS credits kwa ${
+          customer.full_name ||
+          customer.email
+        }:`
+      )
+
+     if (amount) {
+  const creditAmount = Number(amount)
+
+  if (
+    !Number.isFinite(creditAmount) ||
+    creditAmount <= 0
+  ) {
+    window.alert(
+      'Tafadhali weka idadi sahihi ya SMS credits.'
+    )
+    return
+  }
+
+  try {
+    const response = await fetch(
+      'https://forteevents.onrender.com/api/admin/credits/add',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: customer.id,
+          amount: creditAmount,
+          reference: 'Admin credit',
+        }),
+      }
+    )
+
+    const result = await response.json()
+
+    if (!response.ok || !result.ok) {
+      throw new Error(
+        result.error ||
+          'Credits hazikuweza kuongezwa.'
+      )
+    }
+
+    window.alert(
+      `Credits zimeongezwa successfully.\nBalance mpya: ${result.balance}`
+    )
+
+    setCustomers((currentCustomers) =>
+      currentCustomers.map((item) =>
+        item.id === customer.id
+          ? {
+              ...item,
+              sms_balance: result.balance,
+            }
+          : item
+      )
+    )
+  } catch (error) {
+    console.log(
+      'Add credits error:',
+      error.message
+    )
+
+    window.alert(
+      'Imeshindikana kuongeza credits: ' +
+        error.message
+    )
+  }
+}
+    }}
+  >
+    Add Credits
+  </button>
+</td>
                     <td style={{ padding: '10px' }}>
                       {customer.email || '-'}
                     </td>
