@@ -689,6 +689,67 @@ app.post(
           "Imeshindikana kuongeza credits.",
       });
     }
+}
+);
+
+// ------------------------------------
+// ADMIN: GET CUSTOMERS
+// ------------------------------------
+
+app.get(
+  "/api/admin/customers",
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const {
+        data: customers,
+        error,
+      } = await supabaseAdmin
+        .from("profiles")
+        .select(
+          "id, full_name, email, phone, sms_balance, role, created_at"
+        )
+        .eq(
+          "role",
+          "customer"
+        )
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        );
+
+      if (error) {
+        console.error(
+          "ADMIN CUSTOMERS ERROR:",
+          error
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            error.message,
+        });
+      }
+
+      return res.json({
+        ok: true,
+        customers:
+          customers || [],
+      });
+    } catch (error) {
+      console.error(
+        "ADMIN CUSTOMERS SERVER ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Imeshindikana kupakia customers.",
+      });
+    }
   }
 );
 
