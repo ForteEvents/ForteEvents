@@ -809,18 +809,15 @@ function App() {
     return (
       <div className="app-shell">
         <aside className="sidebar">
-          <div className="sidebar-logo">
-            <div className="logo-circle">
-              <div className="logo-forte">Forte</div>
-              <div className="logo-events">Events</div>
-            </div>
+        <div className="sidebar-logo">
+  <img
+    src="/forteevents-logo.png"
+    alt="ForteEvents"
+    className="dashboard-logo"
+  />
+</div>
 
-            <p className="logo-tagline">
-              make your event extraordinary
-            </p>
-          </div>
-
-          <div className="sidebar-nav">
+<div className="sidebar-nav">
             <button
               className={
                 adminPage === 'dashboard'
