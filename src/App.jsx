@@ -699,14 +699,12 @@ function App() {
       <div className="auth-container">
         <div className="auth-card">
           <div className="logo-area">
-            <div className="logo-circle">
-              <div className="logo-forte">Forte</div>
-              <div className="logo-events">Events</div>
-            </div>
-
-            <p className="logo-tagline">
-              make your event extraordinary
-            </p>
+          <div className="auth-logo">
+  <img
+    src="/forteevents-logo.png"
+    alt="ForteEvents"
+  />
+</div>
           </div>
 
           <h2>
@@ -947,14 +945,12 @@ return (
   <div className="app-shell">
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="logo-circle">
-          <div className="logo-forte">Forte</div>
-          <div className="logo-events">Events</div>
-        </div>
-
-        <p className="logo-tagline">
-          make your event extraordinary
-        </p>
+      <div className="auth-logo">
+  <img
+    src="/forteevents-logo.png"
+    alt="ForteEvents"
+  />
+</div>
       </div>
 
       <div className="sidebar-nav">
