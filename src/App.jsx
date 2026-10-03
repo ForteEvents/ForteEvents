@@ -390,7 +390,7 @@ function App() {
       return
     }
 
-    if (data.user) {
+  if (data.user) {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -399,6 +399,7 @@ function App() {
           phone: phone,
           email: email,
           sms_balance: 0,
+          role: 'customer',
         })
 
       if (profileError) {
