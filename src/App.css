@@ -415,3 +415,16 @@ button[type="submit"] {
 .main-content > .card p {
   color: #333333 !important;
 }
+
+.auth-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.auth-logo img {
+  width: 150px;
+  height: auto;
+  display: block;
+}
