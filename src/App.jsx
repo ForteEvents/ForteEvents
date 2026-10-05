@@ -6,6 +6,7 @@ function AdminCustomers({ session, onBack }) {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -54,6 +55,199 @@ function AdminCustomers({ session, onBack }) {
       loadCustomers()
     }
   }, [session])
+
+  const addCredits = async (customer) => {
+    const amount = window.prompt(
+      `Ongeza SMS credits kwa ${
+        customer.full_name ||
+        customer.email
+      }:`
+    )
+
+    if (!amount) {
+      return
+    }
+
+    const creditAmount = Number(amount)
+
+    if (
+      !Number.isFinite(creditAmount) ||
+      creditAmount <= 0
+    ) {
+      window.alert(
+        'Tafadhali weka idadi sahihi ya SMS credits.'
+      )
+      return
+    }
+
+    try {
+      const response = await fetch(
+        'https://forteevents.onrender.com/api/admin/credits/add',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            userId: customer.id,
+            amount: creditAmount,
+            reference: 'Admin credit',
+          }),
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.error ||
+            'Credits hazikuweza kuongezwa.'
+        )
+      }
+
+      window.alert(
+        `Credits zimeongezwa successfully.\nBalance mpya: ${result.balance}`
+      )
+
+      setCustomers((currentCustomers) =>
+        currentCustomers.map((item) =>
+          item.id === customer.id
+            ? {
+                ...item,
+                sms_balance: result.balance,
+              }
+            : item
+        )
+      )
+
+      setSelectedCustomer((currentCustomer) =>
+        currentCustomer &&
+        currentCustomer.id === customer.id
+          ? {
+              ...currentCustomer,
+              sms_balance: result.balance,
+            }
+          : currentCustomer
+      )
+    } catch (error) {
+      console.log(
+        'Add credits error:',
+        error.message
+      )
+
+      window.alert(
+        'Imeshindikana kuongeza credits: ' +
+          error.message
+      )
+    }
+  }
+
+  if (selectedCustomer) {
+    return (
+      <>
+        <div className="page-header">
+          <div>
+            <h1>Customer Details</h1>
+            <p>
+              Taarifa za customer wa ForteEvents.
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>
+            {selectedCustomer.full_name ||
+              'Customer'}
+          </h2>
+
+          <div
+            style={{
+              marginTop: '20px',
+              lineHeight: '1.9',
+            }}
+          >
+            <p>
+              <strong>Full Name:</strong>{' '}
+              {selectedCustomer.full_name || '-'}
+            </p>
+
+            <p>
+              <strong>Email:</strong>{' '}
+              {selectedCustomer.email || '-'}
+            </p>
+
+            <p>
+              <strong>Phone:</strong>{' '}
+              {selectedCustomer.phone || '-'}
+            </p>
+
+            <p>
+              <strong>SMS Balance:</strong>{' '}
+              <strong>
+                {selectedCustomer.sms_balance ?? 0}
+              </strong>
+            </p>
+
+            <p>
+              <strong>Status:</strong> Active
+            </p>
+          </div>
+
+          <div
+            style={{
+              marginTop: '25px',
+              padding: '18px',
+              border: '1px solid #ddd',
+              borderRadius: '10px',
+            }}
+          >
+            <h3>SMS History</h3>
+
+            <p>
+              SMS history ya customer itaonyeshwa
+              hapa baada ya kuunganisha history
+              na Supabase.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap',
+              marginTop: '25px',
+            }}
+          >
+            <button
+              className="primary-button"
+              onClick={() =>
+                addCredits(selectedCustomer)
+              }
+            >
+              Add Credits
+            </button>
+
+            <button
+              className="primary-button"
+              onClick={() =>
+                setSelectedCustomer(null)
+              }
+            >
+              Back to Customers
+            </button>
+
+            <button
+              className="primary-button"
+              onClick={onBack}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </>
+    )
+  }
 
   return (
     <>
@@ -155,17 +349,17 @@ function AdminCustomers({ session, onBack }) {
                       padding: '10px',
                     }}
                   >
-                    Customer Status
+                    Status
                   </th>
 
-<th
-  style={{
-    textAlign: 'left',
-    padding: '10px',
-  }}
->
-  Actions
-</th>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      padding: '10px',
+                    }}
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -173,90 +367,27 @@ function AdminCustomers({ session, onBack }) {
                 {customers.map((customer) => (
                   <tr key={customer.id}>
                     <td style={{ padding: '10px' }}>
-                      {customer.full_name || '-'}
+                      <button
+                        onClick={() =>
+                          setSelectedCustomer(
+                            customer
+                          )
+                        }
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          textDecoration:
+                            'underline',
+                          fontWeight: '600',
+                        }}
+                      >
+                        {customer.full_name ||
+                          'View Customer'}
+                      </button>
                     </td>
 
-<td style={{ padding: '10px' }}>
-  <button
-    className="primary-button"
-    onClick={async () => {
-      const amount = window.prompt(
-        `Ongeza SMS credits kwa ${
-          customer.full_name ||
-          customer.email
-        }:`
-      )
-
-     if (amount) {
-  const creditAmount = Number(amount)
-
-  if (
-    !Number.isFinite(creditAmount) ||
-    creditAmount <= 0
-  ) {
-    window.alert(
-      'Tafadhali weka idadi sahihi ya SMS credits.'
-    )
-    return
-  }
-
-  try {
-    const response = await fetch(
-      'https://forteevents.onrender.com/api/admin/credits/add',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          userId: customer.id,
-          amount: creditAmount,
-          reference: 'Admin credit',
-        }),
-      }
-    )
-
-    const result = await response.json()
-
-    if (!response.ok || !result.ok) {
-      throw new Error(
-        result.error ||
-          'Credits hazikuweza kuongezwa.'
-      )
-    }
-
-    window.alert(
-      `Credits zimeongezwa successfully.\nBalance mpya: ${result.balance}`
-    )
-
-    setCustomers((currentCustomers) =>
-      currentCustomers.map((item) =>
-        item.id === customer.id
-          ? {
-              ...item,
-              sms_balance: result.balance,
-            }
-          : item
-      )
-    )
-  } catch (error) {
-    console.log(
-      'Add credits error:',
-      error.message
-    )
-
-    window.alert(
-      'Imeshindikana kuongeza credits: ' +
-        error.message
-    )
-  }
-}
-    }}
-  >
-    Add Credits
-  </button>
-</td>
                     <td style={{ padding: '10px' }}>
                       {customer.email || '-'}
                     </td>
@@ -273,6 +404,17 @@ function AdminCustomers({ session, onBack }) {
 
                     <td style={{ padding: '10px' }}>
                       Active
+                    </td>
+
+                    <td style={{ padding: '10px' }}>
+                      <button
+                        className="primary-button"
+                        onClick={() =>
+                          addCredits(customer)
+                        }
+                      >
+                        Add Credits
+                      </button>
                     </td>
                   </tr>
                 ))}
