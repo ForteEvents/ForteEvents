@@ -754,6 +754,71 @@ app.get(
 );
 
 // ------------------------------------
+// ADMIN: GET CUSTOMER SMS HISTORY
+// ------------------------------------
+
+app.get(
+  "/api/admin/customers/:customerId/sms-history",
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const {
+        customerId,
+      } = req.params;
+
+      const {
+        data: history,
+        error,
+      } = await supabaseAdmin
+        .from("sms_history")
+        .select(
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at"
+        )
+        .eq(
+          "user_id",
+          customerId
+        )
+        .order(
+          "sent_at",
+          {
+            ascending: false,
+          }
+        );
+
+      if (error) {
+        console.error(
+          "ADMIN SMS HISTORY ERROR:",
+          error
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            error.message,
+        });
+      }
+
+      return res.json({
+        ok: true,
+        history:
+          history || [],
+      });
+    } catch (error) {
+      console.error(
+        "ADMIN SMS HISTORY SERVER ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Imeshindikana kupakia SMS history.",
+      });
+    }
+  }
+);
+
+// ------------------------------------
 // REFUND SMS CREDITS
 // ------------------------------------
 // Internal helper.
