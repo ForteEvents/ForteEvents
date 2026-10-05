@@ -7,6 +7,9 @@ function AdminCustomers({ session, onBack }) {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [smsHistory, setSmsHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState('')
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -55,6 +58,54 @@ function AdminCustomers({ session, onBack }) {
       loadCustomers()
     }
   }, [session])
+
+  const loadSmsHistory = async (customer) => {
+    setHistoryLoading(true)
+    setHistoryError('')
+    setSmsHistory([])
+
+    try {
+      const response = await fetch(
+        `https://forteevents.onrender.com/api/admin/customers/${customer.id}/sms-history`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.error ||
+            'SMS history haikuweza kupakiwa.'
+        )
+      }
+
+      setSmsHistory(result.history || [])
+    } catch (error) {
+      console.log(
+        'SMS history error:',
+        error.message
+      )
+
+      setHistoryError(
+        'SMS history haikuweza kupakiwa: ' +
+          error.message
+      )
+
+      setSmsHistory([])
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  const openCustomerDetails = (customer) => {
+    setSelectedCustomer(customer)
+    loadSmsHistory(customer)
+  }
 
   const addCredits = async (customer) => {
     const amount = window.prompt(
@@ -143,6 +194,14 @@ function AdminCustomers({ session, onBack }) {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="card">
+        <p>Inapakia customers...</p>
+      </div>
+    )
+  }
+
   if (selectedCustomer) {
     return (
       <>
@@ -200,15 +259,163 @@ function AdminCustomers({ session, onBack }) {
               padding: '18px',
               border: '1px solid #ddd',
               borderRadius: '10px',
+              overflowX: 'auto',
             }}
           >
             <h3>SMS History</h3>
 
-            <p>
-              SMS history ya customer itaonyeshwa
-              hapa baada ya kuunganisha history
-              na Supabase.
-            </p>
+            {historyLoading && (
+              <p>
+                Inapakia SMS history...
+              </p>
+            )}
+
+            {historyError && (
+              <p
+                style={{
+                  color: '#b00020',
+                }}
+              >
+                {historyError}
+              </p>
+            )}
+
+            {!historyLoading &&
+              !historyError &&
+              smsHistory.length === 0 && (
+                <p>
+                  Hakuna SMS history kwa customer
+                  huyu.
+                </p>
+              )}
+
+            {!historyLoading &&
+              !historyError &&
+              smsHistory.length > 0 && (
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    marginTop: '15px',
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px',
+                          borderBottom: '1px solid #ddd',
+                        }}
+                      >
+                        Date
+                      </th>
+
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px',
+                          borderBottom: '1px solid #ddd',
+                        }}
+                      >
+                        Recipient
+                      </th>
+
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px',
+                          borderBottom: '1px solid #ddd',
+                        }}
+                      >
+                        Message
+                      </th>
+
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px',
+                          borderBottom: '1px solid #ddd',
+                        }}
+                      >
+                        SMS
+                      </th>
+
+                      <th
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px',
+                          borderBottom: '1px solid #ddd',
+                        }}
+                      >
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {smsHistory.map((item) => (
+                      <tr key={item.id}>
+                        <td
+                          style={{
+                            padding: '10px',
+                            borderBottom:
+                              '1px solid #eee',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {item.sent_at
+                            ? new Date(
+                                item.sent_at
+                              ).toLocaleString()
+                            : '-'}
+                        </td>
+
+                        <td
+                          style={{
+                            padding: '10px',
+                            borderBottom:
+                              '1px solid #eee',
+                          }}
+                        >
+                          {item.recipient || '-'}
+                        </td>
+
+                        <td
+                          style={{
+                            padding: '10px',
+                            borderBottom:
+                              '1px solid #eee',
+                            minWidth: '220px',
+                          }}
+                        >
+                          {item.message || '-'}
+                        </td>
+
+                        <td
+                          style={{
+                            padding: '10px',
+                            borderBottom:
+                              '1px solid #eee',
+                          }}
+                        >
+                          {item.sms_count ?? 0}
+                        </td>
+
+                        <td
+                          style={{
+                            padding: '10px',
+                            borderBottom:
+                              '1px solid #eee',
+                          }}
+                        >
+                          {item.status || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
           </div>
 
           <div
@@ -229,16 +436,18 @@ function AdminCustomers({ session, onBack }) {
             </button>
 
             <button
-              className="primary-button"
-              onClick={() =>
+              className="secondary-button"
+              onClick={() => {
                 setSelectedCustomer(null)
-              }
+                setSmsHistory([])
+                setHistoryError('')
+              }}
             >
               Back to Customers
             </button>
 
             <button
-              className="primary-button"
+              className="secondary-button"
               onClick={onBack}
             >
               Back to Dashboard
@@ -255,185 +464,197 @@ function AdminCustomers({ session, onBack }) {
         <div>
           <h1>Customers</h1>
           <p>
-            Usimamizi wa customers wa ForteEvents.
+            Manage ForteEvents customers and
+            their SMS credits.
           </p>
         </div>
       </div>
 
-      {loading ? (
+      {errorMessage && (
         <div className="card">
-          <p>Inapakia customers...</p>
+          <p>{errorMessage}</p>
         </div>
-      ) : errorMessage ? (
-        <div className="card">
-          <h3>Customer Management</h3>
-          <p className="message">
-            {errorMessage}
-          </p>
+      )}
 
-          <button
-            className="primary-button"
-            onClick={onBack}
+      <div className="card">
+        <div
+          style={{
+            overflowX: 'auto',
+          }}
+        >
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+            }}
           >
-            Back to Dashboard
-          </button>
-        </div>
-      ) : customers.length === 0 ? (
-        <div className="card">
-          <h3>Hakuna customers</h3>
-          <p>
-            Hakuna customer account iliyopatikana
-            kwa sasa.
-          </p>
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderBottom: '1px solid #ddd',
+                  }}
+                >
+                  Customer Name
+                </th>
 
-          <button
-            className="primary-button"
-            onClick={onBack}
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      ) : (
-        <div className="card">
-          <h2>Customer Management</h2>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderBottom: '1px solid #ddd',
+                  }}
+                >
+                  Email
+                </th>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderBottom: '1px solid #ddd',
+                  }}
+                >
+                  Phone
+                </th>
+
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderBottom: '1px solid #ddd',
+                  }}
+                >
+                  SMS Balance
+                </th>
+
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderBottom: '1px solid #ddd',
+                  }}
+                >
+                  Status
+                </th>
+
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px',
+                    borderBottom: '1px solid #ddd',
+                  }}
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {customers.map((customer) => (
+                <tr key={customer.id}>
+                  <td
+                    style={{
+                      padding: '12px',
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openCustomerDetails(
+                          customer
+                        )
+                      }
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: 0,
+                        color: '#8a6d1d',
+                        cursor: 'pointer',
+                        fontWeight: '700',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      {customer.full_name ||
+                        'Customer'}
+                    </button>
+                  </td>
+
+                  <td
+                    style={{
+                      padding: '12px',
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
+                    {customer.email || '-'}
+                  </td>
+
+                  <td
+                    style={{
+                      padding: '12px',
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
+                    {customer.phone || '-'}
+                  </td>
+
+                  <td
+                    style={{
+                      padding: '12px',
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
+                    {customer.sms_balance ?? 0}
+                  </td>
+
+                  <td
+                    style={{
+                      padding: '12px',
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
+                    Active
+                  </td>
+
+                  <td
+                    style={{
+                      padding: '12px',
+                      borderBottom: '1px solid #eee',
+                    }}
+                  >
+                    <button
+                      className="primary-button"
+                      onClick={() =>
+                        addCredits(customer)
+                      }
+                    >
+                      Add Credits
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {customers.length === 0 &&
+          !errorMessage && (
+            <p
               style={{
-                width: '100%',
-                borderCollapse: 'collapse',
                 marginTop: '20px',
               }}
             >
-              <thead>
-                <tr>
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                    }}
-                  >
-                    Customer Name
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                    }}
-                  >
-                    Email
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                    }}
-                  >
-                    Phone
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                    }}
-                  >
-                    SMS Balance
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                    }}
-                  >
-                    Status
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign: 'left',
-                      padding: '10px',
-                    }}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {customers.map((customer) => (
-                  <tr key={customer.id}>
-                    <td style={{ padding: '10px' }}>
-                      <button
-                        onClick={() =>
-                          setSelectedCustomer(
-                            customer
-                          )
-                        }
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          textDecoration:
-                            'underline',
-                          fontWeight: '600',
-                        }}
-                      >
-                        {customer.full_name ||
-                          'View Customer'}
-                      </button>
-                    </td>
-
-                    <td style={{ padding: '10px' }}>
-                      {customer.email || '-'}
-                    </td>
-
-                    <td style={{ padding: '10px' }}>
-                      {customer.phone || '-'}
-                    </td>
-
-                    <td style={{ padding: '10px' }}>
-                      <strong>
-                        {customer.sms_balance ?? 0}
-                      </strong>
-                    </td>
-
-                    <td style={{ padding: '10px' }}>
-                      Active
-                    </td>
-
-                    <td style={{ padding: '10px' }}>
-                      <button
-                        className="primary-button"
-                        onClick={() =>
-                          addCredits(customer)
-                        }
-                      >
-                        Add Credits
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <button
-            className="primary-button"
-            style={{ marginTop: '20px' }}
-            onClick={onBack}
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      )}
+              Hakuna customers kwa sasa.
+            </p>
+          )}
+      </div>
     </>
   )
 }
+
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
