@@ -1234,6 +1234,36 @@ if (!response.ok) {
         historyItem
       );
 
+      // -----------------------------
+      // SAVE SMS HISTORY TO SUPABASE
+      // -----------------------------
+
+      const historyRows = normalizedRecipients.map(
+        (recipient) => ({
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          user_id: req.user.id,
+          event_id: eventId || null,
+          recipient: recipient.dest_addr,
+          message: message.trim(),
+          sms_count: 1,
+          status: "sent",
+          error_message: null,
+          sent_at: new Date().toISOString(),
+        })
+      );
+
+      const { error: historyError } =
+        await supabaseAdmin
+          .from("sms_history")
+          .insert(historyRows);
+
+      if (historyError) {
+        console.error(
+          "SMS HISTORY SAVE ERROR:",
+          historyError
+        );
+      }
+
       return res.json({
         ok: true,
 
