@@ -866,13 +866,49 @@ function App() {
     }
   }, [session, profile?.role])
 
+  // =========================
+// LOAD CUSTOMER SMS HISTORY
+// =========================
+const loadSmsHistory = async () => {
+  if (!session?.user?.id) return
+
+  try {
+    const response = await fetch(
+      'https://forteevents.onrender.com/api/sms/history',
+      {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      }
+    )
+
+    const data = await response.json()
+
+    if (data.ok) {
+      setSmsHistory(data.history || [])
+    } else {
+      console.log(
+        'SMS history error:',
+        data.error
+      )
+      setSmsHistory([])
+    }
+  } catch (error) {
+    console.log(
+      'SMS history error:',
+      error.message
+    )
+    setSmsHistory([])
+  }
+}
+
 useEffect(() => {
   if (session?.user?.id && profile?.role !== 'admin') {
     loadSmsHistory()
   }
 }, [session, profile?.role])
 
-  // =========================
+// =========================
   // CREATE EVENT
   // =========================
   const createEvent = async (e) => {
@@ -919,42 +955,6 @@ useEffect(() => {
 
     setPage('events')
   }
-
-// =========================
-// LOAD CUSTOMER SMS HISTORY
-// =========================
-const loadSmsHistory = async () => {
-  if (!session?.user?.id) return
-
-  try {
-    const response = await fetch(
-      'https://forteevents.onrender.com/api/sms/history',
-      {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      }
-    )
-
-    const data = await response.json()
-
-    if (data.ok) {
-      setSmsHistory(data.history || [])
-    } else {
-      console.log(
-        'SMS history error:',
-        data.error
-      )
-      setSmsHistory([])
-    }
-  } catch (error) {
-    console.log(
-      'SMS history error:',
-      error.message
-    )
-    setSmsHistory([])
-  }
-}
 
   // =========================
   // SEND SMS
