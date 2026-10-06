@@ -719,6 +719,27 @@ function App() {
   // =========================
   // LOGIN / SIGNUP
   // =========================
+  const forgotPassword = async () => {
+    if (!email) {
+      setMessage('Weka email yako kwanza.')
+      return
+    }
+
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://forteevents-web.onrender.com',
+      })
+
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setMessage(
+      'Tumetuma link ya kubadilisha password kwenye email yako.'
+    )
+  }
+
   const submit = async (e) => {
     e.preventDefault()
     setMessage('')
@@ -1162,6 +1183,17 @@ useEffect(() => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+
+            {mode === 'login' && (
+              <button
+                type="button"
+                className="link-button"
+                onClick={forgotPassword}
+                style={{ marginBottom: '12px' }}
+              >
+                Forgot Password?
+              </button>
+            )}
 
             <button type="submit" className="primary-button">
               {mode === 'login' ? 'Login' : 'Create Account'}
