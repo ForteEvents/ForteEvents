@@ -1794,7 +1794,7 @@ return (
 
               <textarea
                 placeholder={
-                  'Weka namba moja kwa kila mstari\nMfano:\n255712345678\n255713456789'
+                  'Weka jina na namba moja kwa kila mstari\nMfano:\nJohn | 255712345678\nMary | 255713456789\nJuma | 255714567890'
                 }
                 value={smsRecipients}
                 onChange={(e) =>
