@@ -693,6 +693,7 @@ function App() {
   const [smsMessage, setSmsMessage] = useState('')
   const [smsSending, setSmsSending] = useState(false)
   const [smsMessageStatus, setSmsMessageStatus] = useState('')
+  const [smsHistory, setSmsHistory] = useState([])
   const [smsBalance, setSmsBalance] = useState(0)
 
   // =========================
