@@ -460,19 +460,57 @@ let smsHistory = [];
 app.get(
   "/api/sms/history",
   requireAuth,
-  (req, res) => {
-    const userHistory =
-      smsHistory.filter(
-        (item) =>
-          item.userId ===
+  async (req, res) => {
+    try {
+      const {
+        data: history,
+        error,
+      } = await supabaseAdmin
+        .from("sms_history")
+        .select(
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at"
+        )
+        .eq(
+          "user_id",
           req.user.id
+        )
+        .order(
+          "sent_at",
+          {
+            ascending: false,
+          }
+        );
+
+      if (error) {
+        console.error(
+          "CUSTOMER SMS HISTORY ERROR:",
+          error
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            "Imeshindikana kupakia SMS history.",
+        });
+      }
+
+      return res.json({
+        ok: true,
+        history:
+          history || [],
+      });
+    } catch (error) {
+      console.error(
+        "CUSTOMER SMS HISTORY SERVER ERROR:",
+        error
       );
 
-    res.json({
-      ok: true,
-      history:
-        userHistory,
-    });
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Imeshindikana kupakia SMS history.",
+      });
+    }
   }
 );
 
