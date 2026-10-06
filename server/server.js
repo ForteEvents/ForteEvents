@@ -1153,14 +1153,21 @@ console.log(
     try {
       const normalizedRecipients =
         recipients.map(
-          (phone, index) => ({
+          (recipient, index) => ({
             recipient_id:
               String(
                 index + 1
               ),
 
             dest_addr:
-              String(phone).trim(),
+              String(
+                recipient.phone
+              ).trim(),
+
+            name:
+              String(
+                recipient.name || ''
+              ).trim(),
           })
         );
 
@@ -1173,62 +1180,146 @@ console.log(
           "utf8"
         ).toString("base64");
 
-      const payload = {
-        source_addr:
-          sender ||
-          BEEM_SENDER_ID,
+      const sentRecipients = [];
+      const failedRecipients = [];
 
-        encoding: 0,
+      for (const recipient of normalizedRecipients) {
+        const personalizedMessage =
+          message
+            .trim()
+            .replace(/\{name\}/gi, recipient.name || '');
 
-        schedule_time: "",
+        const payload = {
+          source_addr:
+            sender ||
+            BEEM_SENDER_ID,
 
-        message:
-          message.trim(),
+          encoding: 0,
 
-        recipients:
-          normalizedRecipients,
-      };
+          schedule_time: "",
 
-      console.log("");
-      console.log(
-        "Sending customer SMS to Beem..."
-      );
-      console.log(
-        "Customer:",
-        req.user.id
-      );
-      console.log(
-        "Recipients:",
-        normalizedRecipients.length
-      );
-      console.log(
-        "Sender:",
-        payload.source_addr
-      );
+          message:
+            personalizedMessage,
 
-      const response =
-        await fetch(
-          "https://apisms.beem.africa/v1/send",
-          {
-            method: "POST",
+          recipients: [
+            {
+              recipient_id:
+                recipient.recipient_id,
 
-            headers: {
-              Authorization:
-                `Basic ${authorization}`,
-
-              "Content-Type":
-                "application/json",
-
-              Accept:
-                "application/json",
+              dest_addr:
+                recipient.dest_addr,
             },
+          ],
+        };
 
-            body:
-              JSON.stringify(
-                payload
-              ),
-          }
+        console.log("");
+        console.log(
+          "Sending customer SMS to Beem..."
         );
+        console.log(
+          "Customer:",
+          req.user.id
+        );
+        console.log(
+          "Recipient:",
+          recipient.dest_addr
+        );
+        console.log(
+          "Name:",
+          recipient.name
+        );
+        console.log(
+          "Message:",
+          personalizedMessage
+        );
+        console.log(
+          "Sender:",
+          payload.source_addr
+        );
+
+        const response =
+          await fetch(
+            "https://apisms.beem.africa/v1/send",
+            {
+              method: "POST",
+
+              headers: {
+                Authorization:
+                  `Basic ${authorization}`,
+
+                "Content-Type":
+                  "application/json",
+
+                Accept:
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  payload
+                ),
+            }
+          );
+
+        const text =
+          await response.text();
+
+        let beemData;
+
+        try {
+          beemData =
+            JSON.parse(text);
+        } catch {
+          beemData = {
+            raw: text,
+          };
+        }
+
+        if (response.ok) {
+          sentRecipients.push({
+            recipient,
+            message:
+              personalizedMessage,
+            beemData,
+          });
+        } else {
+          failedRecipients.push({
+            recipient,
+            message:
+              personalizedMessage,
+            error:
+              beemData,
+          });
+        }
+      }
+
+      const failedCount =
+        failedRecipients.length;
+
+      if (failedCount > 0) {
+        try {
+          const refundedBalance =
+            await refundCredits(
+              req.user.id,
+              failedCount
+            );
+
+          console.log(
+            "Refunded failed SMS credits:",
+            failedCount
+          );
+
+          console.log(
+            "Balance after refund:",
+            refundedBalance
+          );
+        } catch (refundError) {
+          console.error(
+            "REFUND FAILED:",
+            refundError
+          );
+        }
+      }
 
       const text =
         await response.text();

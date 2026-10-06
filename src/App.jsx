@@ -1000,6 +1000,15 @@ useEffect(() => {
       .split(/[\n,]+/)
       .map((item) => item.trim())
       .filter(Boolean)
+      .map((item) => {
+        const parts = item.split('|')
+
+        return {
+          name: (parts[0] || '').trim(),
+          phone: (parts[1] || '').trim(),
+        }
+      })
+      .filter((item) => item.phone)
 
     if (recipients.length === 0) {
       setSmsMessageStatus('Hakuna namba sahihi zilizowekwa.')
@@ -1799,7 +1808,7 @@ return (
               </label>
 
               <textarea
-                placeholder="Andika ujumbe wako hapa..."
+                placeholder="Mfano: Habari {name}! Karibu kwenye harusi weekend hii..."
                 value={smsMessage}
                 onChange={(e) =>
                   setSmsMessage(e.target.value)
