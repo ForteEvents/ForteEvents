@@ -1184,10 +1184,13 @@ console.log(
       const failedRecipients = [];
 
       for (const recipient of normalizedRecipients) {
-        const personalizedMessage =
-          message
-            .trim()
-            .replace(/\{name\}/gi, recipient.name || '');
+        let personalizedMessage =
+          message.trim();
+
+        if (recipient.name) {
+          personalizedMessage =
+            `Habari ${recipient.name}, ${personalizedMessage}`;
+        }
 
         const payload = {
           source_addr:
