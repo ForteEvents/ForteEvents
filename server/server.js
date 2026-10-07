@@ -1321,157 +1321,88 @@ console.log(
         }
       }
 
-      const text =
-        await response.text();
-
-      let beemData;
-
-      try {
-        beemData =
-          JSON.parse(text);
-      } catch {
-        beemData = {
-          raw: text,
-        };
-      }
-
-      console.log(
-        "Beem HTTP status:",
-        response.status
-      );
-
-      console.log(
-        "Beem response:",
-        beemData
-      );
-
-      // -----------------------------
-      // BEEM REJECTED
-      // -----------------------------
-
-if (!response.ok) {
-        try {
-          const refundedBalance =
-            await refundCredits(
-              req.user.id,
-              requiredCredits
-            );
-
-          console.log(
-            "SMS credits refunded:",
-            refundedBalance
-          );
-        } catch (refundError) {
-          console.error(
-            "REFUND ERROR:",
-            refundError
-          );
-        }
-
-        return res.status(400).json({
-          ok: false,
-          error:
-            "Beem imekataa kutuma SMS.",
-          beem:
-            beemData,
-          balance:
-            reservedBalance,
-        });
-      }
-
-      // -----------------------------
-      // SMS SENT SUCCESSFULLY
-      // -----------------------------
-
       const finalBalance =
-        reservedBalance;
-
-      const historyItem = {
-        id:
-          Date.now().toString(),
-
-        userId:
-          req.user.id,
-
-        eventId:
-          eventId || null,
-
-        eventName:
-          eventName || null,
-
-        recipients:
-          normalizedRecipients,
-
-        message:
-          message.trim(),
-
-        sender:
-          payload.source_addr,
-
-        creditsUsed:
-          requiredCredits,
-
-        balanceAfter:
-          finalBalance,
-
-        status:
-          "sent",
-
-        createdAt:
-          new Date().toISOString(),
-
-        beemResponse:
-          beemData,
-      };
-
-      smsHistory.push(
-        historyItem
-      );
+        reservedBalance + failedCount;
 
       // -----------------------------
       // SAVE SMS HISTORY TO SUPABASE
       // -----------------------------
 
-      const historyRows = normalizedRecipients.map(
-        (recipient) => ({
-          id: Date.now() + Math.floor(Math.random() * 1000),
-          user_id: req.user.id,
-          event_id: eventId || null,
-          recipient: recipient.dest_addr,
-          message: message.trim(),
-          sms_count: 1,
-          status: "sent",
-          error_message: null,
-          sent_at: new Date().toISOString(),
-        })
-      );
+      if (sentRecipients.length > 0) {
+        const historyRows =
+          sentRecipients.map(
+            (item) => ({
+              id:
+                Date.now() +
+                Math.floor(
+                  Math.random() * 1000
+                ),
 
-      const { error: historyError } =
-        await supabaseAdmin
-          .from("sms_history")
-          .insert(historyRows);
+              user_id:
+                req.user.id,
 
-      if (historyError) {
-        console.error(
-          "SMS HISTORY SAVE ERROR:",
-          historyError
-        );
+              event_id:
+                eventId || null,
+
+              recipient:
+                item.recipient.dest_addr,
+
+              recipient_name:
+                item.recipient.name ||
+                null,
+
+              message:
+                item.message,
+
+              sms_count:
+                1,
+
+              status:
+                "sent",
+
+              error_message:
+                null,
+
+              sent_at:
+                new Date().toISOString(),
+            })
+          );
+
+        const { error: historyError } =
+          await supabaseAdmin
+            .from("sms_history")
+            .insert(historyRows);
+
+        if (historyError) {
+          console.error(
+            "SMS HISTORY SAVE ERROR:",
+            historyError
+          );
+        }
       }
 
       return res.json({
         ok: true,
 
         message:
-          "SMS imetumwa kikamilifu.",
+          failedCount > 0
+            ? "SMS zimetumwa kwa mafanikio kwa baadhi ya wapokeaji."
+            : "SMS zimetumwa kikamilifu.",
 
         balance:
           finalBalance,
 
         used:
-          requiredCredits,
+          requiredCredits - failedCount,
 
         recipients:
           normalizedRecipients.length,
+
+        sent:
+          sentRecipients.length,
+
+        failed:
+          failedRecipients.length,
 
         eventId:
           eventId || null,
@@ -1479,8 +1410,36 @@ if (!response.ok) {
         eventName:
           eventName || null,
 
-        beem:
-          beemData,
+        results:
+          {
+            sent:
+              sentRecipients.map(
+                (item) => ({
+                  name:
+                    item.recipient.name,
+
+                  phone:
+                    item.recipient.dest_addr,
+
+                  message:
+                    item.message,
+                })
+              ),
+
+            failed:
+              failedRecipients.map(
+                (item) => ({
+                  name:
+                    item.recipient.name,
+
+                  phone:
+                    item.recipient.dest_addr,
+
+                  error:
+                    item.error,
+                })
+              ),
+          },
       });
 
     } catch (error) {
@@ -1489,9 +1448,6 @@ if (!response.ok) {
         error
       );
 
-      // Kama credits zilishapunguzwa
-      // lakini request ya Beem imefeli,
-      // jaribu kuzirudisha.
       if (
         reservedBalance !== null
       ) {
