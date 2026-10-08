@@ -1647,6 +1647,26 @@ return (
             )}
           </div>
 
+          <div className="card" style={{ marginTop: '24px' }}>
+            <h3>Jinsi ya Kutumia Bulk SMS</h3>
+
+            <p>
+              Jifunze jinsi ya kutumia huduma ya Bulk SMS ya ForteEvents.
+            </p>
+
+            <img
+              src="/bulk-sms-flyer.png"
+              alt="ForteEvents Bulk SMS"
+              style={{
+                width: '100%',
+                maxWidth: '900px',
+                display: 'block',
+                margin: '16px auto 0',
+                borderRadius: '10px',
+              }}
+            />
+          </div>
+
         </>
       )}
 
