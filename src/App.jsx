@@ -695,6 +695,7 @@ function App() {
   const [smsMessageStatus, setSmsMessageStatus] = useState('')
   const [smsHistory, setSmsHistory] = useState([])
   const [smsBalance, setSmsBalance] = useState(0)
+  const [csvFile, setCsvFile] = useState(null)
 
   // =========================
   // AUTH SESSION
@@ -976,6 +977,85 @@ useEffect(() => {
     await loadEvents()
 
     setPage('events')
+  }
+
+  // =========================
+  // CSV CONTACT IMPORT
+  // =========================
+  const handleCsvUpload = (file) => {
+    if (!file) return
+
+    const reader = new FileReader()
+
+    reader.onload = (event) => {
+      const text = String(event.target?.result || '')
+
+      const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+
+      if (lines.length < 2) {
+        setSmsMessageStatus('CSV haina contacts za kutosha.')
+        return
+      }
+
+      const firstLine = lines[0]
+        .split(',')
+        .map((item) => item.trim().toLowerCase())
+
+      const hasHeader =
+        firstLine.includes('name') &&
+        firstLine.includes('phone')
+
+      const dataLines = hasHeader
+        ? lines.slice(1)
+        : lines
+
+      const contacts = dataLines
+        .map((line) => {
+          const parts = line
+            .split(',')
+            .map((item) => item.trim())
+
+          return {
+            name: parts[0] || '',
+            phone: parts[1] || '',
+          }
+        })
+        .filter((item) => item.phone)
+
+      if (contacts.length === 0) {
+        setSmsMessageStatus(
+          'Hakuna contacts sahihi zilizopatikana kwenye CSV.'
+        )
+        return
+      }
+
+      const recipientText = contacts
+        .map((item) => {
+          if (item.name) {
+            return item.name + ' | ' + item.phone
+          }
+
+          return item.phone
+        })
+        .join('\n')
+
+      setSmsRecipients(recipientText)
+
+      setSmsMessageStatus(
+        'CSV imeingizwa vizuri. Contacts ' +
+        contacts.length +
+        ' zimeongezwa.'
+      )
+    }
+
+    reader.onerror = () => {
+      setSmsMessageStatus('Imeshindikana kusoma CSV.')
+    }
+
+    reader.readAsText(file)
   }
 
   // =========================
@@ -1803,12 +1883,56 @@ return (
                 rows="7"
               />
 
+              <div style={{ marginTop: '12px', marginBottom: '18px' }}>
+                <p style={{ marginBottom: '8px', fontWeight: '600' }}>
+                  Chaguo la 2: Upload CSV
+                </p>
+
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setCsvFile(file)
+                    handleCsvUpload(file)
+                  }}
+                />
+
+                <p style={{ marginTop: '8px', fontSize: '13px' }}>
+                  Format ya CSV: <strong>name,phone</strong>
+                  <br />
+                  Mfano: John,255712345678
+                  <br />
+                  Mary,255713456789
+                </p>
+
+                {csvFile && (
+                  <p className="message">
+                    CSV imechaguliwa: {csvFile.name}
+                  </p>
+                )}
+
+                {csvFile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCsvFile(null)
+                      setSmsRecipients('')
+                      setSmsMessageStatus('')
+                    }}
+                    style={{ marginTop: '8px' }}
+                  >
+                    Clear CSV
+                  </button>
+                )}
+              </div>
+
               <label>
                 Message
               </label>
 
               <textarea
-                placeholder="Mfano: Habari {name}! Karibu kwenye harusi weekend hii..."
+                placeholder="Mfano: Karibu kwenye harusi weekend hii..."
                 value={smsMessage}
                 onChange={(e) =>
                   setSmsMessage(e.target.value)
