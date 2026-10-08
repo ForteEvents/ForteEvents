@@ -10,29 +10,6 @@ function AdminCustomers({ session, onBack }) {
   const [smsHistory, setSmsHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
-
-  useEffect(() => {
-    if (page !== 'dashboard' || !scrollToFlyer) {
-      return
-    }
-
-    const timer = setTimeout(() => {
-      const flyer = document.getElementById('bulk-sms-flyer')
-
-      if (flyer) {
-        flyer.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        })
-      }
-
-      setScrollToFlyer(false)
-    }, 100)
-
-    return () => clearTimeout(timer)
-  }, [page, scrollToFlyer])
-
-
   useEffect(() => {
     const loadCustomers = async () => {
       setLoading(true)
@@ -693,6 +670,26 @@ function App() {
 
   const [page, setPage] = useState('dashboard')
   const [scrollToFlyer, setScrollToFlyer] = useState(false)
+
+  useEffect(() => {
+    if (page !== 'dashboard' || !scrollToFlyer) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      const flyer = document.getElementById('bulk-sms-flyer')
+
+      if (flyer) {
+        flyer.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [page, scrollToFlyer])
+
   const [adminPage, setAdminPage] = useState('dashboard')
 
   // =========================
@@ -1511,7 +1508,10 @@ return (
               ? 'nav-button active'
               : 'nav-button'
           }
-          onClick={() => setPage('dashboard')}
+          onClick={() => {
+            setPage('dashboard')
+            setScrollToFlyer(false)
+          }}
         >
           Dashboard
         </button>
@@ -1551,7 +1551,11 @@ return (
 
         
         <button
-          className="nav-button"
+          className={
+            scrollToFlyer
+              ? 'nav-button active'
+              : 'nav-button'
+          }
           onClick={() => {
             setPage('dashboard')
             setScrollToFlyer(true)
