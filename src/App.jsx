@@ -12,6 +12,28 @@ function AdminCustomers({ session, onBack }) {
   const [historyError, setHistoryError] = useState('')
 
   useEffect(() => {
+    if (page !== 'dashboard' || !scrollToFlyer) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      const flyer = document.getElementById('bulk-sms-flyer')
+
+      if (flyer) {
+        flyer.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
+
+      setScrollToFlyer(false)
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [page, scrollToFlyer])
+
+
+  useEffect(() => {
     const loadCustomers = async () => {
       setLoading(true)
       setErrorMessage('')
@@ -670,6 +692,7 @@ function App() {
   const [profileLoading, setProfileLoading] = useState(false)
 
   const [page, setPage] = useState('dashboard')
+  const [scrollToFlyer, setScrollToFlyer] = useState(false)
   const [adminPage, setAdminPage] = useState('dashboard')
 
   // =========================
@@ -1525,6 +1548,17 @@ return (
         >
           SMS
         </button>
+
+        
+        <button
+          className="nav-button"
+          onClick={() => {
+            setPage('dashboard')
+            setScrollToFlyer(true)
+          }}
+        >
+          How to Use
+        </button>
       </div>
 
       <div className="sidebar-bottom">
@@ -1655,6 +1689,7 @@ return (
             </p>
 
             <img
+              id="bulk-sms-flyer"
               src="/bulk-sms-flyer.png"
               alt="ForteEvents Bulk SMS"
               style={{
