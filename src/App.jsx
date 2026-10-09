@@ -1643,6 +1643,26 @@ return (
               </button>
             </div>
 
+            <div className="card">
+              <h3>Help &amp; Support</h3>
+
+              <p>
+                Unahitaji msaada kuhusu ForteEvents?
+              </p>
+
+              <button
+                className="primary-button"
+                onClick={() => {
+                  document.getElementById('help-support-section')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }}
+              >
+                Open Help &amp; Support
+              </button>
+            </div>
+
           </div>
 
           <div className="card" style={{ marginTop: '24px' }}>
@@ -1704,6 +1724,37 @@ return (
                 borderRadius: '10px',
               }}
             />
+          </div>
+
+          {/* HELP_SUPPORT_WHATSAPP */}
+          <div
+            id="help-support-section"
+            className="card"
+            style={{ marginTop: '24px' }}
+          >
+            <h3>Help &amp; Support</h3>
+
+            <p>
+              Unahitaji msaada kuhusu ForteEvents? Wasiliana nasi kupitia WhatsApp.
+            </p>
+
+            <p>
+              <strong>WhatsApp:</strong> +255 756 458 095
+            </p>
+
+            <a
+              href="https://wa.me/255756458095?text=Habari%20ForteEvents%20Support%2C%20nahitaji%20msaada%20kuhusu%20ForteEvents."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="primary-button"
+              style={{
+                display: 'inline-block',
+                textDecoration: 'none',
+                textAlign: 'center',
+              }}
+            >
+              Chat with Us on WhatsApp
+            </a>
           </div>
 
         </>
