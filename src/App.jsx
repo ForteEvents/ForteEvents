@@ -1726,6 +1726,22 @@ return (
             />
           </div>
 
+<div className="card" style={{ marginTop: '24px' }}>
+            <h3>Payment &amp; Pricing</h3>
+
+            <img
+              src="/payment-pricing-board.png"
+              alt="ForteEvents Payment and SMS Pricing"
+              style={{
+                width: '100%',
+                maxWidth: '900px',
+                display: 'block',
+                margin: '16px auto 0',
+                borderRadius: '10px',
+              }}
+            />
+          </div>
+
           {/* HELP_SUPPORT_WHATSAPP */}
           <div
             id="help-support-section"
