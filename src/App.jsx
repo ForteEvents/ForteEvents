@@ -717,6 +717,13 @@ function App() {
   const [smsBalance, setSmsBalance] = useState(0)
   const [csvFile, setCsvFile] = useState(null)
 
+  // SCHEDULED SMS STATES
+  const [scheduledAt, setScheduledAt] = useState('')
+  const [schedulingSms, setSchedulingSms] = useState(false)
+  const [scheduledSmsStatus, setScheduledSmsStatus] = useState('')
+  const [smsSchedules, setSmsSchedules] = useState([])
+  const [loadingSchedules, setLoadingSchedules] = useState(false)
+
   // =========================
   // AUTH SESSION
   // =========================
@@ -1203,6 +1210,106 @@ useEffect(() => {
   }
 
   // =========================
+
+  // =========================
+  // SCHEDULED SMS FUNCTIONS
+  // =========================
+  const loadSmsSchedules = async () => {
+    if (!session?.access_token) return;
+    setLoadingSchedules(true);
+    try {
+      const r = await fetch(
+        'https://forteevents.onrender.com/api/sms/schedules',
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || d.error || 'Imeshindikana kupata ratiba.');
+      setSmsSchedules(d.schedules || []);
+    } catch (e) {
+      setScheduledSmsStatus(e.message);
+    } finally {
+      setLoadingSchedules(false);
+    }
+  };
+
+  useEffect(() => {
+    if (page === 'sms' && session?.access_token) loadSmsSchedules();
+  }, [page, session]);
+
+  const scheduleSms = async (e) => {
+    e.preventDefault();
+    setScheduledSmsStatus('');
+
+    if (!smsRecipients.trim() || !smsMessage.trim() || !scheduledAt) {
+      setScheduledSmsStatus('Jaza wapokeaji, ujumbe, tarehe na muda.');
+      return;
+    }
+
+    const recipients = smsRecipients.split(/[\n,]+/).map((line) => {
+      const parts = line.split('|');
+      return {
+        name: parts.length > 1 ? parts[0].trim() : '',
+        phone: parts.length > 1 ? parts.slice(1).join('|').trim() : parts[0].trim(),
+      };
+    }).filter((r) => r.phone);
+
+    if (!recipients.length) {
+      setScheduledSmsStatus('Weka angalau namba moja ya simu.');
+      return;
+    }
+    if (new Date(scheduledAt).getTime() <= Date.now()) {
+      setScheduledSmsStatus('Chagua tarehe na muda wa baadaye.');
+      return;
+    }
+
+    setSchedulingSms(true);
+    try {
+      const r = await fetch(
+        'https://forteevents.onrender.com/api/sms/schedule',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            recipients,
+            message: smsMessage.trim(),
+            scheduledAt: new Date(scheduledAt).toISOString(),
+          }),
+        }
+      );
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || d.error || 'Ratiba haijahifadhiwa.');
+      setScheduledSmsStatus('Ratiba imehifadhiwa.');
+      setScheduledAt('');
+      await loadSmsSchedules();
+    } catch (e) {
+      setScheduledSmsStatus(e.message);
+    } finally {
+      setSchedulingSms(false);
+    }
+  };
+
+  const cancelSmsSchedule = async (id) => {
+    if (!window.confirm('Unataka kughairi ratiba hii?')) return;
+    try {
+      const r = await fetch(
+        `https://forteevents.onrender.com/api/sms/schedules/${id}/cancel`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      );
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || d.error || 'Ratiba haijaghairiwa.');
+      setScheduledSmsStatus('Ratiba imeghairiwa.');
+      await loadSmsSchedules();
+    } catch (e) {
+      setScheduledSmsStatus(e.message);
+    }
+  };
+
   // LOGOUT
   // =========================
   const logout = async () => {
@@ -2083,6 +2190,123 @@ return (
                 {smsMessageStatus}
               </p>
             )}
+          </div>
+
+          {/* SCHEDULED SMS */}
+          <div className="card" style={{ marginTop: '20px' }}>
+            <h2>Panga SMS kwa Tarehe na Muda</h2>
+
+            <p>
+              Chagua muda ambao ungependa SMS zako zitumwe.
+              Hakikisha una SMS credits za kutosha wakati wa kutuma.
+            </p>
+
+            <p style={{ fontSize: '13px' }}>
+              Kumbuka: Utumaji wa moja kwa moja utaanza baada ya
+              huduma ya ratiba kuwashwa na kuthibitishwa.
+            </p>
+
+            <form onSubmit={scheduleSms}>
+              <label>Recipients</label>
+
+              <p style={{ fontSize: '13px' }}>
+                Tumia orodha ileile ya majina na namba uliyojaza
+                kwenye fomu ya SMS hapo juu.
+              </p>
+
+              <label>Tarehe na muda wa kutuma</label>
+
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                min={new Date(
+                  Date.now() - new Date().getTimezoneOffset() * 60000
+                ).toISOString().slice(0, 16)}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                required
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  marginBottom: '16px',
+                  padding: '12px',
+                  boxSizing: 'border-box'
+                }}
+              />
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={schedulingSms}
+              >
+                {schedulingSms ? 'Inahifadhi...' : 'Hifadhi Ratiba'}
+              </button>
+            </form>
+
+            {scheduledSmsStatus && (
+              <p className="message" role="status">
+                {scheduledSmsStatus}
+              </p>
+            )}
+
+            <hr style={{ margin: '24px 0' }} />
+
+            <h3>Ratiba Zangu</h3>
+
+            <button
+              type="button"
+              onClick={loadSmsSchedules}
+              disabled={loadingSchedules}
+              style={{ marginBottom: '16px' }}
+            >
+              {loadingSchedules ? 'Inapakia...' : 'Onyesha Ratiba'}
+            </button>
+
+            {loadingSchedules && (
+              <p>Inapakia ratiba zako...</p>
+            )}
+
+            {!loadingSchedules && smsSchedules.length === 0 && (
+              <p>Bado hakuna ratiba zilizohifadhiwa.</p>
+            )}
+
+            {smsSchedules.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  border: '1px solid #d6c18a',
+                  borderRadius: '8px',
+                  padding: '14px',
+                  marginBottom: '12px'
+                }}
+              >
+                <p>
+                  <strong>Tarehe:</strong>{' '}
+                  {new Date(item.scheduled_at).toLocaleString()}
+                </p>
+
+                <p>
+                  <strong>Wapokeaji:</strong>{' '}
+                  {item.total_recipients ?? item.recipients?.length ?? 0}
+                </p>
+
+                <p>
+                  <strong>Ujumbe:</strong> {item.message}
+                </p>
+
+                <p>
+                  <strong>Hali:</strong> {item.status}
+                </p>
+
+                {item.status === 'pending' && (
+                  <button
+                    type="button"
+                    onClick={() => cancelSmsSchedule(item.id)}
+                  >
+                    Ghairi Ratiba
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         </>
       )}

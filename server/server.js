@@ -1,4 +1,5 @@
 import express from "express";
+import { registerScheduledSms } from "./scheduled-sms.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
@@ -187,6 +188,8 @@ async function requireAuth(
 }
 
 // ------------------------------------
+registerScheduledSms({ app, requireAuth, supabaseAdmin });
+
 // ADMIN AUTHENTICATION
 // ------------------------------------
 
@@ -1349,10 +1352,6 @@ console.log(
 
               recipient:
                 item.recipient.dest_addr,
-
-              recipient_name:
-                item.recipient.name ||
-                null,
 
               message:
                 item.message,

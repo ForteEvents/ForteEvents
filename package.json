@@ -4,11 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "server": "node server/server.js"
-  },
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview",
+  "server": "node server/server.js",
+  "scheduled-sms": "node server/scheduled-sms-worker.js"
+},
   "dependencies": {
     "@supabase/supabase-js": "^2.117.1",
     "cors": "^2.8.5",
