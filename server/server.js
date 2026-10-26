@@ -1,3 +1,4 @@
+import { countSmsParts } from "./sms-utils.js";
 import express from "express";
 import { registerScheduledSms } from "./scheduled-sms.js";
 import cors from "cors";
@@ -1002,10 +1003,23 @@ app.post(
     }
 
     const requiredCredits =
-      recipients.length;
+      recipients.reduce((total, recipient) => {
+        let personalizedMessage = message.trim();
+        const recipientName = String(recipient.name || "").trim();
+
+        if (recipientName) {
+          personalizedMessage =
+            `Habari ${recipientName}, ${personalizedMessage}`;
+        }
+
+        return total + countSmsParts(personalizedMessage);
+      }, 0);
 
     let reservedBalance =
       null;
+
+    // Credits za maombi yaliyoanzishwa kwa Beem.
+    let attemptedCredits = 0;
 
     // -------------------------------
     // RESERVE CUSTOMER CREDITS
@@ -1195,6 +1209,8 @@ console.log(
             `Habari ${recipient.name}, ${personalizedMessage}`;
         }
 
+        const smsCount = countSmsParts(personalizedMessage);
+
         const payload = {
           source_addr:
             sender ||
@@ -1243,6 +1259,10 @@ console.log(
           payload.source_addr
         );
 
+        // Ongeza kabla ya ombi: hitilafu ya mtandao
+        // inaweza kuacha hali ya ujumbe bila uhakika.
+        attemptedCredits += smsCount;
+
         const response =
           await fetch(
             "https://apisms.beem.africa/v1/send",
@@ -1284,35 +1304,37 @@ console.log(
         if (response.ok) {
           sentRecipients.push({
             recipient,
-            message:
-              personalizedMessage,
+            message: personalizedMessage,
+            smsCount,
             beemData,
           });
         } else {
           failedRecipients.push({
             recipient,
-            message:
-              personalizedMessage,
-            error:
-              beemData,
+            message: personalizedMessage,
+            smsCount,
+            error: beemData,
           });
         }
       }
 
-      const failedCount =
-        failedRecipients.length;
+      const failedCount = failedRecipients.length;
 
-      if (failedCount > 0) {
+      const refundedCredits = failedRecipients.reduce(
+        (total, item) => total + item.smsCount,
+        0
+      );
+
+      if (refundedCredits > 0) {
         try {
-          const refundedBalance =
-            await refundCredits(
-              req.user.id,
-              failedCount
-            );
+          const refundedBalance = await refundCredits(
+            req.user.id,
+            refundedCredits
+          );
 
           console.log(
             "Refunded failed SMS credits:",
-            failedCount
+            refundedCredits
           );
 
           console.log(
@@ -1320,15 +1342,11 @@ console.log(
             refundedBalance
           );
         } catch (refundError) {
-          console.error(
-            "REFUND FAILED:",
-            refundError
-          );
+          console.error("REFUND FAILED:", refundError);
         }
       }
 
-      const finalBalance =
-        reservedBalance + failedCount;
+      const finalBalance = reservedBalance + refundedCredits;
 
       // -----------------------------
       // SAVE SMS HISTORY TO SUPABASE
@@ -1357,7 +1375,7 @@ console.log(
                 item.message,
 
               sms_count:
-                1,
+                item.smsCount,
 
               status:
                 "sent",
@@ -1395,7 +1413,7 @@ console.log(
           finalBalance,
 
         used:
-          requiredCredits - failedCount,
+          requiredCredits - refundedCredits,
 
         recipients:
           normalizedRecipients.length,
@@ -1450,18 +1468,26 @@ console.log(
         error
       );
 
+      const creditsNotAttempted = Math.max(
+        0,
+        requiredCredits - attemptedCredits
+      );
+
       if (
-        reservedBalance !== null
+        reservedBalance !== null &&
+        creditsNotAttempted > 0
       ) {
         try {
           const refundedBalance =
             await refundCredits(
               req.user.id,
-              requiredCredits
+              creditsNotAttempted
             );
 
           console.log(
-            "Credits refunded after server error:",
+            "Credits refunded for SMS not attempted:",
+            creditsNotAttempted,
+            "Balance:",
             refundedBalance
           );
         } catch (refundError) {

@@ -1,3 +1,4 @@
+import { countSmsParts } from "./sms-utils.js";
 import express from "express";
 
 export function registerScheduledSms({
@@ -240,6 +241,7 @@ export async function processDueSchedules({
 
     let sentCount = 0;
     let failedCount = 0;
+    let failedCredits = 0;
     let errorMessage = null;
     let reserved = false;
     let reservedBalance = null;
@@ -252,6 +254,15 @@ export async function processDueSchedules({
       if (recipients.length === 0) {
         throw new Error("Ratiba haina wapokeaji.");
       }
+
+      const requiredCredits = recipients.reduce((total, recipient) => {
+        const name = String(recipient.name || "").trim();
+        const personalizedMessage = name
+          ? `Habari ${name}, ${String(claimed.message).trim()}`
+          : String(claimed.message).trim();
+
+        return total + countSmsParts(personalizedMessage);
+      }, 0);
 
       // Hifadhi salio la sasa kabla ya kutoa credits.
       let balanceReserved = false;
@@ -270,13 +281,13 @@ export async function processDueSchedules({
 
         const currentBalance = Number(profile.sms_balance || 0);
 
-        if (currentBalance < recipients.length) {
+        if (currentBalance < requiredCredits) {
           throw new Error(
-            `Salio halitoshi. Zinahitajika SMS ${recipients.length}, salio ni ${currentBalance}.`
+            `Salio halitoshi. Zinahitajika SMS ${requiredCredits}, salio ni ${currentBalance}.`
           );
         }
 
-        const newBalance = currentBalance - recipients.length;
+        const newBalance = currentBalance - requiredCredits;
 
         const { data: updatedProfile, error: reserveError } =
           await supabaseAdmin
@@ -315,14 +326,17 @@ export async function processDueSchedules({
         const phone = String(recipient.phone || "").trim();
         const name = String(recipient.name || "").trim();
 
-        if (!phone) {
-          failedCount++;
-          continue;
-        }
-
         const personalizedMessage = name
           ? `Habari ${name}, ${String(claimed.message).trim()}`
           : String(claimed.message).trim();
+
+        const smsCount = countSmsParts(personalizedMessage);
+
+        if (!phone) {
+          failedCount++;
+          failedCredits += smsCount;
+          continue;
+        }
 
         try {
           const response = await fetch(
@@ -356,6 +370,7 @@ export async function processDueSchedules({
 
           if (!response.ok) {
             failedCount++;
+            failedCredits += smsCount;
             errorMessage =
               `Beem ilikataa SMS kwa ${phone}. HTTP ${response.status}.`;
             console.error(
@@ -373,13 +388,15 @@ export async function processDueSchedules({
             event_id: claimed.event_id || null,
             recipient: phone,
             message: personalizedMessage,
-            sms_count: 1,
+            sms_count: smsCount,
             status: "sent",
             error_message: null,
             sent_at: new Date().toISOString(),
           });
         } catch (sendError) {
           failedCount++;
+          // Hali ya ombi inaweza kuwa haijulikani baada ya hitilafu ya mtandao.
+          // Usirejeshe credits hizi moja kwa moja bila uthibitisho wa Beem.
           errorMessage =
             sendError.message || "Hitilafu ya kutuma SMS kupitia Beem.";
 
@@ -401,7 +418,7 @@ export async function processDueSchedules({
       }
 
       // Rudisha credits za SMS zilizoshindwa.
-      if (reserved && failedCount > 0) {
+      if (reserved && failedCredits > 0) {
         let refunded = false;
 
         for (let attempt = 0; attempt < 5; attempt++) {
@@ -422,7 +439,7 @@ export async function processDueSchedules({
             await supabaseAdmin
               .from("profiles")
               .update({
-                sms_balance: currentBalance + failedCount,
+                sms_balance: currentBalance + failedCredits,
                 updated_at: new Date().toISOString(),
               })
               .eq("id", claimed.user_id)
@@ -442,7 +459,7 @@ export async function processDueSchedules({
           console.error(
             "SCHEDULE REFUND NEEDS REVIEW:",
             claimed.id,
-            failedCount
+            failedCredits
           );
         }
       }
@@ -468,25 +485,43 @@ export async function processDueSchedules({
 
       summary.sent += sentCount;
       summary.failed += failedCount;
-    } catch (error) {
+   } catch (error) {
       console.error("SCHEDULE PROCESS ERROR:", claimed.id, error);
 
-      // Ikiwa bado hatujatoa credits, ratiba inaweza kufungwa salama.
-      // Ikiwa tayari tumetoa credits, hatujaribu kutuma tena
-      // moja kwa moja ili kuepuka kutuma SMS mara mbili.
-      await supabaseAdmin
+      const finalErrorMessage =
+        error.message || "Ratiba imeshindwa.";
+
+      // Usirejeshe credits moja kwa moja hapa:
+      // baadhi ya SMS huenda tayari zimetumwa.
+      // Weka idadi halisi ya SMS zilizojulikana.
+      const { error: updateError } = await supabaseAdmin
         .from("scheduled_sms")
         .update({
           status: "failed",
-          failed_count: recipients.length,
-          error_message: error.message || "Ratiba imeshindwa.",
+          sent_count: sentCount,
+          failed_count: Math.max(
+            failedCount,
+            recipients.length - sentCount
+          ),
+          error_message: reserved
+            ? `${finalErrorMessage} Kagua salio na historia ya SMS kabla ya hatua nyingine.`
+            : finalErrorMessage,
           updated_at: new Date().toISOString(),
           completed_at: new Date().toISOString(),
         })
         .eq("id", claimed.id)
         .eq("status", "processing");
 
-      summary.failed += recipients.length;
+      if (updateError) {
+        console.error(
+          "SCHEDULE FAILURE STATUS UPDATE ERROR:",
+          claimed.id,
+          updateError
+        );
+      }
+
+      summary.sent += sentCount;
+      summary.failed += Math.max(0, recipients.length - sentCount);
     }
   }
 
