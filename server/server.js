@@ -1,5 +1,6 @@
 import { countSmsParts } from "./sms-utils.js";
 import express from "express";
+import whatsappWebhook from "./whatsapp-webhook.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -30,6 +31,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use("/api/whatsapp/webhook", whatsappWebhook);
 
 // ------------------------------------
 // BEEM CONFIGURATION
