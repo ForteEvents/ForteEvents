@@ -716,6 +716,15 @@ function App() {
   const [smsHistory, setSmsHistory] = useState([])
   const [smsBalance, setSmsBalance] = useState(0)
   const [csvFile, setCsvFile] = useState(null)
+  // SMS CONTACTS STATES
+  const [smsContacts, setSmsContacts] = useState([]);
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsSaving, setContactsSaving] = useState(false);
+  const [contactsStatus, setContactsStatus] = useState('');
+  const [selectedContactIds, setSelectedContactIds] = useState([]);
+
 
   // SCHEDULED SMS STATES
   const [scheduledAt, setScheduledAt] = useState('')
@@ -1009,6 +1018,99 @@ useEffect(() => {
   // =========================
   // CSV CONTACT IMPORT
   // =========================
+
+  // SMS CONTACTS FUNCTIONS
+  const loadSmsContacts = async () => {
+    if (!session?.access_token) return;
+    setContactsLoading(true);
+    try {
+      const response = await fetch(
+        'https://forteevents.onrender.com/api/sms/contacts',
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || 'Imeshindikana kupata contacts.');
+      setSmsContacts(data.contacts || []);
+    } catch (error) {
+      setContactsStatus(error.message || 'Imeshindikana kupata contacts.');
+    } finally {
+      setContactsLoading(false);
+    }
+  };
+
+  const saveSmsContact = async (e) => {
+    e.preventDefault();
+    setContactsStatus('');
+    if (!contactName.trim() || !contactPhone.trim()) {
+      setContactsStatus('Jaza jina na namba ya simu.');
+      return;
+    }
+    setContactsSaving(true);
+    try {
+      const response = await fetch(
+        'https://forteevents.onrender.com/api/sms/contacts',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            name: contactName.trim(),
+            phone: contactPhone.trim(),
+          }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || 'Imeshindikana kuhifadhi contact.');
+      setContactName('');
+      setContactPhone('');
+      setContactsStatus('Contact imehifadhiwa.');
+      await loadSmsContacts();
+    } catch (error) {
+      setContactsStatus(error.message || 'Imeshindikana kuhifadhi contact.');
+    } finally {
+      setContactsSaving(false);
+    }
+  };
+
+  const deleteSmsContact = async (id) => {
+    if (!window.confirm('Una uhakika unataka kufuta contact hii?')) return;
+    setContactsStatus('');
+    try {
+      const response = await fetch(
+        `https://forteevents.onrender.com/api/sms/contacts/${id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || 'Imeshindikana kufuta contact.');
+      setSmsContacts((previous) => previous.filter((contact) => String(contact.id) !== String(id)));
+      setSelectedContactIds((previous) => previous.filter((contactId) => String(contactId) !== String(id)));
+      setContactsStatus('Contact imefutwa.');
+    } catch (error) {
+      setContactsStatus(error.message || 'Imeshindikana kufuta contact.');
+    }
+  };
+
+  const addSelectedContactsToRecipients = () => {
+    const chosen = smsContacts.filter((contact) =>
+      selectedContactIds.includes(String(contact.id))
+    );
+    if (!chosen.length) {
+      setContactsStatus('Chagua contact angalau mmoja.');
+      return;
+    }
+    const lines = chosen.map((contact) => `${contact.name || ''} | ${contact.phone}`);
+    setSmsRecipients((previous) => {
+      const existing = previous.trim();
+      return existing ? existing + '\n' + lines.join('\n') : lines.join('\n');
+    });
+    setContactsStatus(`${chosen.length} contact zimeongezwa kwa wapokeaji.`);
+  };
+
   const handleCsvUpload = (file) => {
     if (!file) return
 
@@ -1234,6 +1336,7 @@ useEffect(() => {
 
   useEffect(() => {
     if (page === 'sms' && session?.access_token) loadSmsSchedules();
+    if (page === 'sms' && session?.access_token) loadSmsContacts();
   }, [page, session]);
 
   const scheduleSms = async (e) => {
@@ -2118,6 +2221,79 @@ return (
 
               <div style={{ marginTop: '12px', marginBottom: '18px' }}>
                 <p style={{ marginBottom: '8px', fontWeight: '600' }}>
+
+                  {/* SMS CONTACTS UI */}
+                  <div className="card" style={{ marginTop: '16px', marginBottom: '18px' }}>
+                    <h3 style={{ marginTop: 0 }}>Contacts Zangu</h3>
+                    <p style={{ fontSize: '13px' }}>
+                      Hifadhi majina na namba za wateja ili uzitumie tena unapowatumia SMS.
+                    </p>
+                    <form onSubmit={saveSmsContact}>
+                      <label>Jina la contact</label>
+                      <input
+                        type="text"
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        placeholder="Mfano: John"
+                        required
+                      />
+                      <label style={{ display: 'block', marginTop: '10px' }}>Namba ya simu</label>
+                      <input
+                        type="tel"
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        placeholder="Mfano: 255712345678"
+                        required
+                      />
+                      <button type="submit" className="primary-button" disabled={contactsSaving} style={{ marginTop: '10px' }}>
+                        {contactsSaving ? 'Inahifadhi...' : 'Hifadhi Contact'}
+                      </button>
+                    </form>
+
+                    <div style={{ marginTop: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <strong>Contacts zilizohifadhiwa ({smsContacts.length})</strong>
+                        <button type="button" onClick={loadSmsContacts} disabled={contactsLoading}>
+                          {contactsLoading ? 'Inapakia...' : 'Refresh'}
+                        </button>
+                      </div>
+
+                      {contactsLoading && <p>Inapakia contacts...</p>}
+                      {!contactsLoading && smsContacts.length === 0 && (
+                        <p style={{ fontSize: '13px' }}>Bado hujahifadhi contact yoyote.</p>
+                      )}
+
+                      {smsContacts.map((contact) => (
+                        <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #eee', padding: '8px 0' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedContactIds.includes(String(contact.id))}
+                            onChange={(e) => setSelectedContactIds((previous) =>
+                              e.target.checked
+                                ? [...previous, String(contact.id)]
+                                : previous.filter((id) => id !== String(contact.id))
+                            )}
+                          />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: '600' }}>{contact.name || 'Bila jina'}</div>
+                            <div style={{ fontSize: '13px' }}>{contact.phone}</div>
+                          </div>
+                          <button type="button" onClick={() => deleteSmsContact(contact.id)}>
+                            Futa
+                          </button>
+                        </div>
+                      ))}
+
+                      <button type="button" className="primary-button" onClick={addSelectedContactsToRecipients} style={{ marginTop: '12px' }}>
+                        Ongeza waliochaguliwa kwa wapokeaji
+                      </button>
+                    </div>
+
+                    {contactsStatus && (
+                      <p role="status" style={{ marginBottom: 0, marginTop: '10px' }}>{contactsStatus}</p>
+                    )}
+                  </div>
+
                   Chaguo la 2: Upload CSV
                 </p>
 

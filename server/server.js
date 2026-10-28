@@ -456,6 +456,121 @@ app.post(
 );
 
 // ------------------------------------
+// ------------------------------------
+// CUSTOMER SMS CONTACTS
+// ------------------------------------
+app.get(
+  "/api/sms/contacts",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from("sms_contacts")
+        .select("id, name, phone, created_at")
+        .eq("user_id", req.user.id)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      return res.json({ ok: true, contacts: data || [] });
+    } catch (error) {
+      console.error("LOAD SMS CONTACTS ERROR:", error.message);
+      return res.status(500).json({
+        ok: false,
+        message: "Imeshindikana kupakia contacts."
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/sms/contacts",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const input = Array.isArray(req.body.contacts)
+        ? req.body.contacts
+        : [req.body];
+
+      const contacts = input
+        .map((item) => ({
+          user_id: req.user.id,
+          name: String(item.name || "").trim(),
+          phone: String(item.phone || "").trim()
+        }))
+        .filter((item) => item.phone);
+
+      if (!contacts.length) {
+        return res.status(400).json({
+          ok: false,
+          message: "Weka angalau namba moja."
+        });
+      }
+
+      if (contacts.length > 1000) {
+        return res.status(400).json({
+          ok: false,
+          message: "Hifadhi contacts zisizozidi 1000 kwa mara moja."
+        });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from("sms_contacts")
+        .upsert(contacts, {
+          onConflict: "user_id,phone"
+        })
+        .select("id, name, phone, created_at");
+
+      if (error) throw error;
+
+      return res.json({
+        ok: true,
+        message: "Contacts zimehifadhiwa.",
+        contacts: data || []
+      });
+    } catch (error) {
+      console.error("SAVE SMS CONTACTS ERROR:", error.message);
+      return res.status(500).json({
+        ok: false,
+        message: "Imeshindikana kuhifadhi contacts."
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/sms/contacts/:id",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+
+      if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+          ok: false,
+          message: "Contact ID si sahihi."
+        });
+      }
+
+      const { error } = await supabaseAdmin
+        .from("sms_contacts")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", req.user.id);
+
+      if (error) throw error;
+
+      return res.json({ ok: true, message: "Contact imefutwa." });
+    } catch (error) {
+      console.error("DELETE SMS CONTACT ERROR:", error.message);
+      return res.status(500).json({
+        ok: false,
+        message: "Imeshindikana kufuta contact."
+      });
+    }
+  }
+);
+
+// ------------------------------------
 // SMS HISTORY
 // ------------------------------------
 // Kwa sasa history ya zamani inabaki memory.
