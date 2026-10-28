@@ -706,6 +706,18 @@ function App() {
   const [eventsLoading, setEventsLoading] = useState(false)
   const [eventMessage, setEventMessage] = useState('')
 
+  // CONTRIBUTIONS
+  const [contributionEvent, setContributionEvent] = useState(null)
+  const [contributors, setContributors] = useState([])
+  const [contributorsLoading, setContributorsLoading] = useState(false)
+  const [contributorName, setContributorName] = useState('')
+  const [contributorPhone, setContributorPhone] = useState('')
+  const [pledgedAmount, setPledgedAmount] = useState('')
+  const [paidAmount, setPaidAmount] = useState('0')
+  const [contributorNotes, setContributorNotes] = useState('')
+  const [contributionStatus, setContributionStatus] = useState('')
+  const [contributionSaving, setContributionSaving] = useState(false)
+
   // =========================
   // SMS STATES
   // =========================
@@ -926,6 +938,134 @@ function App() {
   }, [session, profile?.role])
 
   // =========================
+// CONTRIBUTIONS FUNCTIONS
+const loadContributors = async (eventId) => {
+  if (!session?.user?.id || !eventId) return
+
+  setContributorsLoading(true)
+  const { data, error } = await supabase
+    .from('event_contributors')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    setContributionStatus('Imeshindikana kupakia wachangiaji: ' + error.message)
+    setContributors([])
+  } else {
+    setContributors(data || [])
+  }
+
+  setContributorsLoading(false)
+}
+
+const openContributions = async (event) => {
+  setContributionEvent(event)
+  setContributors([])
+  setContributionStatus('')
+  setContributorName('')
+  setContributorPhone('')
+  setPledgedAmount('')
+  setPaidAmount('0')
+  setContributorNotes('')
+  setPage('contributions')
+  await loadContributors(event.id)
+}
+
+const saveContributor = async (e) => {
+  e.preventDefault()
+  setContributionStatus('')
+
+  if (!contributionEvent || !contributorName.trim()) {
+    setContributionStatus('Weka jina la mchangiaji.')
+    return
+  }
+
+  const pledged = Number(pledgedAmount || 0)
+  const paid = Number(paidAmount || 0)
+
+  if (
+    !Number.isFinite(pledged) ||
+    !Number.isFinite(paid) ||
+    pledged < 0 ||
+    paid < 0 ||
+    paid > pledged
+  ) {
+    setContributionStatus('Thibitisha kiasi. Malipo hayawezi kuzidi ahadi.')
+    return
+  }
+
+  setContributionSaving(true)
+
+  const { error } = await supabase
+    .from('event_contributors')
+    .insert({
+      event_id: contributionEvent.id,
+      user_id: session.user.id,
+      full_name: contributorName.trim(),
+      phone: contributorPhone.trim() || null,
+      pledged_amount: pledged,
+      paid_amount: paid,
+      notes: contributorNotes.trim() || null,
+    })
+
+  setContributionSaving(false)
+
+  if (error) {
+    setContributionStatus('Imeshindikana kuhifadhi: ' + error.message)
+    return
+  }
+
+  setContributionStatus('Mchangiaji ameongezwa kikamilifu.')
+  setContributorName('')
+  setContributorPhone('')
+  setPledgedAmount('')
+  setPaidAmount('0')
+  setContributorNotes('')
+  await loadContributors(contributionEvent.id)
+}
+
+const recordContributionPayment = async (item) => {
+  const raw = window.prompt(
+    'Ingiza kiasi cha malipo mapya kwa ' + item.full_name + ' (TZS):'
+  )
+
+  if (raw === null || !raw.trim()) return
+
+  const amount = Number(raw)
+  const oldPaid = Number(item.paid_amount || 0)
+  const pledged = Number(item.pledged_amount || 0)
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    window.alert('Weka kiasi sahihi cha malipo.')
+    return
+  }
+
+  if (oldPaid + amount > pledged) {
+    window.alert('Malipo haya yanazidi salio la ahadi.')
+    return
+  }
+
+  const { error } = await supabase
+    .from('event_contributors')
+    .update({
+      paid_amount: oldPaid + amount,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', item.id)
+    .eq('event_id', contributionEvent.id)
+    .eq('user_id', session.user.id)
+
+  if (error) {
+    window.alert('Imeshindikana kurekodi malipo: ' + error.message)
+    return
+  }
+
+  setContributionStatus('Malipo yamehifadhiwa.')
+  await loadContributors(contributionEvent.id)
+}
+
 // LOAD CUSTOMER SMS HISTORY
 // =========================
 const loadSmsHistory = async () => {
@@ -2161,11 +2301,149 @@ return (
                       {event.venue}
                     </p>
                   )}
+
+                  <button
+                    className="primary-button"
+                    onClick={() => openContributions(event)}
+                  >
+                    Michango
+                  </button>
                 </div>
               ))}
 
             </div>
           )}
+        </>
+      )}
+
+      {/* =========================
+          MICHANGO
+      ========================= */}
+      {page === 'contributions' && (
+        <>
+          <div className="page-header">
+            <div>
+              <h1>Michango</h1>
+              <p>{contributionEvent?.event_name || 'Event'}</p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => setPage('events')}
+            >
+              Rudi kwenye Events
+            </button>
+          </div>
+
+          <div className="card">
+            <h2>Ongeza Mchangiaji</h2>
+            <form onSubmit={saveContributor}>
+              <label>Jina kamili *</label>
+              <input
+                value={contributorName}
+                onChange={(e) => setContributorName(e.target.value)}
+                placeholder="Jina la mchangiaji"
+                required
+              />
+
+              <label>Namba ya simu</label>
+              <input
+                value={contributorPhone}
+                onChange={(e) => setContributorPhone(e.target.value)}
+                placeholder="Mfano: 07XXXXXXXX"
+              />
+
+              <label>Ahadi ya mchango (TZS) *</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={pledgedAmount}
+                onChange={(e) => setPledgedAmount(e.target.value)}
+                required
+              />
+
+              <label>Kiasi alicholipa tayari (TZS)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
+                required
+              />
+
+              <label>Maelezo (hiari)</label>
+              <input
+                value={contributorNotes}
+                onChange={(e) => setContributorNotes(e.target.value)}
+                placeholder="Maelezo ya ziada"
+              />
+
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={contributionSaving}
+              >
+                {contributionSaving ? 'Inahifadhi...' : 'Hifadhi Mchangiaji'}
+              </button>
+            </form>
+
+            {contributionStatus && <p>{contributionStatus}</p>}
+          </div>
+
+          <div className="card">
+            <h2>Muhtasari wa Michango</h2>
+            <p>
+              <strong>Ahadi zote:</strong>{' '}
+              TZS {contributors.reduce((sum, item) => sum + Number(item.pledged_amount || 0), 0).toLocaleString()}
+            </p>
+            <p>
+              <strong>Malipo yaliyopokelewa:</strong>{' '}
+              TZS {contributors.reduce((sum, item) => sum + Number(item.paid_amount || 0), 0).toLocaleString()}
+            </p>
+            <p>
+              <strong>Salio linalodaiwa:</strong>{' '}
+              TZS {contributors.reduce((sum, item) => sum + Math.max(0, Number(item.pledged_amount || 0) - Number(item.paid_amount || 0)), 0).toLocaleString()}
+            </p>
+            <p><strong>Idadi ya wachangiaji:</strong> {contributors.length}</p>
+          </div>
+
+          <div className="card">
+            <h2>Orodha ya Wachangiaji</h2>
+            {contributorsLoading ? (
+              <p>Inapakia wachangiaji...</p>
+            ) : contributors.length === 0 ? (
+              <p>Bado hakuna mchangiaji aliyehifadhiwa kwenye event hii.</p>
+            ) : (
+              <div className="events-list">
+                {contributors.map((item) => {
+                  const balance = Math.max(
+                    0,
+                    Number(item.pledged_amount || 0) - Number(item.paid_amount || 0)
+                  )
+
+                  return (
+                    <div className="card" key={item.id}>
+                      <h3>{item.full_name}</h3>
+                      {item.phone && <p><strong>Simu:</strong> {item.phone}</p>}
+                      <p><strong>Ahadi:</strong> TZS {Number(item.pledged_amount || 0).toLocaleString()}</p>
+                      <p><strong>Amelipa:</strong> TZS {Number(item.paid_amount || 0).toLocaleString()}</p>
+                      <p><strong>Salio:</strong> TZS {balance.toLocaleString()}</p>
+                      {item.notes && <p><strong>Maelezo:</strong> {item.notes}</p>}
+                      {balance > 0 && (
+                        <button
+                          className="primary-button"
+                          onClick={() => recordContributionPayment(item)}
+                        >
+                          Rekodi Malipo
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </>
       )}
 
