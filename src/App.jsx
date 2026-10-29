@@ -715,6 +715,7 @@ function App() {
   const [pledgedAmount, setPledgedAmount] = useState('')
   const [paidAmount, setPaidAmount] = useState('0')
   const [contributorNotes, setContributorNotes] = useState('')
+  const [editingContributorId, setEditingContributorId] = useState(null)
   const [contributionStatus, setContributionStatus] = useState('')
   const [contributionSaving, setContributionSaving] = useState(false)
   const [contributionSmsMode, setContributionSmsMode] = useState('all')
@@ -1119,6 +1120,7 @@ const openContributions = async (event) => {
   setPledgedAmount('')
   setPaidAmount('0')
   setContributorNotes('')
+  setEditingContributorId(null)
   setPage('contributions')
   await loadContributors(event.id)
 }
@@ -1148,17 +1150,15 @@ const saveContributor = async (e) => {
 
   setContributionSaving(true)
 
-  const { error } = await supabase
-    .from('event_contributors')
-    .insert({
-      event_id: contributionEvent.id,
-      user_id: session.user.id,
-      full_name: contributorName.trim(),
-      phone: contributorPhone.trim() || null,
-      pledged_amount: pledged,
-      paid_amount: paid,
-      notes: contributorNotes.trim() || null,
-    })
+  if (editingContributorId && pledged < Number(contributors.find((item) => item.id === editingContributorId)?.paid_amount || 0)) {
+    setContributionStatus('Ahadi haiwezi kuwa chini ya kiasi alicholipa tayari.')
+    return
+  }
+  const payload = { full_name: contributorName.trim(), phone: contributorPhone.trim() || null, pledged_amount: pledged, notes: contributorNotes.trim() || null, updated_at: new Date().toISOString() }
+  const query = editingContributorId
+    ? supabase.from('event_contributors').update(payload).eq('id', editingContributorId).eq('event_id', contributionEvent.id).eq('user_id', session.user.id)
+    : supabase.from('event_contributors').insert({ ...payload, event_id: contributionEvent.id, user_id: session.user.id, paid_amount: paid })
+  const { error } = await query
 
   setContributionSaving(false)
 
@@ -1167,12 +1167,29 @@ const saveContributor = async (e) => {
     return
   }
 
-  setContributionStatus('Mchangiaji ameongezwa kikamilifu.')
+  setContributionStatus(editingContributorId ? 'Taarifa za mchangiaji zimesasishwa.' : 'Mchangiaji ameongezwa kikamilifu.')
+  setEditingContributorId(null)
   setContributorName('')
   setContributorPhone('')
   setPledgedAmount('')
   setPaidAmount('0')
   setContributorNotes('')
+  await loadContributors(contributionEvent.id)
+}
+
+const editContributor = (item) => {
+  setEditingContributorId(item.id); setContributorName(item.full_name || ''); setContributorPhone(item.phone || '')
+  setPledgedAmount(String(item.pledged_amount ?? 0)); setPaidAmount(String(item.paid_amount ?? 0)); setContributorNotes(item.notes || '')
+  setContributionStatus('Unahariri mchangiaji. Kiasi alicholipa tayari hakitabadilishwa hapa.')
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const deleteContributor = async (item) => {
+  if (!window.confirm('Una uhakika unataka kumfuta ' + item.full_name + '? Hii itaondoa pia rekodi ya malipo kwenye orodha hii.')) return
+  const { error } = await supabase.from('event_contributors').delete().eq('id', item.id).eq('event_id', contributionEvent.id).eq('user_id', session.user.id)
+  if (error) { setContributionStatus('Imeshindikana kufuta mchangiaji: ' + error.message); return }
+  setContributionStatus('Mchangiaji amefutwa kwenye event hii.')
+  if (editingContributorId === item.id) { setEditingContributorId(null); setContributorName(''); setContributorPhone(''); setPledgedAmount(''); setPaidAmount('0'); setContributorNotes('') }
   await loadContributors(contributionEvent.id)
 }
 
@@ -2514,7 +2531,7 @@ return (
           </div>
 
           <div className="card">
-            <h2>Ongeza Mchangiaji</h2>
+            <h2>{editingContributorId ? 'Hariri Mchangiaji' : 'Ongeza Mchangiaji'}</h2>
             <form onSubmit={saveContributor}>
               <label>Jina kamili *</label>
               <input
@@ -2541,13 +2558,14 @@ return (
                 required
               />
 
-              <label>Kiasi alicholipa tayari (TZS)</label>
+              <label>{editingContributorId ? 'Kiasi alicholipa tayari (TZS) — hakibadilishwi hapa' : 'Kiasi alicholipa tayari (TZS)'}</label>
               <input
                 type="number"
                 min="0"
                 step="1"
                 value={paidAmount}
                 onChange={(e) => setPaidAmount(e.target.value)}
+                disabled={Boolean(editingContributorId)}
                 required
               />
 
@@ -2563,11 +2581,12 @@ return (
                 type="submit"
                 disabled={contributionSaving}
               >
-                {contributionSaving ? 'Inahifadhi...' : 'Hifadhi Mchangiaji'}
+                {contributionSaving ? 'Inahifadhi...' : editingContributorId ? 'Hifadhi Mabadiliko' : 'Hifadhi Mchangiaji'}
               </button>
+              {editingContributorId && <button type="button" className="secondary-button" onClick={() => { setEditingContributorId(null); setContributorName(''); setContributorPhone(''); setPledgedAmount(''); setPaidAmount('0'); setContributorNotes(''); setContributionStatus('Uhariri umeghairiwa.') }} style={{ marginLeft: '8px' }}>Ghairi Uhariri</button>}
             </form>
 
-            {contributionStatus && <p>{contributionStatus}</p>}
+            {contributionStatus && <p role="status">{contributionStatus}</p>}
           </div>
 
           <div className="card">
@@ -2643,21 +2662,18 @@ return (
                   )
 
                   return (
-                    <div className="card" key={item.id}>
-                      <h3>{item.full_name}</h3>
-                      {item.phone && <p><strong>Simu:</strong> {item.phone}</p>}
-                      <p><strong>Ahadi:</strong> TZS {Number(item.pledged_amount || 0).toLocaleString()}</p>
-                      <p><strong>Amelipa:</strong> TZS {Number(item.paid_amount || 0).toLocaleString()}</p>
-                      <p><strong>Salio:</strong> TZS {balance.toLocaleString()}</p>
-                      {item.notes && <p><strong>Maelezo:</strong> {item.notes}</p>}
-                      {balance > 0 && (
-                        <button
-                          className="primary-button"
-                          onClick={() => recordContributionPayment(item)}
-                        >
-                          Rekodi Malipo
-                        </button>
-                      )}
+                    <div className="card" key={item.id} style={{ background: '#fffdf7', color: '#252525', border: '1px solid #d6c18a', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                      <h3 style={{ color: '#5b4510', background: '#f5edda', padding: '8px 10px', borderRadius: '6px' }}>{item.full_name}</h3>
+                      {item.phone && <p style={{ color: '#252525', background: '#fff', padding: '7px 10px', borderRadius: '5px', border: '1px solid #eee' }}><strong>Simu:</strong> {item.phone}</p>}
+                      <p style={{ color: '#252525', background: '#fff', padding: '7px 10px', borderRadius: '5px', border: '1px solid #eee' }}><strong>Ahadi:</strong> TZS {Number(item.pledged_amount || 0).toLocaleString()}</p>
+                      <p style={{ color: '#252525', background: '#fff', padding: '7px 10px', borderRadius: '5px', border: '1px solid #eee' }}><strong>Amelipa:</strong> TZS {Number(item.paid_amount || 0).toLocaleString()}</p>
+                      <p style={{ color: '#252525', background: '#fff', padding: '7px 10px', borderRadius: '5px', border: '1px solid #eee' }}><strong>Salio:</strong> TZS {balance.toLocaleString()}</p>
+                      {item.notes && <p style={{ color: '#252525', background: '#fff', padding: '7px 10px', borderRadius: '5px', border: '1px solid #eee' }}><strong>Maelezo:</strong> {item.notes}</p>}
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {balance > 0 && <button className="primary-button" onClick={() => recordContributionPayment(item)}>Rekodi Malipo</button>}
+                        <button type="button" className="secondary-button" onClick={() => editContributor(item)}>Hariri</button>
+                        <button type="button" className="secondary-button" onClick={() => deleteContributor(item)}>Futa</button>
+                      </div>
                     </div>
                   )
                 })}
