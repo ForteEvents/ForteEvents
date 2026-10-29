@@ -1352,7 +1352,7 @@ useEffect(() => {
         }
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || data.error || 'Imeshindikana kuhifadhi contact.');
+      if (!response.ok) throw new Error([data.message, data.details, data.error].filter(Boolean).join(' — ') || 'Imeshindikana kuhifadhi contact.');
       setContactName('');
       setContactPhone('');
       setContactsStatus('Contact imehifadhiwa.');
