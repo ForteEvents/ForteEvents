@@ -1351,12 +1351,41 @@ useEffect(() => {
           }),
         }
       );
-      const data = await response.json();
-      if (!response.ok) throw new Error([data.message, data.details, data.error].filter(Boolean).join(' — ') || 'Imeshindikana kuhifadhi contact.');
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error('Seva imerudisha majibu yasiyoeleweka. Contact haijathibitishwa kuhifadhiwa; taarifa zako zimeachwa kwenye fomu.');
+      }
+
+      if (!response.ok || data?.ok !== true) {
+        throw new Error(
+          [data?.message, data?.details, data?.error]
+            .filter(Boolean)
+            .join(' — ') || 'Imeshindikana kuhifadhi contact. Taarifa zako zimeachwa kwenye fomu.'
+        );
+      }
+
+      const savedContacts = Array.isArray(data.contacts) ? data.contacts : [];
+      const savedContact = savedContacts.find(
+        (item) => String(item.phone || '').trim() === contactPhone.trim()
+      );
+
+      if (!savedContact) {
+        throw new Error('Seva haijathibitisha kuhifadhi contact. Taarifa zako hazijafutwa; jaribu tena baada ya kukagua muunganisho.');
+      }
+
+      setSmsContacts((previous) => {
+        const withoutDuplicate = previous.filter(
+          (item) => String(item.phone || '').trim() !== String(savedContact.phone || '').trim()
+        );
+        return [...withoutDuplicate, savedContact].sort((a, b) =>
+          String(a.name || '').localeCompare(String(b.name || ''))
+        );
+      });
       setContactName('');
       setContactPhone('');
-      setContactsStatus('Contact imehifadhiwa.');
-      await loadSmsContacts();
+      setContactsStatus('Contact imehifadhiwa vizuri.');
     } catch (error) {
       setContactsStatus(error.message || 'Imeshindikana kuhifadhi contact.');
     } finally {
@@ -2689,7 +2718,7 @@ return (
               />
 
               <div style={{ marginTop: '12px', marginBottom: '18px' }}>
-                <p style={{ marginBottom: '8px', fontWeight: '600' }}>
+                <div style={{ marginBottom: '8px', fontWeight: '600' }}>
 
                   {/* SMS CONTACTS UI */}
                   <div className="card" style={{ marginTop: '16px', marginBottom: '18px' }}>
@@ -2764,7 +2793,7 @@ return (
                   </div>
 
                   Chaguo la 2: Upload CSV
-                </p>
+                </div>
 
                 <input
                   type="file"
