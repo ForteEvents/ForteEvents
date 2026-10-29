@@ -487,6 +487,10 @@ app.post(
   requireAuth,
   async (req, res) => {
     try {
+      console.log("[CONTACTS DIAG] POST route reached", {
+        userId: req.user?.id,
+        bodyKeys: Object.keys(req.body || {}),
+      });
       const input = Array.isArray(req.body.contacts)
         ? req.body.contacts
         : [req.body];
@@ -520,7 +524,20 @@ app.post(
         })
         .select("id, name, phone, created_at");
 
-      if (error) throw error;
+      if (error) {
+        console.error("[CONTACTS DIAG] Supabase rejected save", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        throw error;
+      }
+
+      console.log("[CONTACTS DIAG] Supabase save completed", {
+        returnedRows: data?.length || 0,
+        userId: req.user?.id,
+      });
 
       return res.json({
         ok: true,
