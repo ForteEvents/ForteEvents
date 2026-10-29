@@ -717,6 +717,12 @@ function App() {
   const [contributorNotes, setContributorNotes] = useState('')
   const [contributionStatus, setContributionStatus] = useState('')
   const [contributionSaving, setContributionSaving] = useState(false)
+  const [contributionSmsMode, setContributionSmsMode] = useState('all')
+  const [contributionSmsMessage, setContributionSmsMessage] = useState(
+    'Habari {jina}, tunakukumbusha kuhusu mchango wako wa event.'
+  )
+  const [contributionSmsStatus, setContributionSmsStatus] = useState('')
+  const [contributionSmsSending, setContributionSmsSending] = useState(false)
 
   // =========================
   // SMS STATES
@@ -938,6 +944,150 @@ function App() {
   }, [session, profile?.role])
 
   // =========================
+// CONTRIBUTION SMS
+const sendContributionSms = async () => {
+  setContributionSmsStatus('')
+
+  if (!contributionEvent || !session?.access_token) {
+    setContributionSmsStatus('Tafadhali ingia tena na uchague event.')
+    return
+  }
+
+  const eligible = contributors.filter((item) => {
+    if (!item.phone?.trim()) return false
+    if (contributionSmsMode === 'balance') {
+      return Number(item.pledged_amount || 0) > Number(item.paid_amount || 0)
+    }
+    return true
+  })
+
+  if (eligible.length === 0) {
+    setContributionSmsStatus(
+      contributionSmsMode === 'balance'
+        ? 'Hakuna wenye salio wenye namba za simu.'
+        : 'Hakuna wachangiaji wenye namba za simu.'
+    )
+    return
+  }
+
+  const recipients = eligible.map((item) => {
+    const pledged = Number(item.pledged_amount || 0)
+    const paid = Number(item.paid_amount || 0)
+    const balance = Math.max(0, pledged - paid)
+
+    let message = contributionSmsMessage
+      .replaceAll('{jina}', item.full_name || '')
+      .replaceAll('{ahadi}', pledged.toLocaleString())
+      .replaceAll('{amelipa}', paid.toLocaleString())
+      .replaceAll('{salio}', balance.toLocaleString())
+      .replaceAll('{event}', contributionEvent.event_name || '')
+
+    if (contributionSmsMode === 'personal') {
+      message =
+        'Habari ' + item.full_name +
+        ', event: ' + (contributionEvent.event_name || '') +
+        '. Ahadi yako ni TZS ' + pledged.toLocaleString() +
+        ', umelipa TZS ' + paid.toLocaleString() +
+        ', salio TZS ' + balance.toLocaleString() +
+        '. Asante kwa mchango wako.'
+    }
+
+    return {
+      name: item.full_name,
+      phone: item.phone.trim(),
+      message,
+    }
+  })
+
+  const creditsNeeded = recipients.reduce(
+    (sum, item) => sum + Math.max(1, Math.ceil(item.message.length / 160)),
+    0
+  )
+
+  if (creditsNeeded > Number(smsBalance || 0)) {
+    setContributionSmsStatus(
+      'Salio la SMS halitoshi. Unahitaji angalau ' +
+      creditsNeeded + ' credits; salio lako ni ' + smsBalance + '.'
+    )
+    return
+  }
+
+  const modeLabel = {
+    all: 'wachangiaji wote',
+    balance: 'wenye salio',
+    personal: 'ujumbe binafsi',
+  }[contributionSmsMode]
+
+  if (!window.confirm(
+    'Unakaribia kutuma SMS kwa ' + recipients.length +
+    ' wapokeaji (' + modeLabel + '). Endelea?'
+  )) return
+
+  setContributionSmsSending(true)
+
+  try {
+    const response = await fetch(
+      'https://forteevents.onrender.com/api/sms/send',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          recipients: recipients.map((item) => ({
+            name: item.name,
+            phone: item.phone,
+          })),
+          message: recipients[0].message,
+          personalizedMessages: recipients.map((item) => ({
+            phone: item.phone,
+            message: item.message,
+          })),
+          eventId: contributionEvent.id,
+          eventName: contributionEvent.event_name,
+        }),
+      }
+    )
+
+    const data = await response.json()
+
+    if (!response.ok || !data.ok) {
+      setContributionSmsStatus(
+        data.message || 'SMS hazikutumwa. Hakuna uthibitisho wa mafanikio.'
+      )
+      return
+    }
+
+    setContributionSmsStatus(
+      data.message || 'Ombi la kutuma SMS limepokelewa.'
+    )
+
+    if (typeof data.balance === 'number') {
+      setSmsBalance(data.balance)
+      setProfile((current) =>
+        current ? { ...current, sms_balance: data.balance } : current
+      )
+    } else {
+      const balanceResponse = await fetch(
+        'https://forteevents.onrender.com/api/sms/balance',
+        { headers: { Authorization: 'Bearer ' + session.access_token } }
+      )
+      const balanceData = await balanceResponse.json()
+      if (balanceData.ok) {
+        setSmsBalance(balanceData.balance ?? 0)
+        setProfile((current) =>
+          current ? { ...current, sms_balance: balanceData.balance ?? 0 } : current
+        )
+      }
+    }
+  } catch (error) {
+    setContributionSmsStatus('Tatizo la connection. Jaribu tena.')
+  } finally {
+    setContributionSmsSending(false)
+  }
+}
+
 // CONTRIBUTIONS FUNCTIONS
 const loadContributors = async (eventId) => {
   if (!session?.user?.id || !eventId) return
@@ -2406,6 +2556,47 @@ return (
               TZS {contributors.reduce((sum, item) => sum + Math.max(0, Number(item.pledged_amount || 0) - Number(item.paid_amount || 0)), 0).toLocaleString()}
             </p>
             <p><strong>Idadi ya wachangiaji:</strong> {contributors.length}</p>
+          </div>
+
+          <div className="card">
+            <h2>Tuma SMS za Michango</h2>
+            <p>Salio lako la SMS: {smsBalance} credits</p>
+
+            <label>Chagua aina ya utumaji</label>
+            <select
+              value={contributionSmsMode}
+              onChange={(e) => setContributionSmsMode(e.target.value)}
+            >
+              <option value="all">1. Wachangiaji wote</option>
+              <option value="balance">2. Wenye salio pekee</option>
+              <option value="personal">3. Ujumbe binafsi wenye ahadi, malipo na salio</option>
+            </select>
+
+            {contributionSmsMode !== 'personal' && (
+              <>
+                <label>Ujumbe wa SMS</label>
+                <textarea
+                  value={contributionSmsMessage}
+                  onChange={(e) => setContributionSmsMessage(e.target.value)}
+                  rows={4}
+                  placeholder="Andika ujumbe wa SMS"
+                />
+                <p>
+                  Unaweza kutumia {'{jina}'}, {'{ahadi}'}, {'{amelipa}'},
+                  {'{salio}'} na {'{event}'} ndani ya ujumbe.
+                </p>
+              </>
+            )}
+
+            <button
+              className="primary-button"
+              disabled={contributionSmsSending || contributorsLoading}
+              onClick={sendContributionSms}
+            >
+              {contributionSmsSending ? 'Inatuma...' : 'Tuma SMS za Michango'}
+            </button>
+
+            {contributionSmsStatus && <p>{contributionSmsStatus}</p>}
           </div>
 
           <div className="card">

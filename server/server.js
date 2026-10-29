@@ -1057,6 +1057,7 @@ app.post(
       sender,
       eventId,
       eventName,
+      personalizedMessages,
     } = req.body;
 
     // -------------------------------
@@ -1120,17 +1121,31 @@ app.post(
       });
     }
 
-    const requiredCredits =
-      recipients.reduce((total, recipient) => {
-        let personalizedMessage = message.trim();
-        const recipientName = String(recipient.name || "").trim();
+    const customMessages = Array.isArray(personalizedMessages)
+      ? personalizedMessages
+      : [];
 
-        if (recipientName) {
-          personalizedMessage =
-            `Habari ${recipientName}, ${personalizedMessage}`;
+    const requiredCredits =
+      recipients.reduce((total, recipient, index) => {
+        const custom = customMessages[index];
+        const useCustom =
+          custom &&
+          String(custom.phone || "").trim() === String(recipient.phone || "").trim() &&
+          typeof custom.message === "string" &&
+          custom.message.trim();
+
+        let finalMessage = useCustom
+          ? custom.message.trim()
+          : message.trim();
+
+        if (!useCustom) {
+          const recipientName = String(recipient.name || "").trim();
+          if (recipientName) {
+            finalMessage = `Habari ${recipientName}, ${finalMessage}`;
+          }
         }
 
-        return total + countSmsParts(personalizedMessage);
+        return total + countSmsParts(finalMessage);
       }, 0);
 
     let reservedBalance =
@@ -1287,24 +1302,21 @@ console.log(
 
     try {
       const normalizedRecipients =
-        recipients.map(
-          (recipient, index) => ({
-            recipient_id:
-              String(
-                index + 1
-              ),
+        recipients.map((recipient, index) => {
+          const custom = customMessages[index];
+          const useCustom =
+            custom &&
+            String(custom.phone || "").trim() === String(recipient.phone || "").trim() &&
+            typeof custom.message === "string" &&
+            custom.message.trim();
 
-            dest_addr:
-              String(
-                recipient.phone
-              ).trim(),
-
-            name:
-              String(
-                recipient.name || ''
-              ).trim(),
-          })
-        );
+          return {
+            recipient_id: String(index + 1),
+            dest_addr: String(recipient.phone).trim(),
+            name: String(recipient.name || "").trim(),
+            customMessage: useCustom ? custom.message.trim() : null,
+          };
+        });
 
       const credentials =
         `${BEEM_API_KEY}:${BEEM_SECRET_KEY}`;
@@ -1320,9 +1332,9 @@ console.log(
 
       for (const recipient of normalizedRecipients) {
         let personalizedMessage =
-          message.trim();
+          recipient.customMessage || message.trim();
 
-        if (recipient.name) {
+        if (!recipient.customMessage && recipient.name) {
           personalizedMessage =
             `Habari ${recipient.name}, ${personalizedMessage}`;
         }
