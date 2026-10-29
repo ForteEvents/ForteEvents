@@ -528,10 +528,11 @@ app.post(
         contacts: data || []
       });
     } catch (error) {
-      console.error("SAVE SMS CONTACTS ERROR:", error.message);
+      console.error("SAVE SMS CONTACTS ERROR:", error);
       return res.status(500).json({
         ok: false,
-        message: "Imeshindikana kuhifadhi contacts."
+        message: "Imeshindikana kuhifadhi contacts.",
+        details: error.message || String(error)
       });
     }
   }
