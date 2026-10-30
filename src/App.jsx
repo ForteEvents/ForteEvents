@@ -134,7 +134,7 @@ function AdminCustomers({ session, onBack }) {
       const response = await fetch(
         'https://forteevents.onrender.com/api/admin/credits/add',
         {
-          method: editingContactId ? 'PUT' : 'POST',
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
@@ -1412,7 +1412,8 @@ useEffect(() => {
 
       setSmsContacts((previous) => {
         const withoutDuplicate = previous.filter(
-          (item) => String(item.phone || '').trim() !== String(savedContact.phone || '').trim()
+          (item) => String(item.id) !== String(savedContact.id) &&
+            String(item.phone || '').trim() !== String(savedContact.phone || '').trim()
         );
         return [...withoutDuplicate, savedContact].sort((a, b) =>
           String(a.name || '').localeCompare(String(b.name || ''))
