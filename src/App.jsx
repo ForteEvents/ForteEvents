@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import './App.css'
+import WhatsAppPage from './WhatsAppPage'
 
 function AdminCustomers({ session, onBack }) {
   const [customers, setCustomers] = useState([])
@@ -2095,6 +2096,13 @@ return (
           SMS
         </button>
 
+        <button
+          className={page === 'whatsapp' ? 'nav-button active' : 'nav-button'}
+          onClick={() => setPage('whatsapp')}
+        >
+          WhatsApp
+        </button>
+
         
         <button
           className={
@@ -2686,6 +2694,8 @@ return (
       {/* =========================
           SMS
       ========================= */}
+      {page === 'whatsapp' && <WhatsAppPage session={session} />}
+
       {page === 'sms' && (
         <>
           <div className="page-header">
