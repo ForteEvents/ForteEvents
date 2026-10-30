@@ -32,6 +32,27 @@ app.use(
 
 app.use(express.json());
 
+// Temporary, privacy-safe diagnostics for SMS Contacts only.
+// Runs before requireAuth so 401 responses are visible in Render logs.
+// Never log authorization values, contact names, or phone numbers.
+app.use("/api/sms/contacts", (req, res, next) => {
+  const startedAt = Date.now();
+  console.log("[SMS CONTACTS REQUEST]", {
+    method: req.method,
+    path: req.path,
+    authorizationPresent: Boolean(req.headers.authorization),
+  });
+  res.on("finish", () => {
+    console.log("[SMS CONTACTS RESPONSE]", {
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      durationMs: Date.now() - startedAt,
+    });
+  });
+  next();
+});
+
 app.use("/api/whatsapp/webhook", whatsappWebhook);
 
 // ------------------------------------
