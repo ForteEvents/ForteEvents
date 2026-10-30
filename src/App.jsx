@@ -701,6 +701,7 @@ function App() {
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [venue, setVenue] = useState('')
+  const [editingEventId, setEditingEventId] = useState(null)
 
   const [events, setEvents] = useState([])
   const [eventsLoading, setEventsLoading] = useState(false)
@@ -738,7 +739,8 @@ function App() {
   // SMS CONTACTS STATES
   const [smsContacts, setSmsContacts] = useState([]);
   const [contactName, setContactName] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
+  const [contactPhone, setContactPhone] = useState('')
+  const [editingContactId, setEditingContactId] = useState(null);
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsSaving, setContactsSaving] = useState(false);
   const [contactsStatus, setContactsStatus] = useState('');
@@ -1277,6 +1279,18 @@ useEffect(() => {
 // =========================
   // CREATE EVENT
   // =========================
+  const editEvent = (event) => {
+    setEditingEventId(event.id)
+    setEventName(event.event_name || '')
+    setEventType(event.event_type || '')
+    setEventDescription(event.description || '')
+    setEventDate(event.event_date || '')
+    setEventTime(event.event_time || '')
+    setVenue(event.venue || '')
+    setEventMessage('Badilisha taarifa za event kisha hifadhi.')
+    setPage('create')
+  }
+
   const createEvent = async (e) => {
     e.preventDefault()
     setEventMessage('')
@@ -1288,17 +1302,11 @@ useEffect(() => {
       return
     }
 
-    const { error } = await supabase
-      .from('events')
-      .insert({
-        user_id: session.user.id,
-        event_name: eventName,
-        event_type: eventType,
-        description: eventDescription,
-        event_date: eventDate,
-        event_time: eventTime || null,
-        venue: venue,
-      })
+    const eventPayload = { event_name: eventName.trim(), event_type: eventType, description: eventDescription, event_date: eventDate, event_time: eventTime || null, venue }
+    const query = editingEventId
+      ? supabase.from('events').update(eventPayload).eq('id', editingEventId).eq('user_id', session.user.id)
+      : supabase.from('events').insert({ ...eventPayload, user_id: session.user.id })
+    const { error } = await query
 
     if (error) {
       console.log('Create event error:', error.message)
@@ -1314,6 +1322,7 @@ useEffect(() => {
     setEventDate('')
     setEventTime('')
     setVenue('')
+    setEditingEventId(null)
 
     setEventMessage('Event imehifadhiwa vizuri. 🎉')
 
@@ -1345,6 +1354,13 @@ useEffect(() => {
     }
   };
 
+  const editSmsContact = (contact) => {
+    setEditingContactId(contact.id)
+    setContactName(contact.name || '')
+    setContactPhone(contact.phone || '')
+    setContactsStatus('Badilisha taarifa za contact kisha hifadhi.')
+  }
+
   const saveSmsContact = async (e) => {
     e.preventDefault();
     setContactsStatus('');
@@ -1355,9 +1371,11 @@ useEffect(() => {
     setContactsSaving(true);
     try {
       const response = await fetch(
-        'https://forteevents.onrender.com/api/sms/contacts',
+        editingContactId
+          ? `https://forteevents.onrender.com/api/sms/contacts/${editingContactId}`
+          : 'https://forteevents.onrender.com/api/sms/contacts',
         {
-          method: 'POST',
+          method: editingContactId ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
@@ -1383,9 +1401,9 @@ useEffect(() => {
         );
       }
 
-      const savedContacts = Array.isArray(data.contacts) ? data.contacts : [];
+      const savedContacts = Array.isArray(data.contacts) ? data.contacts : (data.contact ? [data.contact] : []);
       const savedContact = savedContacts.find(
-        (item) => String(item.phone || '').trim() === contactPhone.trim()
+        (item) => editingContactId ? String(item.id) === String(editingContactId) : String(item.phone || '').trim() === contactPhone.trim()
       );
 
       if (!savedContact) {
@@ -1394,7 +1412,8 @@ useEffect(() => {
 
       setSmsContacts((previous) => {
         const withoutDuplicate = previous.filter(
-          (item) => String(item.phone || '').trim() !== String(savedContact.phone || '').trim()
+          (item) => String(item.id) !== String(savedContact.id) &&
+            String(item.phone || '').trim() !== String(savedContact.phone || '').trim()
         );
         return [...withoutDuplicate, savedContact].sort((a, b) =>
           String(a.name || '').localeCompare(String(b.name || ''))
@@ -1402,7 +1421,8 @@ useEffect(() => {
       });
       setContactName('');
       setContactPhone('');
-      setContactsStatus('Contact imehifadhiwa vizuri.');
+      setEditingContactId(null);
+      setContactsStatus(editingContactId ? 'Contact imebadilishwa vizuri.' : 'Contact imehifadhiwa vizuri.');
     } catch (error) {
       setContactsStatus(error.message || 'Imeshindikana kuhifadhi contact.');
     } finally {
@@ -2068,7 +2088,7 @@ return (
               ? 'nav-button active'
               : 'nav-button'
           }
-          onClick={() => setPage('create')}
+          onClick={() => { setEditingEventId(null); setEventName(''); setEventType(''); setEventDescription(''); setEventDate(''); setEventTime(''); setVenue(''); setPage('create') }}
         >
           + Create Event
         </button>
@@ -2329,7 +2349,7 @@ return (
         <>
           <div className="page-header">
             <div>
-              <h1>Create Event</h1>
+              <h1>{editingEventId ? 'Edit Event' : 'Create Event'}</h1>
 
               <p>
                 Tengeneza event yako hapa.
@@ -2398,7 +2418,7 @@ return (
                 type="submit"
                 className="primary-button"
               >
-                Save Event
+                {editingEventId ? 'Update Event' : 'Save Event'}
               </button>
 
             </form>
@@ -2498,6 +2518,7 @@ return (
                     </p>
                   )}
 
+                  <button type="button" className="primary-button" onClick={() => editEvent(event)} style={{ marginRight: '8px' }}>Edit Event</button>
                   <button
                     className="primary-button"
                     onClick={() => openContributions(event)}
@@ -2766,7 +2787,7 @@ return (
                         onClick={(e) => saveSmsContact(e)}
                         style={{ marginTop: '10px' }}
                       >
-                        {contactsSaving ? 'Inahifadhi...' : 'Hifadhi Contact'}
+                        {contactsSaving ? 'Inahifadhi...' : editingContactId ? 'Hifadhi Mabadiliko' : 'Hifadhi Contact'}
                       </button>
                     </div>
 
@@ -2812,7 +2833,8 @@ return (
                                   <td style={{ padding: '10px', color: '#111', fontSize: '14px', fontFamily: 'monospace', whiteSpace: 'nowrap', letterSpacing: '0.2px' }}>
                                     {contact.phone || 'Namba haipo'}
                                   </td>
-                                  <td style={{ padding: '10px' }}>
+                                  <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
+                                    <button type="button" onClick={() => editSmsContact(contact)} style={{ marginRight: '6px' }}>Edit</button>
                                     <button type="button" onClick={() => deleteSmsContact(contact.id)}>
                                       Futa
                                     </button>

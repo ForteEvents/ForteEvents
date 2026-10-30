@@ -576,6 +576,34 @@ app.post(
   }
 );
 
+app.put(
+  "/api/sms/contacts/:id",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const name = String(req.body.name || "").trim();
+      const phone = String(req.body.phone || "").trim();
+      if (!Number.isSafeInteger(id) || id <= 0 || !name || !phone) {
+        return res.status(400).json({ ok: false, message: "Weka contact ID, jina na namba sahihi." });
+      }
+      const { data, error } = await supabaseAdmin
+        .from("sms_contacts")
+        .update({ name, phone })
+        .eq("id", id)
+        .eq("user_id", req.user.id)
+        .select("id, name, phone, created_at")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ ok: false, message: "Contact haijapatikana." });
+      return res.json({ ok: true, message: "Contact imebadilishwa.", contact: data });
+    } catch (error) {
+      console.error("UPDATE SMS CONTACT ERROR:", error.message);
+      return res.status(500).json({ ok: false, message: "Imeshindikana kubadilisha contact." });
+    }
+  }
+);
+
 app.delete(
   "/api/sms/contacts/:id",
   requireAuth,
