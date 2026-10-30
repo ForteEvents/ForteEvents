@@ -34,9 +34,9 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
 
     const normalized = recipients.map((item) => ({
       name: String(item?.name || "").trim(),
-      phone: String(item?.phone || "").replace(/[\\s()+-]/g, ""),
+      phone: String(item?.phone || "").replace(/[\s()+-]/g, ""),
     }));
-    if (normalized.some((item) => !/^\\d{8,15}$/.test(item.phone))) {
+    if (normalized.some((item) => !/^\d{8,15}$/.test(item.phone))) {
       return res.status(400).json({ ok: false, error: "Kuna namba isiyo sahihi. Tumia muundo wa kimataifa bila alama, mfano 255712345678." });
     }
     if (new Set(normalized.map((item) => item.phone)).size !== normalized.length) {
@@ -53,7 +53,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
         console.error("WHATSAPP CREDIT RESERVATION ERROR:", reservation.error.message);
         return res.status(500).json({ ok: false, error: "Imeshindikana kuhifadhi WhatsApp credit. Hakikisha migration ya WhatsApp imeendeshwa." });
       }
-      if (!reservation.data) {
+      if (reservation.data === null || reservation.data === undefined) {
         return res.status(400).json({ ok: false, error: "WhatsApp credits hazitoshi.", sent, failed, results });
       }
 
