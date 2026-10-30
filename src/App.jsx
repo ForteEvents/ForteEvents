@@ -2742,7 +2742,7 @@ return (
                     <p style={{ fontSize: '13px' }}>
                       Hifadhi majina na namba za wateja ili uzitumie tena unapowatumia SMS.
                     </p>
-                    <form onSubmit={saveSmsContact}>
+                    <div>
                       <label>Jina la contact</label>
                       <input
                         type="text"
@@ -2759,10 +2759,16 @@ return (
                         placeholder="Mfano: 255712345678"
                         required
                       />
-                      <button type="submit" className="primary-button" disabled={contactsSaving} style={{ marginTop: '10px' }}>
+                      <button
+                        type="button"
+                        className="primary-button"
+                        disabled={contactsSaving}
+                        onClick={(e) => saveSmsContact(e)}
+                        style={{ marginTop: '10px' }}
+                      >
                         {contactsSaving ? 'Inahifadhi...' : 'Hifadhi Contact'}
                       </button>
-                    </form>
+                    </div>
 
                     <div style={{ marginTop: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
