@@ -82,8 +82,9 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
           sent += 1;
         }
       } catch (error) {
+        status = "pending";
         errorMessage = "Hitilafu ya mtandao; hali ya ujumbe haijathibitishwa. Kagua WhatsApp Manager kabla ya kujaribu tena.";
-        // Network failures may have reached Meta; do not auto-refund to avoid duplicate-credit risk.
+        // Network failures may have reached Meta; retain the reserved credit to avoid duplicate-credit risk.
       }
       if (status === "failed") failed += 1;
       const { error: historyError } = await supabaseAdmin.from("whatsapp_history").insert({
