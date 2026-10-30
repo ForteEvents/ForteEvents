@@ -2783,26 +2783,46 @@ return (
                         <p style={{ fontSize: '13px' }}>Bado hujahifadhi contact yoyote.</p>
                       )}
 
-                      {smsContacts.map((contact) => (
-                        <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #eee', padding: '8px 0' }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedContactIds.includes(String(contact.id))}
-                            onChange={(e) => setSelectedContactIds((previous) =>
-                              e.target.checked
-                                ? [...previous, String(contact.id)]
-                                : previous.filter((id) => id !== String(contact.id))
-                            )}
-                          />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: '600' }}>{contact.name || 'Bila jina'}</div>
-                            <div style={{ fontSize: '13px' }}>{contact.phone}</div>
-                          </div>
-                          <button type="button" onClick={() => deleteSmsContact(contact.id)}>
-                            Futa
-                          </button>
+                      {smsContacts.length > 0 && (
+                        <div style={{ overflowX: 'auto', marginTop: '10px', border: '1px solid #e5e5e5', borderRadius: '8px', background: '#fff' }}>
+                          <table style={{ width: '100%', minWidth: '360px', borderCollapse: 'collapse', color: '#222', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ background: '#f7f4ed' }}>
+                                <th style={{ padding: '10px', width: '42px' }}>Chagua</th>
+                                <th style={{ padding: '10px' }}>Jina</th>
+                                <th style={{ padding: '10px' }}>Namba ya simu</th>
+                                <th style={{ padding: '10px' }}>Kitendo</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {smsContacts.map((contact) => (
+                                <tr key={contact.id} style={{ borderTop: '1px solid #eee' }}>
+                                  <td style={{ padding: '10px' }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedContactIds.includes(String(contact.id))}
+                                      onChange={(e) => setSelectedContactIds((previous) =>
+                                        e.target.checked
+                                          ? [...previous, String(contact.id)]
+                                          : previous.filter((id) => id !== String(contact.id))
+                                      )}
+                                    />
+                                  </td>
+                                  <td style={{ padding: '10px', fontWeight: '600' }}>{contact.name || 'Bila jina'}</td>
+                                  <td style={{ padding: '10px', color: '#111', fontSize: '14px', fontFamily: 'monospace', whiteSpace: 'nowrap', letterSpacing: '0.2px' }}>
+                                    {contact.phone || 'Namba haipo'}
+                                  </td>
+                                  <td style={{ padding: '10px' }}>
+                                    <button type="button" onClick={() => deleteSmsContact(contact.id)}>
+                                      Futa
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                      ))}
+                      )}
 
                       <button type="button" className="primary-button" onClick={addSelectedContactsToRecipients} style={{ marginTop: '12px' }}>
                         Ongeza waliochaguliwa kwa wapokeaji
