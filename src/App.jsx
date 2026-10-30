@@ -2770,7 +2770,6 @@ return (
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder="Mfano: John"
-                        required
                       />
                       <label style={{ display: 'block', marginTop: '10px' }}>Namba ya simu</label>
                       <input
@@ -2778,7 +2777,6 @@ return (
                         value={contactPhone}
                         onChange={(e) => setContactPhone(e.target.value)}
                         placeholder="Mfano: 255712345678"
-                        required
                       />
                       <button
                         type="button"
