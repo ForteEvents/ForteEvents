@@ -1371,9 +1371,11 @@ useEffect(() => {
     setContactsSaving(true);
     try {
       const response = await fetch(
-        'https://forteevents.onrender.com/api/sms/contacts',
+        editingContactId
+          ? `https://forteevents.onrender.com/api/sms/contacts/${editingContactId}`
+          : 'https://forteevents.onrender.com/api/sms/contacts',
         {
-          method: 'POST',
+          method: editingContactId ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
