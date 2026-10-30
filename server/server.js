@@ -1,6 +1,7 @@
 import { countSmsParts } from "./sms-utils.js";
 import express from "express";
 import whatsappWebhook from "./whatsapp-webhook.js";
+import { registerWhatsAppRoutes } from "./whatsapp.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -283,6 +284,8 @@ async function requireAdmin(
     }
   );
 }
+
+registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabaseAdmin });
 
 // ------------------------------------
 // HOME
