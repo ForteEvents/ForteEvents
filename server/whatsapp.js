@@ -47,10 +47,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
     let sent = 0;
     let failed = 0;
     for (const recipient of normalized) {
-      const { data: reserved, error: reserveError } = await supabaseAdmin
-        .from("profiles").update({ whatsapp_balance: supabaseAdmin.rpc ? undefined : undefined })
-        .eq("id", req.user.id).select("id").maybeSingle();
-      // The atomic SQL function prevents concurrent requests from spending the same credit.
+      // Atomic reservation prevents concurrent requests from spending the same credit.
       const reservation = await supabaseAdmin.rpc("reserve_whatsapp_credit", { p_user_id: req.user.id });
       if (reservation.error) {
         console.error("WHATSAPP CREDIT RESERVATION ERROR:", reservation.error.message);
