@@ -909,7 +909,7 @@ app.get(
       } = await supabaseAdmin
         .from("profiles")
         .select(
-          "id, full_name, email, phone, sms_balance, role, created_at"
+          "id, full_name, email, phone, sms_balance, whatsapp_balance, role, created_at"
         )
         .eq(
           "role",
