@@ -1341,7 +1341,7 @@ useEffect(() => {
     setContactsLoading(true);
     try {
       const response = await fetch(
-        editingContactId ? `https://forteevents.onrender.com/api/sms/contacts/${editingContactId}` : 'https://forteevents.onrender.com/api/sms/contacts',
+        'https://forteevents.onrender.com/api/sms/contacts',
         { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
       const data = await response.json();
