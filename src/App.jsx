@@ -1344,18 +1344,25 @@ useEffect(() => {
     setContactsLoading(true);
     try {
       const headers = { Authorization: `Bearer ${session.access_token}` };
-      const [contactsResponse, groupsResponse] = await Promise.all([
-        fetch('https://forteevents.onrender.com/api/sms/contacts', { headers }),
-        fetch('https://forteevents.onrender.com/api/sms/contact-groups', { headers }),
-      ]);
-      const [contactsData, groupsData] = await Promise.all([
-        contactsResponse.json(), groupsResponse.json()
-      ]);
+      const contactsResponse = await fetch('https://forteevents.onrender.com/api/sms/contacts', { headers });
+      const contactsData = await contactsResponse.json();
       if (!contactsResponse.ok) throw new Error(contactsData.message || 'Imeshindikana kupata contacts.');
-      if (!groupsResponse.ok) throw new Error(groupsData.message || 'Imeshindikana kupata makundi.');
-      setSmsContacts(contactsData.contacts || []);
-      setSmsContactGroups(groupsData.groups || []);
-      const names = (groupsData.groups || []).map((group) => group.name);
+      const savedContacts = contactsData.contacts || [];
+      setSmsContacts(savedContacts);
+
+      // Keep existing contacts visible even if the groups migration has not run yet.
+      const groupsResponse = await fetch('https://forteevents.onrender.com/api/sms/contact-groups', { headers });
+      let savedGroups = [];
+      if (groupsResponse.ok) {
+        const groupsData = await groupsResponse.json();
+        savedGroups = groupsData.groups || [];
+      } else {
+        savedGroups = [...new Set(['Contacts Zangu', ...savedContacts.map((contact) => contact.group_name || 'Contacts Zangu')])]
+          .map((name) => ({ name }));
+        setContactsStatus('Contacts zimepakiwa. Endesha migration ya makundi ili makundi matupu yahifadhiwe pia.');
+      }
+      setSmsContactGroups(savedGroups);
+      const names = savedGroups.map((group) => group.name);
       if (names.length && !names.includes(activeSmsContactGroup)) {
         setActiveSmsContactGroup(names.includes('Contacts Zangu') ? 'Contacts Zangu' : names[0]);
         setContactGroupName(names.includes('Contacts Zangu') ? 'Contacts Zangu' : names[0]);
