@@ -480,6 +480,79 @@ app.post(
 // ------------------------------------
 // CUSTOMER SMS CONTACTS
 // ------------------------------------
+// Persistent SMS contact groups (kept even when they contain zero contacts).
+app.get("/api/sms/contact-groups", requireAuth, async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("sms_contact_groups")
+      .select("id, name, created_at")
+      .eq("user_id", req.user.id)
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return res.json({ ok: true, groups: data || [] });
+  } catch (error) {
+    console.error("LOAD SMS CONTACT GROUPS ERROR:", error.message);
+    return res.status(500).json({ ok: false, message: "Imeshindikana kupata makundi. Hakikisha migration ya SMS contact groups imeendeshwa Supabase." });
+  }
+});
+
+app.post("/api/sms/contact-groups", requireAuth, async (req, res) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    if (!name) return res.status(400).json({ ok: false, message: "Andika jina la kundi." });
+    const { error } = await supabaseAdmin
+      .from("sms_contact_groups")
+      .upsert({ user_id: req.user.id, name }, { onConflict: "user_id,name", ignoreDuplicates: true });
+    if (error) throw error;
+    const { data, error: listError } = await supabaseAdmin
+      .from("sms_contact_groups").select("id, name, created_at")
+      .eq("user_id", req.user.id).order("name", { ascending: true });
+    if (listError) throw listError;
+    return res.json({ ok: true, groups: data || [] });
+  } catch (error) {
+    console.error("CREATE SMS CONTACT GROUP ERROR:", error.message);
+    return res.status(500).json({ ok: false, message: "Imeshindikana kuhifadhi kundi. Hakikisha migration ya SMS contact groups imeendeshwa Supabase." });
+  }
+});
+
+app.post("/api/sms/contact-groups/rename", requireAuth, async (req, res) => {
+  try {
+    const oldName = String(req.body.old_name || "").trim();
+    const newName = String(req.body.new_name || "").trim();
+    if (!oldName || !newName) return res.status(400).json({ ok: false, message: "Weka majina yote mawili." });
+    const { data, error } = await supabaseAdmin.rpc("rename_sms_contact_group", {
+      p_user_id: req.user.id, p_old_name: oldName, p_new_name: newName
+    });
+    if (error) throw error;
+    return res.json({ ok: true, updated: Number(data) || 0 });
+  } catch (error) {
+    console.error("RENAME SMS CONTACT GROUP ERROR:", error.message);
+    return res.status(500).json({ ok: false, message: error.message || "Imeshindikana kubadilisha jina la kundi." });
+  }
+});
+
+app.delete("/api/sms/contact-groups", requireAuth, async (req, res) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    if (!name) return res.status(400).json({ ok: false, message: "Jina la kundi halipo." });
+    const { count, error: countError } = await supabaseAdmin
+      .from("sms_contacts").select("id", { count: "exact", head: true })
+      .eq("user_id", req.user.id).eq("group_name", name);
+    if (countError) throw countError;
+    if (count > 0) return res.status(409).json({ ok: false, message: "Kundi lina contacts. Contacts hazijafutwa." });
+    const { error } = await supabaseAdmin.from("sms_contact_groups")
+      .delete().eq("user_id", req.user.id).eq("name", name);
+    if (error) throw error;
+    const { data, error: listError } = await supabaseAdmin.from("sms_contact_groups")
+      .select("id, name, created_at").eq("user_id", req.user.id).order("name", { ascending: true });
+    if (listError) throw listError;
+    return res.json({ ok: true, groups: data || [] });
+  } catch (error) {
+    console.error("DELETE SMS CONTACT GROUP ERROR:", error.message);
+    return res.status(500).json({ ok: false, message: "Imeshindikana kufuta kundi." });
+  }
+});
+
 app.get(
   "/api/sms/contacts",
   requireAuth,
