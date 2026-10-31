@@ -577,6 +577,49 @@ app.post(
   }
 );
 
+app.post(
+  "/api/sms/contacts/rename-group",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const oldName = String(req.body.old_name || "").trim();
+      const newName = String(req.body.new_name || "").trim();
+
+      if (!oldName || !newName) {
+        return res.status(400).json({
+          ok: false,
+          message: "Weka jina la sasa na jina jipya la kundi."
+        });
+      }
+
+      if (oldName === newName) {
+        return res.json({ ok: true, updated: 0 });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from("sms_contacts")
+        .update({ group_name: newName })
+        .eq("user_id", req.user.id)
+        .eq("group_name", oldName)
+        .select("id");
+
+      if (error) throw error;
+
+      return res.json({
+        ok: true,
+        updated: data?.length || 0,
+        message: "Jina la kundi limebadilishwa."
+      });
+    } catch (error) {
+      console.error("RENAME SMS CONTACT GROUP ERROR:", error.message);
+      return res.status(500).json({
+        ok: false,
+        message: "Imeshindikana kubadilisha jina. Hakikisha kundi lenye jina hilo halina contact zinazofanana."
+      });
+    }
+  }
+);
+
 app.put(
   "/api/sms/contacts/:id",
   requireAuth,
