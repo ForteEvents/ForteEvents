@@ -740,6 +740,8 @@ function App() {
   const [smsContacts, setSmsContacts] = useState([]);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('')
+  const [contactGroupName, setContactGroupName] = useState('Contacts Zangu');
+  const [activeSmsContactGroup, setActiveSmsContactGroup] = useState('Contacts Zangu');
   const [editingContactId, setEditingContactId] = useState(null);
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsSaving, setContactsSaving] = useState(false);
@@ -1358,6 +1360,8 @@ useEffect(() => {
     setEditingContactId(contact.id)
     setContactName(contact.name || '')
     setContactPhone(contact.phone || '')
+    setContactGroupName(contact.group_name || 'Contacts Zangu')
+    setActiveSmsContactGroup(contact.group_name || 'Contacts Zangu')
     setContactsStatus('Badilisha taarifa za contact kisha hifadhi.')
   }
 
@@ -1383,6 +1387,7 @@ useEffect(() => {
           body: JSON.stringify({
             name: contactName.trim(),
             phone: contactPhone.trim(),
+            group_name: (contactGroupName || activeSmsContactGroup || 'Contacts Zangu').trim(),
           }),
         }
       );
@@ -1419,6 +1424,9 @@ useEffect(() => {
           String(a.name || '').localeCompare(String(b.name || ''))
         );
       });
+      const savedGroupName = savedContact.group_name || contactGroupName || 'Contacts Zangu';
+      setActiveSmsContactGroup(savedGroupName);
+      setContactGroupName(savedGroupName);
       setContactName('');
       setContactPhone('');
       setEditingContactId(null);
@@ -1453,6 +1461,7 @@ useEffect(() => {
 
   const addSelectedContactsToRecipients = () => {
     const chosen = smsContacts.filter((contact) =>
+      (contact.group_name || 'Contacts Zangu') === activeSmsContactGroup &&
       selectedContactIds.includes(String(contact.id))
     );
     if (!chosen.length) {
