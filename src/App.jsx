@@ -738,6 +738,7 @@ function App() {
   const [csvFile, setCsvFile] = useState(null)
   // SMS CONTACTS STATES
   const [smsContacts, setSmsContacts] = useState([]);
+   const [smsContactGroups, setSmsContactGroups] = useState([]);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('')
   const [contactGroupName, setContactGroupName] = useState('Contacts Zangu');
@@ -1342,17 +1343,61 @@ useEffect(() => {
     if (!session?.access_token) return;
     setContactsLoading(true);
     try {
-      const response = await fetch(
-        'https://forteevents.onrender.com/api/sms/contacts',
-        { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || data.error || 'Imeshindikana kupata contacts.');
-      setSmsContacts(data.contacts || []);
+      const headers = { Authorization: `Bearer ${session.access_token}` };
+      const [contactsResponse, groupsResponse] = await Promise.all([
+        fetch('https://forteevents.onrender.com/api/sms/contacts', { headers }),
+        fetch('https://forteevents.onrender.com/api/sms/contact-groups', { headers }),
+      ]);
+      const [contactsData, groupsData] = await Promise.all([
+        contactsResponse.json(), groupsResponse.json()
+      ]);
+      if (!contactsResponse.ok) throw new Error(contactsData.message || 'Imeshindikana kupata contacts.');
+      if (!groupsResponse.ok) throw new Error(groupsData.message || 'Imeshindikana kupata makundi.');
+      setSmsContacts(contactsData.contacts || []);
+      setSmsContactGroups(groupsData.groups || []);
+      const names = (groupsData.groups || []).map((group) => group.name);
+      if (names.length && !names.includes(activeSmsContactGroup)) {
+        setActiveSmsContactGroup(names.includes('Contacts Zangu') ? 'Contacts Zangu' : names[0]);
+        setContactGroupName(names.includes('Contacts Zangu') ? 'Contacts Zangu' : names[0]);
+      }
     } catch (error) {
-      setContactsStatus(error.message || 'Imeshindikana kupata contacts.');
+      setContactsStatus(error.message || 'Imeshindikana kupakia contacts na makundi.');
     } finally {
       setContactsLoading(false);
+    }
+  };
+
+  const createSmsContactGroup = async () => {
+    const name = contactGroupName.trim();
+    if (!name) {
+      setContactsStatus('Andika jina la kundi kwanza.');
+      return;
+    }
+    setContactsSaving(true);
+    setContactsStatus('');
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/sms/contact-groups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Imeshindikana kuhifadhi kundi.');
+      setSmsContactGroups(data.groups || []);
+      setActiveSmsContactGroup(name);
+      setContactGroupName(name);
+      setSelectedContactIds([]);
+      setEditingContactId(null);
+      setContactName('');
+      setContactPhone('');
+      setContactsStatus('Kundi jipya limehifadhiwa. Sasa unaweza kuongeza contacts.');
+    } catch (error) {
+      setContactsStatus(error.message || 'Imeshindikana kuhifadhi kundi.');
+    } finally {
+      setContactsSaving(false);
     }
   };
 
@@ -1360,52 +1405,64 @@ useEffect(() => {
     const oldName = activeSmsContactGroup || 'Contacts Zangu';
     const newName = window.prompt('Andika jina jipya la kundi:', oldName);
     if (newName === null) return;
-
     const trimmedName = newName.trim();
-    if (!trimmedName) {
-      setContactsStatus('Jina la kundi haliwezi kuwa tupu.');
-      return;
-    }
-    if (trimmedName === oldName) {
-      setContactsStatus('Jina la kundi halijabadilika.');
-      return;
-    }
-
+    if (!trimmedName || trimmedName === oldName) return;
     setContactsSaving(true);
     setContactsStatus('');
     try {
-      const response = await fetch(
-        'https://forteevents.onrender.com/api/sms/contacts/rename-group',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ old_name: oldName, new_name: trimmedName }),
-        }
-      );
+      const response = await fetch('https://forteevents.onrender.com/api/sms/contact-groups/rename', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ old_name: oldName, new_name: trimmedName }),
+      });
       const data = await response.json();
-      if (!response.ok || !data.ok) {
-        throw new Error(data.message || 'Imeshindikana kubadilisha jina la kundi.');
-      }
-
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Imeshindikana kubadilisha jina.');
       setSmsContacts((previous) => previous.map((contact) =>
         (contact.group_name || 'Contacts Zangu') === oldName
-          ? { ...contact, group_name: trimmedName }
-          : contact
+          ? { ...contact, group_name: trimmedName } : contact
       ));
       setActiveSmsContactGroup(trimmedName);
       setContactGroupName(trimmedName);
-      setSelectedContactIds([]);
-      setEditingContactId(null);
-      setContactsStatus(
-        data.updated > 0
-          ? `Jina limebadilishwa. Contacts ${data.updated} zimebaki kwenye kundi hili.`
-          : 'Jina limebadilishwa kwa sasa. Kundi litaonekana tena baada ya kuhifadhi contact ya kwanza.'
-      );
+      await loadSmsContacts();
+      setContactsStatus('Jina limebadilishwa. Contacts zote zimebaki kwenye kundi hilo.');
     } catch (error) {
       setContactsStatus(error.message || 'Imeshindikana kubadilisha jina la kundi.');
+    } finally {
+      setContactsSaving(false);
+    }
+  };
+
+  const deleteSmsContactGroup = async () => {
+    const name = activeSmsContactGroup;
+    const count = smsContacts.filter((contact) => (contact.group_name || 'Contacts Zangu') === name).length;
+    if (count > 0) {
+      setContactsStatus('Kundi lina contacts. Hamisha au futa contacts zake kwanza; mfumo hautafuta contacts zako kwa bahati mbaya.');
+      return;
+    }
+    if (!window.confirm(`Una uhakika unataka kufuta kundi "${name}"?`)) return;
+    setContactsSaving(true);
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/sms/contact-groups', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Imeshindikana kufuta kundi.');
+      setSmsContactGroups(data.groups || []);
+      const nextName = (data.groups || []).some((group) => group.name === 'Contacts Zangu')
+        ? 'Contacts Zangu' : (data.groups || [])[0]?.name || 'Contacts Zangu';
+      setActiveSmsContactGroup(nextName);
+      setContactGroupName(nextName);
+      setContactsStatus('Kundi limefutwa. Contacts hazijaguswa.');
+    } catch (error) {
+      setContactsStatus(error.message || 'Imeshindikana kufuta kundi.');
     } finally {
       setContactsSaving(false);
     }
@@ -2846,44 +2903,34 @@ return (
                         }}
                         style={{ width: '100%', marginBottom: '10px' }}
                       >
-                        {[...new Set(['Contacts Zangu', ...smsContacts.map((contact) => contact.group_name || 'Contacts Zangu')])].map((groupName) => (
-                          <option key={groupName} value={groupName}>{groupName}</option>
+                        {smsContactGroups.map((group) => (
+                          <option key={group.id || group.name} value={group.name}>
+                            {group.name} ({smsContacts.filter((contact) => (contact.group_name || 'Contacts Zangu') === group.name).length})
+                          </option>
                         ))}
                       </select>
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={renameSmsContactGroup}
-                        disabled={contactsSaving}
-                        style={{ marginBottom: '12px' }}
-                      >
-                        Hariri jina la kundi
-                      </button>
-                      <label>Kundi jipya (andika jina hapa ukitaka kuanzisha kundi)</label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                        <button type="button" className="secondary-button" onClick={renameSmsContactGroup} disabled={contactsSaving}>
+                          Hariri jina
+                        </button>
+                        <button type="button" className="secondary-button" onClick={deleteSmsContactGroup} disabled={contactsSaving}>
+                          Futa kundi tupu
+                        </button>
+                      </div>
+                      <label>Jina la kundi jipya</label>
                       <input
                         type="text"
                         value={contactGroupName}
                         onChange={(e) => setContactGroupName(e.target.value)}
-                        placeholder="Mfano: Harusi, Kanisa, Wateja"
+                        placeholder="Mfano: Send Off Kadi, Wateja wa Harusi"
                       />
                       <button
                         type="button"
-                        onClick={() => {
-                          const nextGroup = contactGroupName.trim();
-                          if (!nextGroup) {
-                            setContactsStatus('Andika jina la kundi jipya kwanza.');
-                            return;
-                          }
-                          setActiveSmsContactGroup(nextGroup);
-                          setSelectedContactIds([]);
-                          setEditingContactId(null);
-                          setContactName('');
-                          setContactPhone('');
-                          setContactsStatus('Kundi limechaguliwa. Litahifadhiwa pamoja na contact ya kwanza utakayoongeza.');
-                        }}
+                        onClick={createSmsContactGroup}
+                        disabled={contactsSaving}
                         style={{ marginTop: '6px', marginBottom: '12px' }}
                       >
-                        Tumia kundi hili
+                        {contactsSaving ? 'Inahifadhi...' : 'Hifadhi / Fungua kundi'}
                       </button>
                       <label>Jina la contact</label>
                       <input
