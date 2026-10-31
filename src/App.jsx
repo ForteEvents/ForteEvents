@@ -1407,8 +1407,12 @@ useEffect(() => {
       }
 
       const savedContacts = Array.isArray(data.contacts) ? data.contacts : (data.contact ? [data.contact] : []);
+      const savedGroupName = (contactGroupName || activeSmsContactGroup || 'Contacts Zangu').trim();
       const savedContact = savedContacts.find(
-        (item) => editingContactId ? String(item.id) === String(editingContactId) : String(item.phone || '').trim() === contactPhone.trim()
+        (item) => editingContactId
+          ? String(item.id) === String(editingContactId)
+          : String(item.phone || '').trim() === contactPhone.trim() &&
+            (item.group_name || 'Contacts Zangu') === savedGroupName
       );
 
       if (!savedContact) {
@@ -1418,7 +1422,8 @@ useEffect(() => {
       setSmsContacts((previous) => {
         const withoutDuplicate = previous.filter(
           (item) => String(item.id) !== String(savedContact.id) &&
-            String(item.phone || '').trim() !== String(savedContact.phone || '').trim()
+            !(String(item.phone || '').trim() === String(savedContact.phone || '').trim() &&
+              (item.group_name || 'Contacts Zangu') === (savedContact.group_name || 'Contacts Zangu'))
         );
         return [...withoutDuplicate, savedContact].sort((a, b) =>
           String(a.name || '').localeCompare(String(b.name || ''))
