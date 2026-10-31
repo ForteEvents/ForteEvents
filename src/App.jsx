@@ -1548,9 +1548,9 @@ useEffect(() => {
           String(a.name || '').localeCompare(String(b.name || ''))
         );
       });
-      const savedGroupName = savedContact.group_name || contactGroupName || 'Contacts Zangu';
-      setActiveSmsContactGroup(savedGroupName);
-      setContactGroupName(savedGroupName);
+      const finalSavedGroupName = savedContact.group_name || contactGroupName || 'Contacts Zangu';
+      setActiveSmsContactGroup(finalSavedGroupName);
+      setContactGroupName(finalSavedGroupName);
       setContactName('');
       setContactPhone('');
       setEditingContactId(null);
