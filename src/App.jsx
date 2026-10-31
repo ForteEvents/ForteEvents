@@ -2773,6 +2773,49 @@ return (
                       Hifadhi majina na namba za wateja ili uzitumie tena unapowatumia SMS.
                     </p>
                     <div>
+                      <label>Kundi la contacts</label>
+                      <select
+                        value={activeSmsContactGroup}
+                        onChange={(e) => {
+                          setActiveSmsContactGroup(e.target.value);
+                          setContactGroupName(e.target.value);
+                          setSelectedContactIds([]);
+                          setEditingContactId(null);
+                          setContactName('');
+                          setContactPhone('');
+                        }}
+                        style={{ width: '100%', marginBottom: '10px' }}
+                      >
+                        {[...new Set(['Contacts Zangu', ...smsContacts.map((contact) => contact.group_name || 'Contacts Zangu')])].map((groupName) => (
+                          <option key={groupName} value={groupName}>{groupName}</option>
+                        ))}
+                      </select>
+                      <label>Kundi jipya (andika jina hapa ukitaka kuanzisha kundi)</label>
+                      <input
+                        type="text"
+                        value={contactGroupName}
+                        onChange={(e) => setContactGroupName(e.target.value)}
+                        placeholder="Mfano: Harusi, Kanisa, Wateja"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextGroup = contactGroupName.trim();
+                          if (!nextGroup) {
+                            setContactsStatus('Andika jina la kundi jipya kwanza.');
+                            return;
+                          }
+                          setActiveSmsContactGroup(nextGroup);
+                          setSelectedContactIds([]);
+                          setEditingContactId(null);
+                          setContactName('');
+                          setContactPhone('');
+                          setContactsStatus('Kundi limechaguliwa. Litahifadhiwa pamoja na contact ya kwanza utakayoongeza.');
+                        }}
+                        style={{ marginTop: '6px', marginBottom: '12px' }}
+                      >
+                        Tumia kundi hili
+                      </button>
                       <label>Jina la contact</label>
                       <input
                         type="text"
@@ -2800,18 +2843,18 @@ return (
 
                     <div style={{ marginTop: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <strong>Contacts zilizohifadhiwa ({smsContacts.length})</strong>
+                        <strong>{activeSmsContactGroup} ({smsContacts.filter((contact) => (contact.group_name || 'Contacts Zangu') === activeSmsContactGroup).length})</strong>
                         <button type="button" onClick={loadSmsContacts} disabled={contactsLoading}>
                           {contactsLoading ? 'Inapakia...' : 'Refresh'}
                         </button>
                       </div>
 
                       {contactsLoading && <p>Inapakia contacts...</p>}
-                      {!contactsLoading && smsContacts.length === 0 && (
-                        <p style={{ fontSize: '13px' }}>Bado hujahifadhi contact yoyote.</p>
+                      {!contactsLoading && smsContacts.filter((contact) => (contact.group_name || 'Contacts Zangu') === activeSmsContactGroup).length === 0 && (
+                        <p style={{ fontSize: '13px' }}>Kundi hili bado halina contacts. Unaweza kuongeza contact ya kwanza hapo juu.</p>
                       )}
 
-                      {smsContacts.length > 0 && (
+                      {smsContacts.filter((contact) => (contact.group_name || 'Contacts Zangu') === activeSmsContactGroup).length > 0 && (
                         <div style={{ overflowX: 'auto', marginTop: '10px', border: '1px solid #e5e5e5', borderRadius: '8px', background: '#fff' }}>
                           <table style={{ width: '100%', minWidth: '360px', borderCollapse: 'collapse', color: '#222', textAlign: 'left' }}>
                             <thead>
@@ -2823,7 +2866,7 @@ return (
                               </tr>
                             </thead>
                             <tbody>
-                              {smsContacts.map((contact) => (
+                              {smsContacts.filter((contact) => (contact.group_name || 'Contacts Zangu') === activeSmsContactGroup).map((contact) => (
                                 <tr key={contact.id} style={{ borderTop: '1px solid #eee' }}>
                                   <td style={{ padding: '10px' }}>
                                     <input
