@@ -487,7 +487,7 @@ app.get(
     try {
       const { data, error } = await supabaseAdmin
         .from("sms_contacts")
-        .select("id, name, phone, created_at")
+        .select("id, name, phone, group_name, created_at")
         .eq("user_id", req.user.id)
         .order("name", { ascending: true });
 
@@ -520,7 +520,8 @@ app.post(
         .map((item) => ({
           user_id: req.user.id,
           name: String(item.name || "").trim(),
-          phone: String(item.phone || "").trim()
+          phone: String(item.phone || "").trim(),
+          group_name: String(item.group_name || "Contacts Zangu").trim() || "Contacts Zangu"
         }))
         .filter((item) => item.phone);
 
@@ -543,7 +544,7 @@ app.post(
         .upsert(contacts, {
           onConflict: "user_id,phone"
         })
-        .select("id, name, phone, created_at");
+        .select("id, name, phone, group_name, created_at");
 
       if (error) {
         console.error("[CONTACTS DIAG] Supabase rejected save", {
@@ -584,15 +585,16 @@ app.put(
       const id = Number(req.params.id);
       const name = String(req.body.name || "").trim();
       const phone = String(req.body.phone || "").trim();
+      const group_name = String(req.body.group_name || "Contacts Zangu").trim() || "Contacts Zangu";
       if (!Number.isSafeInteger(id) || id <= 0 || !name || !phone) {
         return res.status(400).json({ ok: false, message: "Weka contact ID, jina na namba sahihi." });
       }
       const { data, error } = await supabaseAdmin
         .from("sms_contacts")
-        .update({ name, phone })
+        .update({ name, phone, group_name })
         .eq("id", id)
         .eq("user_id", req.user.id)
-        .select("id, name, phone, created_at")
+        .select("id, name, phone, group_name, created_at")
         .maybeSingle();
       if (error) throw error;
       if (!data) return res.status(404).json({ ok: false, message: "Contact haijapatikana." });
