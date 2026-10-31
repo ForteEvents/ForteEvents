@@ -1356,6 +1356,61 @@ useEffect(() => {
     }
   };
 
+  const renameSmsContactGroup = async () => {
+    const oldName = activeSmsContactGroup || 'Contacts Zangu';
+    const newName = window.prompt('Andika jina jipya la kundi:', oldName);
+    if (newName === null) return;
+
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      setContactsStatus('Jina la kundi haliwezi kuwa tupu.');
+      return;
+    }
+    if (trimmedName === oldName) {
+      setContactsStatus('Jina la kundi halijabadilika.');
+      return;
+    }
+
+    setContactsSaving(true);
+    setContactsStatus('');
+    try {
+      const response = await fetch(
+        'https://forteevents.onrender.com/api/sms/contacts/rename-group',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ old_name: oldName, new_name: trimmedName }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || 'Imeshindikana kubadilisha jina la kundi.');
+      }
+
+      setSmsContacts((previous) => previous.map((contact) =>
+        (contact.group_name || 'Contacts Zangu') === oldName
+          ? { ...contact, group_name: trimmedName }
+          : contact
+      ));
+      setActiveSmsContactGroup(trimmedName);
+      setContactGroupName(trimmedName);
+      setSelectedContactIds([]);
+      setEditingContactId(null);
+      setContactsStatus(
+        data.updated > 0
+          ? `Jina limebadilishwa. Contacts ${data.updated} zimebaki kwenye kundi hili.`
+          : 'Jina limebadilishwa kwa sasa. Kundi litaonekana tena baada ya kuhifadhi contact ya kwanza.'
+      );
+    } catch (error) {
+      setContactsStatus(error.message || 'Imeshindikana kubadilisha jina la kundi.');
+    } finally {
+      setContactsSaving(false);
+    }
+  };
+
   const editSmsContact = (contact) => {
     setEditingContactId(contact.id)
     setContactName(contact.name || '')
@@ -2795,6 +2850,15 @@ return (
                           <option key={groupName} value={groupName}>{groupName}</option>
                         ))}
                       </select>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={renameSmsContactGroup}
+                        disabled={contactsSaving}
+                        style={{ marginBottom: '12px' }}
+                      >
+                        Hariri jina la kundi
+                      </button>
                       <label>Kundi jipya (andika jina hapa ukitaka kuanzisha kundi)</label>
                       <input
                         type="text"
