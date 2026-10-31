@@ -542,7 +542,7 @@ app.post(
       const { data, error } = await supabaseAdmin
         .from("sms_contacts")
         .upsert(contacts, {
-          onConflict: "user_id,phone"
+          onConflict: "user_id,phone,group_name"
         })
         .select("id, name, phone, group_name, created_at");
 
