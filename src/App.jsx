@@ -674,6 +674,8 @@ function App() {
   // E-CARD STATES
   const [eCards, setECards] = useState([])
   const [eCardsLoading, setECardsLoading] = useState(false)
+  const [eCardWalletBalance, setECardWalletBalance] = useState(0)
+  const [eCardWalletLoading, setECardWalletLoading] = useState(false)
   const [eCardSaving, setECardSaving] = useState(false)
   const [eCardMessage, setECardMessage] = useState('')
   const [editingECardId, setEditingECardId] = useState(null)
@@ -690,7 +692,7 @@ function App() {
   const scanVideoRef = useRef(null)
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', event_date: '',
-    event_time: '', venue: '', message: '', image_url: '',
+    event_time: '', venue: '', location_url: '', message: '', image_url: '',
     theme: 'gold'
   })
 
@@ -966,7 +968,7 @@ function App() {
     setEditingECardId(null)
     setECardForm({
       title: '', occasion: 'Harusi', host_names: '', event_date: '',
-      event_time: '', venue: '', message: '', image_url: '', theme: 'gold'
+      event_time: '', venue: '', location_url: '', message: '', image_url: '', theme: 'gold'
     })
   }
 
@@ -988,6 +990,7 @@ function App() {
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
         venue: eCardForm.venue.trim(),
+        location_url: eCardForm.location_url.trim() || null,
         message: eCardForm.message.trim(),
         image_url: eCardForm.image_url.trim() || null,
         user_id: session.user.id,
@@ -1015,7 +1018,7 @@ function App() {
     setECardForm({
       title: card.title || '', occasion: card.occasion || 'Harusi',
       host_names: card.host_names || '', event_date: card.event_date || '',
-      event_time: card.event_time || '', venue: card.venue || '',
+      event_time: card.event_time || '', venue: card.venue || '', location_url: card.location_url || '',
       message: card.message || '', image_url: card.image_url || '',
       theme: card.theme || 'gold'
     })
@@ -1034,6 +1037,14 @@ function App() {
     await loadECards()
   }
 
+  const loadECardWallet = async () => {
+    if (!session?.user?.id) return
+    setECardWalletLoading(true)
+    const { data, error } = await supabase.from('e_card_wallets').select('balance').eq('user_id', session.user.id).maybeSingle()
+    if (!error) setECardWalletBalance(data?.balance || 0)
+    setECardWalletLoading(false)
+  }
+
   const loadECardGuests = async (cardId) => {
     if (!cardId) { setECardGuests([]); return }
     const { data, error } = await supabase.from('e_card_guests').select('*')
@@ -1046,12 +1057,11 @@ function App() {
     e.preventDefault()
     if (!guestCardId || !guestName.trim()) return
     setGuestBusy(true); setScanResult('')
-    const { error } = await supabase.from('e_card_guests').insert({
-      card_id: guestCardId, user_id: session.user.id, guest_name: guestName.trim(),
-      invite_type: guestType, guest_count: guestType === 'double' ? 2 : 1
+    const { error } = await supabase.rpc('create_paid_e_card_guest', {
+      p_card_id: guestCardId, p_guest_name: guestName.trim(), p_invite_type: guestType
     })
     if (error) setECardMessage('Mgeni hakuongezwa: ' + error.message)
-    else { setGuestName(''); setECardMessage('Mgeni ameongezwa. QR yake ipo kwenye orodha.'); await loadECardGuests(guestCardId) }
+    else { setGuestName(''); setECardMessage('Mwaliko umetengenezwa. TSh 500 zimekatwa kwenye salio lako.'); await loadECardGuests(guestCardId); await loadECardWallet() }
     setGuestBusy(false)
   }
 
@@ -1119,7 +1129,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (session?.user?.id && profile?.role !== 'admin') loadECards()
+    if (session?.user?.id && profile?.role !== 'admin') { loadECards(); loadECardWallet() }
   }, [session?.user?.id, profile?.role])
 
   useEffect(() => {
@@ -2156,6 +2166,7 @@ useEffect(() => {
                 <p><strong>Tarehe:</strong> {publicECard.event_date}</p>
                 {publicECard.event_time && <p><strong>Muda:</strong> {publicECard.event_time}</p>}
                 {publicECard.venue && <p><strong>Mahali:</strong> {publicECard.venue}</p>}
+                {publicECard.location_url && <a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>}
               </div>
               <p style={{ color: '#9a792d', fontWeight: 'bold' }}>ForteEvents — Make your event extraordinary</p>
             </>
@@ -3147,6 +3158,9 @@ return (
               <input type="time" value={eCardForm.event_time} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
               <label>Mahali / Ukumbi</label>
               <input value={eCardForm.venue} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
+              <label>Google Maps location link (hiari)</label>
+              <input type="url" value={eCardForm.location_url} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
+              <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
               <label>Ujumbe wa mwaliko</label>
               <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Tunayo furaha kukualika..." />
               <label>Link ya picha (hiari, https://)</label>
@@ -3166,9 +3180,16 @@ return (
               <p><strong>Tarehe:</strong> {eCardForm.event_date || '—'}</p>
               {eCardForm.event_time && <p><strong>Muda:</strong> {eCardForm.event_time}</p>}
               {eCardForm.venue && <p><strong>Mahali:</strong> {eCardForm.venue}</p>}
+              {eCardForm.location_url && <a className="primary-button" href={eCardForm.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>
               <p style={{color:'#9a792d',fontWeight:'bold'}}>ForteEvents</p>
             </div>
             {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
+          </div>
+          <div className="card">
+            <h2>Salio la E-card</h2>
+            <p style={{fontSize:'28px',fontWeight:'700',color:'#9a792d'}}>TSh {Number(eCardWalletBalance).toLocaleString()}</p>
+            <p>Kila mwaliko wenye jina na QR Code unagharimu TSh 500. Wasiliana na ForteEvents ili kuongeza salio baada ya malipo.</p>
+            {eCardWalletLoading && <p>Inapakia salio...</p>}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
             <h2>Wageni na QR zao</h2>
