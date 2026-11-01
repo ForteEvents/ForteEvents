@@ -1139,7 +1139,7 @@ function App() {
     const loadPublicCard = async () => {
       setPublicECardLoading(true)
       const { data, error } = await supabase.from('e_cards')
-        .select('title, occasion, host_names, event_date, event_time, venue, message, image_url, theme')
+        .select('title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme')
         .eq('slug', slug).eq('is_published', true).maybeSingle()
       if (active) {
         setPublicECard(error ? null : data)
