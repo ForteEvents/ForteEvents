@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient'
 import './App.css'
 
@@ -679,6 +679,15 @@ function App() {
   const [editingECardId, setEditingECardId] = useState(null)
   const [publicECard, setPublicECard] = useState(null)
   const [publicECardLoading, setPublicECardLoading] = useState(false)
+  const [guestCardId, setGuestCardId] = useState('')
+  const [eCardGuests, setECardGuests] = useState([])
+  const [guestName, setGuestName] = useState('')
+  const [guestType, setGuestType] = useState('single')
+  const [guestBusy, setGuestBusy] = useState(false)
+  const [scanToken, setScanToken] = useState('')
+  const [scanResult, setScanResult] = useState('')
+  const [scannerActive, setScannerActive] = useState(false)
+  const scanVideoRef = useRef(null)
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', event_date: '',
     event_time: '', venue: '', message: '', image_url: '',
@@ -1023,6 +1032,79 @@ function App() {
       return
     }
     await loadECards()
+  }
+
+  const loadECardGuests = async (cardId) => {
+    if (!cardId) { setECardGuests([]); return }
+    const { data, error } = await supabase.from('e_card_guests').select('*')
+      .eq('card_id', cardId).order('created_at', { ascending: false })
+    if (error) { setECardMessage('Imeshindikana kupakia wageni: ' + error.message); return }
+    setECardGuests(data || [])
+  }
+
+  const addECardGuest = async (e) => {
+    e.preventDefault()
+    if (!guestCardId || !guestName.trim()) return
+    setGuestBusy(true); setScanResult('')
+    const { error } = await supabase.from('e_card_guests').insert({
+      card_id: guestCardId, user_id: session.user.id, guest_name: guestName.trim(),
+      invite_type: guestType, guest_count: guestType === 'double' ? 2 : 1
+    })
+    if (error) setECardMessage('Mgeni hakuongezwa: ' + error.message)
+    else { setGuestName(''); setECardMessage('Mgeni ameongezwa. QR yake ipo kwenye orodha.'); await loadECardGuests(guestCardId) }
+    setGuestBusy(false)
+  }
+
+  const checkInECardGuest = async (rawToken) => {
+    const token = String(rawToken || '').trim()
+    if (!token) { setScanResult('Weka au scan QR token kwanza.'); return }
+    const { data: guest, error } = await supabase.from('e_card_guests').select('*')
+      .eq('token', token).maybeSingle()
+    if (error || !guest) { setScanResult('QR haijatambulika kwenye akaunti hii.'); return }
+    if (guest.user_id !== session.user.id) { setScanResult('Mwaliko huu si wa tukio lako.'); return }
+    if (guest.checked_in_at) { setScanResult(guest.guest_name + ' tayari ameingia.'); return }
+    const { error: updateError } = await supabase.from('e_card_guests')
+      .update({ checked_in_at: new Date().toISOString(), checked_in_by: session.user.id })
+      .eq('id', guest.id).is('checked_in_at', null)
+    if (updateError) { setScanResult('Imeshindikana kuthibitisha: ' + updateError.message); return }
+    setScanToken('')
+    setScanResult('IMEKUBALIWA: ' + guest.guest_name + ' — ' + guest.invite_type.toUpperCase() + ' (' + guest.guest_count + ' watu).')
+    await loadECardGuests(guest.card_id)
+  }
+
+  const startECardScanner = async () => {
+    try {
+      if (!('BarcodeDetector' in window)) {
+        setScanResult('Kifaa hiki hakina QR scanner ya ndani. Tumia sehemu ya kuingiza QR token chini.')
+        return
+      }
+      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      setScannerActive(true)
+      const video = scanVideoRef.current
+      video.srcObject = stream
+      await video.play()
+      const scan = async () => {
+        if (!video || !video.srcObject) return
+        try {
+          const codes = await detector.detect(video)
+          if (codes.length) {
+            stream.getTracks().forEach(track => track.stop())
+            video.srcObject = null
+            setScannerActive(false)
+            const value = codes[0].rawValue
+            const found = value.match(/[?&]guest=([a-f0-9-]+)/i)
+            await checkInECardGuest(found ? found[1] : value)
+            return
+          }
+        } catch {}
+        if (video.srcObject) requestAnimationFrame(scan)
+      }
+      requestAnimationFrame(scan)
+    } catch (error) {
+      setScannerActive(false)
+      setScanResult('Imeshindikana kuwasha kamera: ' + error.message)
+    }
   }
 
   const deleteECard = async (card) => {
@@ -2412,6 +2494,8 @@ return (
           E-card
         </button>
 
+        <button className={page === 'ecard-checkin' ? 'nav-button active' : 'nav-button'} onClick={() => setPage('ecard-checkin')}>QR Check-in</button>
+
         <button
           className={
             page === 'sms'
@@ -3016,6 +3100,30 @@ return (
       {/* =========================
           E-CARD
       ========================= */}
+      {page === 'ecard-checkin' && (
+        <div className="card">
+          <h1>Mapokezi ya Wageni — QR Check-in</h1>
+          <p>Chagua tukio, kisha msimamizi ascan QR ya kila mgeni.</p>
+          <label>Chagua kadi / tukio</label>
+          <select value={guestCardId} onChange={e => { setGuestCardId(e.target.value); loadECardGuests(e.target.value); setScanResult('') }}>
+            <option value="">Chagua E-card</option>
+            {eCards.map(card => <option key={card.id} value={card.id}>{card.title}</option>)}
+          </select>
+          <button type="button" className="primary-button" onClick={startECardScanner} disabled={!guestCardId || scannerActive}>{scannerActive ? 'Scanner inafanya kazi...' : 'Washa kamera kuscan QR'}</button>
+          {scannerActive && <video ref={scanVideoRef} playsInline style={{width:'100%',maxWidth:'420px',marginTop:'12px',borderRadius:'12px'}} />}
+          <label>Au ingiza QR token</label>
+          <input value={scanToken} onChange={e => setScanToken(e.target.value)} placeholder="QR token" />
+          <button type="button" className="secondary-button" onClick={() => checkInECardGuest(scanToken)} disabled={!guestCardId}>Thibitisha Kuingia</button>
+          {scanResult && <p role="status" className="message">{scanResult}</p>}
+          <h2>Wageni wa tukio hili ({eCardGuests.length})</h2>
+          {eCardGuests.map(g => <div key={g.id} style={{padding:'10px',borderBottom:'1px solid #ddd'}}>
+            <strong>{g.guest_name}</strong> — {g.invite_type.toUpperCase()} ({g.guest_count})
+            <span> · {g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span>
+            <button type="button" className="secondary-button" onClick={() => setScanToken(g.token)}>Chagua token</button>
+          </div>)}
+        </div>
+      )}
+
       {page === 'ecard' && (
         <>
           <div className="page-header">
@@ -3061,6 +3169,27 @@ return (
               <p style={{color:'#9a792d',fontWeight:'bold'}}>ForteEvents</p>
             </div>
             {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
+          </div>
+          <div className="card" style={{marginTop:'20px'}}>
+            <h2>Wageni na QR zao</h2>
+            <label>Chagua kadi ya tukio</label>
+            <select value={guestCardId} onChange={e => { setGuestCardId(e.target.value); loadECardGuests(e.target.value) }}>
+              <option value="">Chagua E-card</option>
+              {eCards.map(card => <option key={card.id} value={card.id}>{card.title}</option>)}
+            </select>
+            <form onSubmit={addECardGuest}>
+              <label>Jina la mgeni</label>
+              <input value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Jina la mgeni" required />
+              <label>Aina ya kadi</label>
+              <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE — mtu 1</option><option value="double">DOUBLE — watu 2</option></select>
+              <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
+            </form>
+            {eCardGuests.map(g => <div key={g.id} style={{padding:'12px',borderBottom:'1px solid #ddd'}}>
+              <strong>{g.guest_name}</strong> — {g.invite_type.toUpperCase()}
+              <p>{g.checked_in_at ? 'Ameingia' : 'Hajascanwa'}</p>
+              <img alt="QR ya mwaliko" style={{width:'150px',height:'150px'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(window.location.origin+'/?guest='+g.token)} />
+              <button type="button" className="secondary-button" onClick={() => window.print()}>Chapisha kadi / QR</button>
+            </div>)}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
             <h2>Kadi Zangu</h2>
