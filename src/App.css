@@ -428,3 +428,10 @@ button[type="submit"] {
   height: auto;
   display: block;
 }
+
+@media print {
+  body * { visibility: hidden !important; }
+  .ecard-guest-print, .ecard-guest-print * { visibility: visible !important; }
+  .ecard-guest-print { position: relative !important; page-break-after: always; break-after: page; margin: 0 auto !important; box-shadow: none !important; }
+  .no-print { display: none !important; }
+}
