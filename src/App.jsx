@@ -10,648 +10,168 @@ function AdminCustomers({ session, onBack }) {
   const [smsHistory, setSmsHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
-  useEffect(() => {
-    const loadCustomers = async () => {
-      setLoading(true)
-      setErrorMessage('')
+  const [eCardTransactions, setECardTransactions] = useState([])
+  const [eCardHistoryLoading, setECardHistoryLoading] = useState(false)
+  const [eCardAmount, setECardAmount] = useState('')
+  const [eCardDescription, setECardDescription] = useState('Malipo ya E-card yaliyopokelewa')
+  const [eCardBusy, setECardBusy] = useState(false)
+  const [adminECardAccounts, setAdminECardAccounts] = useState([])
 
-      try {
-        const response = await fetch(
-          'https://forteevents.onrender.com/api/admin/customers',
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-          }
-        )
+  const loadCustomers = async () => {
+    setLoading(true)
+    setErrorMessage('')
+    try {
+      const [response, accountResult] = await Promise.all([
+        fetch('https://forteevents.onrender.com/api/admin/customers', {
+          headers: { Authorization: `Bearer ${session.access_token}` }
+        }),
+        supabase.rpc('admin_get_e_card_accounts')
+      ])
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Wateja hawakuweza kupakiwa.')
+      if (accountResult.error) throw accountResult.error
+      setAdminECardAccounts(accountResult.data || [])
+      const rows = result.customers || []
+      setCustomers(rows.map(customer => {
+        const extra = (accountResult.data || []).find(item => item.user_id === customer.id) || {}
+        return { ...customer, e_card_balance: extra.e_card_balance || 0,
+          e_cards_count: extra.cards_count || 0, e_card_invitations: extra.invitations_count || 0,
+          e_card_checked_in: extra.checked_in_count || 0 }
+      }))
+    } catch (error) {
+      setErrorMessage('Taarifa za wateja hazijapakiwa: ' + error.message)
+    } finally { setLoading(false) }
+  }
 
-        const result = await response.json()
-
-        if (!response.ok || !result.ok) {
-          throw new Error(
-            result.error ||
-              'Customers hawakuweza kupakiwa.'
-          )
-        }
-
-        setCustomers(result.customers || [])
-      } catch (error) {
-        console.log(
-          'Admin customers error:',
-          error.message
-        )
-
-        setErrorMessage(
-          'Customers hawakuweza kupakiwa: ' +
-            error.message
-        )
-
-        setCustomers([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (session?.access_token) {
-      loadCustomers()
-    }
-  }, [session])
+  useEffect(() => { if (session?.access_token) loadCustomers() }, [session?.access_token])
 
   const loadSmsHistory = async (customer) => {
-    setHistoryLoading(true)
-    setHistoryError('')
-    setSmsHistory([])
-
+    setHistoryLoading(true); setHistoryError(''); setSmsHistory([])
     try {
-      const response = await fetch(
-        `https://forteevents.onrender.com/api/admin/customers/${customer.id}/sms-history`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      )
-
+      const response = await fetch(`https://forteevents.onrender.com/api/admin/customers/${customer.id}/sms-history`, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
       const result = await response.json()
-
-      if (!response.ok || !result.ok) {
-        throw new Error(
-          result.error ||
-            'SMS history haikuweza kupakiwa.'
-        )
-      }
-
+      if (!response.ok || !result.ok) throw new Error(result.error || 'SMS history haikupatikana.')
       setSmsHistory(result.history || [])
-    } catch (error) {
-      console.log(
-        'SMS history error:',
-        error.message
-      )
+    } catch (error) { setHistoryError(error.message) }
+    finally { setHistoryLoading(false) }
+  }
 
-      setHistoryError(
-        'SMS history haikuweza kupakiwa: ' +
-          error.message
-      )
-
-      setSmsHistory([])
-    } finally {
-      setHistoryLoading(false)
-    }
+  const loadECardTransactions = async (customer) => {
+    setECardHistoryLoading(true); setECardTransactions([])
+    const { data, error } = await supabase.rpc('admin_get_e_card_transactions', { p_user_id: customer.id })
+    if (error) setHistoryError('E-card history: ' + error.message)
+    else setECardTransactions(data || [])
+    setECardHistoryLoading(false)
   }
 
   const openCustomerDetails = (customer) => {
-    setSelectedCustomer(customer)
-    loadSmsHistory(customer)
+    setSelectedCustomer(customer); setHistoryError('')
+    loadSmsHistory(customer); loadECardTransactions(customer)
   }
 
   const addCredits = async (customer) => {
-    const amount = window.prompt(
-      `Ongeza SMS credits kwa ${
-        customer.full_name ||
-        customer.email
-      }:`
-    )
-
-    if (!amount) {
-      return
-    }
-
+    const amount = window.prompt(`Ongeza SMS credits kwa ${customer.full_name || customer.email}:`)
+    if (!amount) return
     const creditAmount = Number(amount)
+    if (!Number.isInteger(creditAmount) || creditAmount <= 0) return window.alert('Weka idadi sahihi ya SMS credits.')
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/credits/add', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ userId: customer.id, amount: creditAmount, reference: 'Admin credit' })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'SMS credits hazikuongezwa.')
+      window.alert(`SMS credits zimeongezwa. Salio jipya: ${result.balance}`)
+      await loadCustomers()
+      setSelectedCustomer(current => current ? { ...current, sms_balance: result.balance } : current)
+    } catch (error) { window.alert('Imeshindikana kuongeza SMS: ' + error.message) }
+  }
 
-    if (
-      !Number.isFinite(creditAmount) ||
-      creditAmount <= 0
-    ) {
-      window.alert(
-        'Tafadhali weka idadi sahihi ya SMS credits.'
-      )
+  const addECardCredits = async () => {
+    const amount = Number(eCardAmount)
+    if (!selectedCustomer || !Number.isInteger(amount) || amount <= 0) {
+      window.alert('Weka kiasi cha E-card credits kama namba kamili ya TSh.')
       return
     }
-
-    try {
-      const response = await fetch(
-        'https://forteevents.onrender.com/api/admin/credits/add',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            userId: customer.id,
-            amount: creditAmount,
-            reference: 'Admin credit',
-          }),
-        }
-      )
-
-      const result = await response.json()
-
-      if (!response.ok || !result.ok) {
-        throw new Error(
-          result.error ||
-            'Credits hazikuweza kuongezwa.'
-        )
-      }
-
-      window.alert(
-        `Credits zimeongezwa successfully.\nBalance mpya: ${result.balance}`
-      )
-
-      setCustomers((currentCustomers) =>
-        currentCustomers.map((item) =>
-          item.id === customer.id
-            ? {
-                ...item,
-                sms_balance: result.balance,
-              }
-            : item
-        )
-      )
-
-      setSelectedCustomer((currentCustomer) =>
-        currentCustomer &&
-        currentCustomer.id === customer.id
-          ? {
-              ...currentCustomer,
-              sms_balance: result.balance,
-            }
-          : currentCustomer
-      )
-    } catch (error) {
-      console.log(
-        'Add credits error:',
-        error.message
-      )
-
-      window.alert(
-        'Imeshindikana kuongeza credits: ' +
-          error.message
-      )
+    setECardBusy(true)
+    const { data, error } = await supabase.rpc('admin_adjust_e_card_balance', {
+      p_user_id: selectedCustomer.id, p_amount: amount, p_description: eCardDescription.trim() || 'E-card top-up'
+    })
+    if (error) window.alert('Imeshindikana kuongeza E-card credit: ' + error.message)
+    else {
+      setECardAmount('')
+      window.alert(`E-card credits zimeongezwa. Salio jipya: TSh ${Number(data).toLocaleString()}`)
+      await loadCustomers()
+      const updated = { ...selectedCustomer, e_card_balance: data }
+      setSelectedCustomer(updated)
+      await loadECardTransactions(updated)
     }
+    setECardBusy(false)
   }
 
-  if (loading) {
-    return (
-      <div className="card">
-        <p>Inapakia customers...</p>
-      </div>
-    )
-  }
+  if (loading) return <div className="card"><p>Inapakia akaunti za wateja...</p></div>
 
-  if (selectedCustomer) {
-    return (
-      <>
-        <div className="page-header">
-          <div>
-            <h1>Customer Details</h1>
-            <p>
-              Taarifa za customer wa ForteEvents.
-            </p>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2>
-            {selectedCustomer.full_name ||
-              'Customer'}
-          </h2>
-
-          <div
-            style={{
-              marginTop: '20px',
-              lineHeight: '1.9',
-            }}
-          >
-            <p>
-              <strong>Full Name:</strong>{' '}
-              {selectedCustomer.full_name || '-'}
-            </p>
-
-            <p>
-              <strong>Email:</strong>{' '}
-              {selectedCustomer.email || '-'}
-            </p>
-
-            <p>
-              <strong>Phone:</strong>{' '}
-              {selectedCustomer.phone || '-'}
-            </p>
-
-            <p>
-              <strong>SMS Balance:</strong>{' '}
-              <strong>
-                {selectedCustomer.sms_balance ?? 0}
-              </strong>
-            </p>
-
-            <p>
-              <strong>Status:</strong> Active
-            </p>
-          </div>
-
-          <div
-            style={{
-              marginTop: '25px',
-              padding: '18px',
-              border: '1px solid #ddd',
-              borderRadius: '10px',
-              overflowX: 'auto',
-            }}
-          >
-            <h3>SMS History</h3>
-
-            {historyLoading && (
-              <p>
-                Inapakia SMS history...
-              </p>
-            )}
-
-            {historyError && (
-              <p
-                style={{
-                  color: '#b00020',
-                }}
-              >
-                {historyError}
-              </p>
-            )}
-
-            {!historyLoading &&
-              !historyError &&
-              smsHistory.length === 0 && (
-                <p>
-                  Hakuna SMS history kwa customer
-                  huyu.
-                </p>
-              )}
-
-            {!historyLoading &&
-              !historyError &&
-              smsHistory.length > 0 && (
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    marginTop: '15px',
-                  }}
-                >
-                  <thead>
-                    <tr>
-                      <th
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px',
-                          borderBottom: '1px solid #ddd',
-                        }}
-                      >
-                        Date
-                      </th>
-
-                      <th
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px',
-                          borderBottom: '1px solid #ddd',
-                        }}
-                      >
-                        Recipient
-                      </th>
-
-                      <th
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px',
-                          borderBottom: '1px solid #ddd',
-                        }}
-                      >
-                        Message
-                      </th>
-
-                      <th
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px',
-                          borderBottom: '1px solid #ddd',
-                        }}
-                      >
-                        SMS
-                      </th>
-
-                      <th
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px',
-                          borderBottom: '1px solid #ddd',
-                        }}
-                      >
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {smsHistory.map((item) => (
-                      <tr key={item.id}>
-                        <td
-                          style={{
-                            padding: '10px',
-                            borderBottom:
-                              '1px solid #eee',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {item.sent_at
-                            ? new Date(
-                                item.sent_at
-                              ).toLocaleString()
-                            : '-'}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: '10px',
-                            borderBottom:
-                              '1px solid #eee',
-                          }}
-                        >
-                          {item.recipient || '-'}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: '10px',
-                            borderBottom:
-                              '1px solid #eee',
-                            minWidth: '220px',
-                          }}
-                        >
-                          {item.message || '-'}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: '10px',
-                            borderBottom:
-                              '1px solid #eee',
-                          }}
-                        >
-                          {item.sms_count ?? 0}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: '10px',
-                            borderBottom:
-                              '1px solid #eee',
-                          }}
-                        >
-                          {item.status || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              flexWrap: 'wrap',
-              marginTop: '25px',
-            }}
-          >
-            <button
-              className="primary-button"
-              onClick={() =>
-                addCredits(selectedCustomer)
-              }
-            >
-              Add Credits
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => {
-                setSelectedCustomer(null)
-                setSmsHistory([])
-                setHistoryError('')
-              }}
-            >
-              Back to Customers
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={onBack}
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  return (
+  if (selectedCustomer) return (
     <>
-      <div className="page-header">
-        <div>
-          <h1>Customers</h1>
-          <p>
-            Manage ForteEvents customers and
-            their SMS credits.
-          </p>
-        </div>
-      </div>
-
-      {errorMessage && (
-        <div className="card">
-          <p>{errorMessage}</p>
-        </div>
-      )}
-
+      <div className="page-header"><div><h1>Taarifa za Akaunti</h1><p>Usimamizi wa SMS na E-card kwa mteja huyu.</p></div></div>
       <div className="card">
-        <div
-          style={{
-            overflowX: 'auto',
-          }}
-        >
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-            }}
-          >
-            <thead>
-              <tr>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '12px',
-                    borderBottom: '1px solid #ddd',
-                  }}
-                >
-                  Customer Name
-                </th>
-
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '12px',
-                    borderBottom: '1px solid #ddd',
-                  }}
-                >
-                  Email
-                </th>
-
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '12px',
-                    borderBottom: '1px solid #ddd',
-                  }}
-                >
-                  Phone
-                </th>
-
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '12px',
-                    borderBottom: '1px solid #ddd',
-                  }}
-                >
-                  SMS Balance
-                </th>
-
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '12px',
-                    borderBottom: '1px solid #ddd',
-                  }}
-                >
-                  Status
-                </th>
-
-                <th
-                  style={{
-                    textAlign: 'left',
-                    padding: '12px',
-                    borderBottom: '1px solid #ddd',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {customers.map((customer) => (
-                <tr key={customer.id}>
-                  <td
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #eee',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openCustomerDetails(
-                          customer
-                        )
-                      }
-                      style={{
-                        border: 'none',
-                        background: 'transparent',
-                        padding: 0,
-                        color: '#8a6d1d',
-                        cursor: 'pointer',
-                        fontWeight: '700',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      {customer.full_name ||
-                        'Customer'}
-                    </button>
-                  </td>
-
-                  <td
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #eee',
-                    }}
-                  >
-                    {customer.email || '-'}
-                  </td>
-
-                  <td
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #eee',
-                    }}
-                  >
-                    {customer.phone || '-'}
-                  </td>
-
-                  <td
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #eee',
-                    }}
-                  >
-                    {customer.sms_balance ?? 0}
-                  </td>
-
-                  <td
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #eee',
-                    }}
-                  >
-                    Active
-                  </td>
-
-                  <td
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #eee',
-                    }}
-                  >
-                    <button
-                      className="primary-button"
-                      onClick={() =>
-                        addCredits(customer)
-                      }
-                    >
-                      Add Credits
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {customers.length === 0 &&
-          !errorMessage && (
-            <p
-              style={{
-                marginTop: '20px',
-              }}
-            >
-              Hakuna customers kwa sasa.
-            </p>
-          )}
+        <h2>{selectedCustomer.full_name || 'Customer'}</h2>
+        <p><strong>Email:</strong> {selectedCustomer.email || '-'}</p>
+        <p><strong>Simu:</strong> {selectedCustomer.phone || '-'}</p>
+        <p><strong>SMS balance:</strong> {selectedCustomer.sms_balance ?? 0} credits</p>
+        <p><strong>E-card balance:</strong> TSh {Number(selectedCustomer.e_card_balance || 0).toLocaleString()}</p>
+        <p><strong>E-cards:</strong> {selectedCustomer.e_cards_count || 0} · <strong>Mialiko:</strong> {selectedCustomer.e_card_invitations || 0} · <strong>Walioingia:</strong> {selectedCustomer.e_card_checked_in || 0}</p>
+        <button className="primary-button" onClick={() => addCredits(selectedCustomer)}>Ongeza SMS credits</button>
       </div>
+      <div className="card">
+        <h2>Ongeza E-card credits</h2>
+        <p>Salio hili ni tofauti kabisa na SMS. Kwa bei ya TSh 500 kwa mwaliko mmoja, TSh 5,000 ni mialiko 10.</p>
+        <label>Kiasi cha kuongeza (TSh)</label>
+        <input type="number" min="1" step="1" value={eCardAmount} onChange={e => setECardAmount(e.target.value)} placeholder="Mfano: 10000" />
+        <label>Maelezo / kumbukumbu ya malipo</label>
+        <input value={eCardDescription} onChange={e => setECardDescription(e.target.value)} />
+        <button className="primary-button" disabled={eCardBusy || !eCardAmount} onClick={addECardCredits}>{eCardBusy ? 'Inaongeza...' : 'Ongeza E-card credits'}</button>
+      </div>
+      <div className="card">
+        <h2>Historia ya E-card</h2>
+        {eCardHistoryLoading ? <p>Inapakia...</p> : eCardTransactions.length === 0 ? <p>Bado hakuna miamala.</p> :
+          <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Aina</th><th>Kiasi</th><th>Maelezo</th></tr></thead><tbody>
+            {eCardTransactions.map(t => <tr key={t.id}><td>{new Date(t.created_at).toLocaleString()}</td><td>{t.transaction_type}</td><td>{t.amount > 0 ? '+' : ''}{Number(t.amount).toLocaleString()}</td><td>{t.description}</td></tr>)}
+          </tbody></table></div>}
+      </div>
+      <div className="card">
+        <h2>SMS History</h2>
+        {historyLoading && <p>Inapakia SMS history...</p>}
+        {historyError && <p style={{color:'#b00020'}}>{historyError}</p>}
+        {!historyLoading && smsHistory.length === 0 && <p>Hakuna SMS history kwa mteja huyu.</p>}
+        {smsHistory.length > 0 && <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Mpokeaji</th><th>Ujumbe</th><th>SMS</th><th>Hali</th></tr></thead><tbody>
+          {smsHistory.map(item => <tr key={item.id}><td>{item.sent_at ? new Date(item.sent_at).toLocaleString() : '-'}</td><td>{item.recipient}</td><td>{item.message}</td><td>{item.sms_count}</td><td>{item.status}</td></tr>)}
+        </tbody></table></div>}
+      </div>
+      <button className="secondary-button" onClick={() => { setSelectedCustomer(null); setSmsHistory([]); setECardTransactions([]); setHistoryError('') }}>Rudi kwenye wateja</button>{' '}
+      <button className="secondary-button" onClick={onBack}>Dashboard</button>
     </>
   )
+
+  return <>
+    <div className="page-header"><div><h1>Akaunti za Wateja</h1><p>Muhtasari wa salio na matumizi ya kila akaunti.</p></div><button className="secondary-button" onClick={loadCustomers}>Refresh</button></div>
+    {errorMessage && <div className="card"><p>{errorMessage}</p></div>}
+    <div className="card" style={{overflowX:'auto'}}>
+      <table style={{width:'100%',minWidth:'760px',borderCollapse:'collapse'}}><thead><tr>
+        <th>Jina</th><th>Email</th><th>Simu</th><th>SMS credits</th><th>E-card TSh</th><th>Mialiko</th><th>Check-in</th><th>Kitendo</th>
+      </tr></thead><tbody>
+        {customers.map(customer => <tr key={customer.id}>
+          <td><button type="button" onClick={() => openCustomerDetails(customer)} style={{border:0,background:'transparent',color:'#8a6d1d',fontWeight:700,cursor:'pointer'}}>{customer.full_name || 'Customer'}</button></td>
+          <td>{customer.email || '-'}</td><td>{customer.phone || '-'}</td><td>{customer.sms_balance ?? 0}</td>
+          <td>{Number(customer.e_card_balance || 0).toLocaleString()}</td><td>{customer.e_card_invitations || 0}</td><td>{customer.e_card_checked_in || 0}</td>
+          <td><button className="primary-button" onClick={() => openCustomerDetails(customer)}>Angalia akaunti</button></td>
+        </tr>)}
+      </tbody></table>
+      {customers.length === 0 && <p>Hakuna wateja waliopatikana.</p>}
+    </div>
+  </>
 }
 
 function App() {
