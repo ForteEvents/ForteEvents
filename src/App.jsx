@@ -3071,7 +3071,25 @@ return (
                 <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
                 <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
                 <button type="button" className="secondary-button" onClick={() => deleteECard(card)}>Futa</button>
-                {card.is_published && <p style={{wordBreak:'break-all',marginTop:'10px'}}>Link: <a href={window.location.origin + '/?card=' + encodeURIComponent(card.slug)} target="_blank" rel="noreferrer">{window.location.origin + '/?card=' + card.slug}</a></p>}
+                {card.is_published && <>
+                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
+                    <button type="button" className="primary-button" onClick={() => {
+                      const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
+                      const message = `Habari! Tunakualika kwenye ${card.title}. Fungua mwaliko kupitia link hii: ${url}`;
+                      window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+                    }}>Tuma WhatsApp</button>
+                    <button type="button" className="secondary-button" onClick={async () => {
+                      const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        setECardMessage('Link ya mwaliko imenakiliwa. Unaweza kuibandika WhatsApp au SMS.');
+                      } catch {
+                        setECardMessage('Imeshindikana kunakili link. Tafadhali nakili link inayoonekana hapa chini.');
+                      }
+                    }}>Nakili link</button>
+                  </div>
+                  <p style={{wordBreak:'break-all',marginTop:'10px'}}>Link: <a href={window.location.origin + '/?card=' + encodeURIComponent(card.slug)} target="_blank" rel="noreferrer">{window.location.origin + '/?card=' + card.slug}</a></p>
+                </>}
               </div>
             ))}
           </div>
