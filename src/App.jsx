@@ -3048,6 +3048,18 @@ return (
               <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
               {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
             </form>
+            <div style={{marginTop:'24px', padding:'22px', border:'1px solid #d6bd78', borderRadius:'14px', background:'#fffdf8', textAlign:'center'}}>
+              <p style={{letterSpacing:'3px', color:'#9a792d', textTransform:'uppercase'}}>Preview ya mwaliko</p>
+              {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha ya preview" style={{width:'100%', maxHeight:'240px', objectFit:'cover', borderRadius:'10px'}} />}
+              <h2 style={{color:'#9a792d'}}>{eCardForm.title || 'Jina la tukio'}</h2>
+              <p style={{color:'#9a792d'}}>{eCardForm.occasion}</p>
+              {eCardForm.host_names && <h3>{eCardForm.host_names}</h3>}
+              <p style={{whiteSpace:'pre-wrap'}}>{eCardForm.message || 'Ujumbe wako wa mwaliko utaonekana hapa.'}</p>
+              <p><strong>Tarehe:</strong> {eCardForm.event_date || '—'}</p>
+              {eCardForm.event_time && <p><strong>Muda:</strong> {eCardForm.event_time}</p>}
+              {eCardForm.venue && <p><strong>Mahali:</strong> {eCardForm.venue}</p>}
+              <p style={{color:'#9a792d',fontWeight:'bold'}}>ForteEvents</p>
+            </div>
             {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
