@@ -20,8 +20,3 @@ create policy "Customers manage own e-card guests" on public.e_card_guests
   for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 grant select, insert, update, delete on public.e_card_guests to authenticated;
 
--- Public guest invitation lookup by unguessable token; managers still need auth to check in.
-drop policy if exists "Guests can view their own invitation by token" on public.e_card_guests;
-create policy "Guests can view their own invitation by token" on public.e_card_guests
-  for select to anon, authenticated using (true);
-grant select on public.e_card_guests to anon;
