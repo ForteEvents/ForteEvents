@@ -2738,11 +2738,15 @@ return (
               <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE — mtu 1</option><option value="double">DOUBLE — watu 2</option></select>
               <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
             </form>
-            {eCardGuests.map(g => <div key={g.id} style={{padding:'12px',borderBottom:'1px solid #ddd'}}>
-              <strong>{g.guest_name}</strong> — {g.invite_type.toUpperCase()}
-              <p>{g.checked_in_at ? 'Ameingia' : 'Hajascanwa'}</p>
-              <img alt="QR ya mwaliko" style={{width:'150px',height:'150px'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(window.location.origin+'/?guest='+g.token)} />
-              <button type="button" className="secondary-button" onClick={() => window.print()}>Chapisha kadi / QR</button>
+            {eCardGuests.map(g => <div key={g.id} className="ecard-guest-print" style={{padding:'18px',border:'1px solid #d6bd78',borderRadius:'12px',marginBottom:'14px',background:'#fffdf8',maxWidth:'420px',textAlign:'center'}}>
+              <p style={{letterSpacing:'2px',color:'#9a792d',fontSize:'12px'}}>FORTEEVENTS INVITATION</p>
+              <h3>{eCards.find(card => card.id === guestCardId)?.title || 'Mwaliko'}</h3>
+              <p style={{fontSize:'20px',fontWeight:'700'}}>{g.guest_name}</p>
+              <p>{g.invite_type.toUpperCase()} · {g.guest_count} {g.guest_count === 1 ? 'mtu' : 'watu'}</p>
+              <img alt="QR ya mwaliko" style={{width:'170px',height:'170px'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(window.location.origin+'/?card='+encodeURIComponent(eCards.find(card => card.id === guestCardId)?.slug || '')+'&guest='+g.token)} />
+              <p style={{color:'#9a792d',fontWeight:'700'}}>Make your event extraordinary</p>
+              <p>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</p>
+              <button type="button" className="secondary-button no-print" onClick={() => window.print()}>Chapisha mwaliko huu</button>
             </div>)}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
