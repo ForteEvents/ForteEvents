@@ -588,18 +588,13 @@ function App() {
   const checkInECardGuest = async (rawToken) => {
     const token = String(rawToken || '').trim()
     if (!token) { setScanResult('Weka au scan QR token kwanza.'); return }
-    const { data: guest, error } = await supabase.from('e_card_guests').select('*')
-      .eq('token', token).maybeSingle()
-    if (error || !guest) { setScanResult('QR haijatambulika kwenye akaunti hii.'); return }
-    if (guest.user_id !== session.user.id) { setScanResult('Mwaliko huu si wa tukio lako.'); return }
-    if (guest.checked_in_at) { setScanResult(guest.guest_name + ' tayari ameingia.'); return }
-    const { error: updateError } = await supabase.from('e_card_guests')
-      .update({ checked_in_at: new Date().toISOString(), checked_in_by: session.user.id })
-      .eq('id', guest.id).is('checked_in_at', null)
-    if (updateError) { setScanResult('Imeshindikana kuthibitisha: ' + updateError.message); return }
+    const { data, error } = await supabase.rpc('check_in_e_card_guest', { p_token: token })
+    if (error) { setScanResult(error.message || 'QR haijatambulika.'); return }
+    const guest = Array.isArray(data) ? data[0] : data
+    if (!guest) { setScanResult('QR haijatambulika.'); return }
     setScanToken('')
     setScanResult('IMEKUBALIWA: ' + guest.guest_name + ' — ' + guest.invite_type.toUpperCase() + ' (' + guest.guest_count + ' watu).')
-    await loadECardGuests(guest.card_id)
+    await loadECardGuests(guestCardId)
   }
 
   const startECardScanner = async () => {
@@ -2683,7 +2678,25 @@ return (
               <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
               <label>Ujumbe wa mwaliko</label>
               <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Tunayo furaha kukualika..." />
-              <label>Link ya picha (hiari, https://)</label>
+              <label>Pakia picha ya mwaliko (JPG, PNG au WEBP; hadi 5MB)</label>
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                if (file.size > 5 * 1024 * 1024) { setECardMessage('Picha isizidi 5MB.'); e.target.value = ''; return }
+                const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+                const path = session.user.id + '/' + (window.crypto?.randomUUID?.() || Date.now()) + '.' + ext
+                setECardSaving(true)
+                const { error } = await supabase.storage.from('e-card-images').upload(path, file, { upsert: false, contentType: file.type })
+                if (error) setECardMessage('Picha haikupakiwa: ' + error.message)
+                else {
+                  const { data } = supabase.storage.from('e-card-images').getPublicUrl(path)
+                  setECardForm(v => ({...v, image_url:data.publicUrl}))
+                  setECardMessage('Picha imepakiwa.')
+                }
+                setECardSaving(false)
+              }} />
+              {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha iliyochaguliwa" style={{width:'100%',maxWidth:'240px',borderRadius:'8px',marginTop:'8px'}} />}
+              <label>Au weka link ya picha (hiari, https://)</label>
               <input type="url" value={eCardForm.image_url} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
               <label>Muonekano</label>
               <select value={eCardForm.theme} onChange={e => setECardForm(v => ({...v, theme:e.target.value}))}><option value="gold">Gold & White</option><option value="classic">Classic White</option></select>
