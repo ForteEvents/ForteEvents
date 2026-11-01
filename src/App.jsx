@@ -2725,7 +2725,30 @@ return (
             {eCardWalletLoading && <p>Inapakia salio...</p>}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
+            <h2>Ingiza wageni kwa CSV</h2>
+            <p>Andaa faili lenye safu mbili: <strong>name,type</strong>. Mfano: Asha,single au Juma,double. Kila mgeni atakatwa TSh 500 kwenye E-card balance.</p>
+            <input type="file" accept=".csv,text/csv" disabled={!guestCardId || guestBusy} onChange={async e => {
+              const file=e.target.files?.[0]; if(!file) return;
+              const raw=await file.text();
+              const rows=raw.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+              const parsed=rows.map(line=>line.split(',').map(value=>value.trim().replace(/^"|"$/g,'')));
+              const start=parsed[0]?.[0]?.toLowerCase()==='name' ? 1 : 0;
+              const guests=parsed.slice(start).filter(row=>row[0]).map(row=>({name:row[0],type:(row[1]||'single').toLowerCase()}));
+              if(!guests.length || guests.some(g=>!['single','double'].includes(g.type))) { setECardMessage('CSV haiko sahihi. Tumia name,type na aina single au double.'); e.target.value=''; return; }
+              if(!window.confirm('Una uhakika kuongeza wageni '+guests.length+'? Jumla ya makato ni TSh '+(guests.length*500).toLocaleString()+'.')) {e.target.value='';return;}
+              setGuestBusy(true); let added=0; let failed='';
+              for(const guest of guests) {
+                const {error}=await supabase.rpc('create_paid_e_card_guest',{p_card_id:guestCardId,p_guest_name:guest.name,p_invite_type:guest.type});
+                if(error){failed=error.message;break;} added++;
+              }
+              setGuestBusy(false); await loadECardGuests(guestCardId); await loadECardWallet();
+              setECardMessage('Wageni '+added+' wameongezwa.'+(failed?' Imesimama: '+failed:''));
+              e.target.value='';
+            }} />
+          </div>
+          <div className="card" style={{marginTop:'20px'}}>
             <h2>Wageni na QR zao</h2>
+            <button type="button" className="secondary-button no-print" onClick={() => window.print()} disabled={!eCardGuests.length}>Chapisha wageni wote / Hifadhi PDF</button>
             <label>Chagua kadi ya tukio</label>
             <select value={guestCardId} onChange={e => { setGuestCardId(e.target.value); loadECardGuests(e.target.value) }}>
               <option value="">Chagua E-card</option>
