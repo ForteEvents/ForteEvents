@@ -671,6 +671,20 @@ function App() {
   const [page, setPage] = useState('dashboard')
   const [scrollToFlyer, setScrollToFlyer] = useState(false)
 
+  // E-CARD STATES
+  const [eCards, setECards] = useState([])
+  const [eCardsLoading, setECardsLoading] = useState(false)
+  const [eCardSaving, setECardSaving] = useState(false)
+  const [eCardMessage, setECardMessage] = useState('')
+  const [editingECardId, setEditingECardId] = useState(null)
+  const [publicECard, setPublicECard] = useState(null)
+  const [publicECardLoading, setPublicECardLoading] = useState(false)
+  const [eCardForm, setECardForm] = useState({
+    title: '', occasion: 'Harusi', host_names: '', event_date: '',
+    event_time: '', venue: '', message: '', image_url: '',
+    theme: 'gold'
+  })
+
   useEffect(() => {
     if (page !== 'dashboard' || !scrollToFlyer) {
       return
@@ -916,6 +930,133 @@ function App() {
 
     loadProfile()
   }, [session])
+
+
+  // =========================
+  // E-CARD FUNCTIONS
+  // =========================
+  const loadECards = async () => {
+    if (!session?.user?.id) return
+    setECardsLoading(true)
+    const { data, error } = await supabase
+      .from('e_cards')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+    if (error) {
+      setECardMessage('Imeshindikana kupakia E-card: ' + error.message)
+      setECards([])
+    } else {
+      setECards(data || [])
+      setECardMessage('')
+    }
+    setECardsLoading(false)
+  }
+
+  const resetECardForm = () => {
+    setEditingECardId(null)
+    setECardForm({
+      title: '', occasion: 'Harusi', host_names: '', event_date: '',
+      event_time: '', venue: '', message: '', image_url: '', theme: 'gold'
+    })
+  }
+
+  const saveECard = async (e) => {
+    e.preventDefault()
+    setECardMessage('')
+    if (!eCardForm.title.trim() || !eCardForm.event_date) {
+      setECardMessage('Jaza jina la tukio na tarehe.')
+      return
+    }
+    if (eCardForm.image_url && !/^https:\/\//i.test(eCardForm.image_url)) {
+      setECardMessage('Picha lazima iwe na link salama inayoanza na https://')
+      return
+    }
+    setECardSaving(true)
+    try {
+      const payload = {
+        ...eCardForm,
+        title: eCardForm.title.trim(),
+        host_names: eCardForm.host_names.trim(),
+        venue: eCardForm.venue.trim(),
+        message: eCardForm.message.trim(),
+        image_url: eCardForm.image_url.trim() || null,
+        user_id: session.user.id,
+        slug: editingECardId
+          ? eCards.find((card) => String(card.id) === String(editingECardId))?.slug
+          : (window.crypto?.randomUUID?.() || ('card-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9)))
+      }
+      const query = editingECardId
+        ? supabase.from('e_cards').update(payload).eq('id', editingECardId).eq('user_id', session.user.id).select().single()
+        : supabase.from('e_cards').insert(payload).select().single()
+      const { data, error } = await query
+      if (error) throw error
+      setECardMessage('E-card imehifadhiwa. Unaweza kushiriki link yake na wageni.')
+      resetECardForm()
+      await loadECards()
+    } catch (error) {
+      setECardMessage('E-card haijahifadhiwa: ' + error.message)
+    } finally {
+      setECardSaving(false)
+    }
+  }
+
+  const editECard = (card) => {
+    setEditingECardId(card.id)
+    setECardForm({
+      title: card.title || '', occasion: card.occasion || 'Harusi',
+      host_names: card.host_names || '', event_date: card.event_date || '',
+      event_time: card.event_time || '', venue: card.venue || '',
+      message: card.message || '', image_url: card.image_url || '',
+      theme: card.theme || 'gold'
+    })
+    setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
+    setPage('ecard')
+  }
+
+  const toggleECardPublished = async (card) => {
+    const { error } = await supabase.from('e_cards')
+      .update({ is_published: !card.is_published })
+      .eq('id', card.id).eq('user_id', session.user.id)
+    if (error) {
+      setECardMessage('Imeshindikana kubadilisha hali ya kadi: ' + error.message)
+      return
+    }
+    await loadECards()
+  }
+
+  const deleteECard = async (card) => {
+    if (!window.confirm('Una uhakika unataka kufuta E-card hii?')) return
+    const { error } = await supabase.from('e_cards')
+      .delete().eq('id', card.id).eq('user_id', session.user.id)
+    if (error) {
+      setECardMessage('Imeshindikana kufuta E-card: ' + error.message)
+      return
+    }
+    await loadECards()
+  }
+
+  useEffect(() => {
+    if (session?.user?.id && profile?.role !== 'admin') loadECards()
+  }, [session?.user?.id, profile?.role])
+
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get('card')
+    if (!slug) return
+    let active = true
+    const loadPublicCard = async () => {
+      setPublicECardLoading(true)
+      const { data, error } = await supabase.from('e_cards')
+        .select('title, occasion, host_names, event_date, event_time, venue, message, image_url, theme')
+        .eq('slug', slug).eq('is_published', true).maybeSingle()
+      if (active) {
+        setPublicECard(error ? null : data)
+        setPublicECardLoading(false)
+      }
+    }
+    loadPublicCard()
+    return () => { active = false }
+  }, [])
 
   // =========================
   // LOAD CUSTOMER EVENTS
@@ -1915,6 +2056,33 @@ useEffect(() => {
     setEvents([])
   }
 
+
+  if (new URLSearchParams(window.location.search).has('card')) {
+    return (
+      <div className="app-shell" style={{ minHeight: '100vh', padding: '24px', background: '#f8f5ed' }}>
+        <div className="card" style={{ maxWidth: '680px', width: '100%', margin: '30px auto', padding: '28px', textAlign: 'center', border: '1px solid #d6bd78', background: '#fffdf8' }}>
+          {publicECardLoading ? <p>Inafungua mwaliko...</p> : !publicECard ? (
+            <><h2>ForteEvents</h2><p>Mwaliko huu haupatikani au bado haujachapishwa.</p></>
+          ) : (
+            <>
+              {publicECard.image_url && <img src={publicECard.image_url} alt="Picha ya mwaliko" style={{ width: '100%', maxHeight: '360px', objectFit: 'cover', borderRadius: '12px', marginBottom: '18px' }} />}
+              <p style={{ letterSpacing: '3px', color: '#9a792d', textTransform: 'uppercase' }}>{publicECard.occasion || 'Mwaliko'}</p>
+              <h1 style={{ color: '#9a792d' }}>{publicECard.title}</h1>
+              {publicECard.host_names && <h2>{publicECard.host_names}</h2>}
+              {publicECard.message && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{publicECard.message}</p>}
+              <div style={{ borderTop: '1px solid #d6bd78', borderBottom: '1px solid #d6bd78', padding: '16px', margin: '20px 0' }}>
+                <p><strong>Tarehe:</strong> {publicECard.event_date}</p>
+                {publicECard.event_time && <p><strong>Muda:</strong> {publicECard.event_time}</p>}
+                {publicECard.venue && <p><strong>Mahali:</strong> {publicECard.venue}</p>}
+              </div>
+              <p style={{ color: '#9a792d', fontWeight: 'bold' }}>ForteEvents — Make your event extraordinary</p>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   // =========================
   // INITIAL LOADING
   // =========================
@@ -2235,6 +2403,13 @@ return (
           onClick={() => setPage('events')}
         >
           My Events
+        </button>
+
+        <button
+          className={page === 'ecard' ? 'nav-button active' : 'nav-button'}
+          onClick={() => { resetECardForm(); setPage('ecard') }}
+        >
+          E-card
         </button>
 
         <button
@@ -2833,6 +3008,60 @@ return (
                 })}
               </div>
             )}
+          </div>
+        </>
+      )}
+
+
+      {/* =========================
+          E-CARD
+      ========================= */}
+      {page === 'ecard' && (
+        <>
+          <div className="page-header">
+            <div><h1>Digital E-card</h1><p>Tengeneza na usambaze mialiko ya kidigitali.</p></div>
+            <button type="button" className="secondary-button" onClick={loadECards}>Refresh</button>
+          </div>
+          <div className="card">
+            <h2>{editingECardId ? 'Hariri E-card' : 'Tengeneza E-card mpya'}</h2>
+            <form onSubmit={saveECard}>
+              <label>Jina la tukio</label>
+              <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
+              <label>Aina ya tukio</label>
+              <select value={eCardForm.occasion} onChange={e => setECardForm(v => ({...v, occasion:e.target.value}))}>
+                <option>Harusi</option><option>Send-off</option><option>Birthday</option><option>Kitchen Party</option><option>Graduation</option><option>Shukrani</option><option>Tukio lingine</option>
+              </select>
+              <label>Majina ya wahusika</label>
+              <input value={eCardForm.host_names} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: John & Mary" />
+              <label>Tarehe</label>
+              <input type="date" value={eCardForm.event_date} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
+              <label>Muda</label>
+              <input type="time" value={eCardForm.event_time} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
+              <label>Mahali / Ukumbi</label>
+              <input value={eCardForm.venue} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
+              <label>Ujumbe wa mwaliko</label>
+              <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Tunayo furaha kukualika..." />
+              <label>Link ya picha (hiari, https://)</label>
+              <input type="url" value={eCardForm.image_url} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
+              <label>Muonekano</label>
+              <select value={eCardForm.theme} onChange={e => setECardForm(v => ({...v, theme:e.target.value}))}><option value="gold">Gold & White</option><option value="classic">Classic White</option></select>
+              <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
+              {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
+            </form>
+            {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
+          </div>
+          <div className="card" style={{marginTop:'20px'}}>
+            <h2>Kadi Zangu</h2>
+            {eCardsLoading ? <p>Inapakia...</p> : eCards.length === 0 ? <p>Bado hujatengeneza E-card.</p> : eCards.map(card => (
+              <div key={card.id} style={{border:'1px solid #d6bd78',borderRadius:'10px',padding:'16px',marginBottom:'12px'}}>
+                <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p>
+                <p><strong>Hali:</strong> {card.is_published ? 'Imechapishwa' : 'Haijachapishwa'}</p>
+                <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
+                <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
+                <button type="button" className="secondary-button" onClick={() => deleteECard(card)}>Futa</button>
+                {card.is_published && <p style={{wordBreak:'break-all',marginTop:'10px'}}>Link: <a href={window.location.origin + '/?card=' + encodeURIComponent(card.slug)} target="_blank" rel="noreferrer">{window.location.origin + '/?card=' + card.slug}</a></p>}
+              </div>
+            ))}
           </div>
         </>
       )}
