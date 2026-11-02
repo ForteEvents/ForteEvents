@@ -174,6 +174,78 @@ function AdminCustomers({ session, onBack }) {
   </>
 }
 
+
+function AdminECardManagement({ onBack }) {
+  const [accounts, setAccounts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [transactions, setTransactions] = useState([])
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('Malipo ya E-card yaliyopokelewa')
+  const [busy, setBusy] = useState(false)
+  const loadAccounts = async () => {
+    setLoading(true); setError('')
+    const { data, error: rpcError } = await supabase.rpc('admin_get_e_card_accounts')
+    if (rpcError) setError('Imeshindikana kupakia taarifa za E-card: ' + rpcError.message)
+    else setAccounts(data || [])
+    setLoading(false)
+  }
+  const loadTransactions = async account => {
+    setSelected(account); setTransactions([]); setError('')
+    const { data, error: rpcError } = await supabase.rpc('admin_get_e_card_transactions', { p_user_id: account.user_id })
+    if (rpcError) setError('Historia haikupatikana: ' + rpcError.message)
+    else setTransactions(data || [])
+  }
+  useEffect(() => { loadAccounts() }, [])
+  const addCredits = async () => {
+    const value = Number(amount)
+    if (!selected || !Number.isInteger(value) || value <= 0) return window.alert('Weka kiasi sahihi cha E-card credits kwa TSh.')
+    setBusy(true)
+    const { data, error: rpcError } = await supabase.rpc('admin_adjust_e_card_balance', {
+      p_user_id: selected.user_id, p_amount: value, p_description: description.trim() || 'E-card top-up'
+    })
+    if (rpcError) window.alert('Imeshindikana kuongeza credits: ' + rpcError.message)
+    else {
+      window.alert('E-card credits zimeongezwa. Salio jipya: TSh ' + Number(data).toLocaleString())
+      setAmount('')
+      await loadAccounts()
+      const updated = { ...selected, e_card_balance: data }
+      setSelected(updated)
+      const result = await supabase.rpc('admin_get_e_card_transactions', { p_user_id: updated.user_id })
+      if (!result.error) setTransactions(result.data || [])
+    }
+    setBusy(false)
+  }
+  if (loading) return <div className="card"><p>Inapakia akaunti za E-card...</p></div>
+  return <>
+    <div className="page-header"><div><h1>Usimamizi wa E-card</h1><p>Angalia salio, mialiko na ongeza credits za E-card kwa wateja.</p></div><button className="secondary-button" onClick={loadAccounts}>Refresh</button></div>
+    {error && <div className="card"><p style={{color:'#b00020'}}>{error}</p></div>}
+    <div className="card" style={{overflowX:'auto'}}>
+      <h2>Akaunti za E-card</h2>
+      <table style={{width:'100%',minWidth:'680px',borderCollapse:'collapse'}}>
+        <thead><tr><th>Mteja</th><th>Salio (TSh)</th><th>E-cards</th><th>Mialiko</th><th>Check-in</th><th>Kitendo</th></tr></thead>
+        <tbody>{accounts.map(account => <tr key={account.user_id}>
+          <td>{account.full_name || account.email || 'Customer'}<br/><small>{account.email || ''}</small></td>
+          <td>{Number(account.e_card_balance || 0).toLocaleString()}</td><td>{account.cards_count || 0}</td><td>{account.invitations_count || 0}</td><td>{account.checked_in_count || 0}</td>
+          <td><button className="primary-button" onClick={() => loadTransactions(account)}>Simamia E-card</button></td>
+        </tr>)}</tbody>
+      </table>
+      {accounts.length === 0 && <p>Hakuna akaunti za E-card zilizopatikana.</p>}
+    </div>
+    {selected && <div className="card">
+      <h2>Ongeza credits: {selected.full_name || selected.email || 'Customer'}</h2>
+      <p>Salio la sasa: <strong>TSh {Number(selected.e_card_balance || 0).toLocaleString()}</strong></p>
+      <label>Kiasi cha kuongeza (TSh)</label><input type="number" min="1" step="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Mfano: 10000" />
+      <label>Maelezo / kumbukumbu ya malipo</label><input value={description} onChange={e => setDescription(e.target.value)} />
+      <button className="primary-button" disabled={busy || !amount} onClick={addCredits}>{busy ? 'Inaongeza...' : 'Ongeza E-card credits'}</button>
+      <h3>Historia ya E-card</h3>
+      {transactions.length === 0 ? <p>Bado hakuna miamala.</p> : <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Aina</th><th>Kiasi</th><th>Maelezo</th></tr></thead><tbody>{transactions.map(t => <tr key={t.id}><td>{new Date(t.created_at).toLocaleString()}</td><td>{t.transaction_type}</td><td>{t.amount > 0 ? '+' : ''}{Number(t.amount).toLocaleString()}</td><td>{t.description}</td></tr>)}</tbody></table></div>}
+    </div>}
+    <button className="secondary-button" onClick={onBack}>Rudi Dashboard</button>
+  </>
+}
+
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -1864,6 +1936,9 @@ useEffect(() => {
             >
               Customers
             </button>
+            <button className={adminPage === 'ecards' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecards')}>
+              E-card Management
+            </button>
           </div>
 
           <div className="sidebar-bottom">
@@ -1924,6 +1999,12 @@ useEffect(() => {
                 </div>
 
                 <div className="card">
+                  <h3>E-card Management</h3>
+                  <p>Simamia salio la E-card, mialiko, check-in na kuongeza credits za wateja sehemu moja.</p>
+                  <button className="primary-button" onClick={() => setAdminPage('ecards')}>Manage E-cards</button>
+                </div>
+
+                <div className="card">
                   <h3>System</h3>
                   <p>
                     ForteEvents backend iko online
@@ -1956,6 +2037,7 @@ useEffect(() => {
   onBack={() => setAdminPage('dashboard')}
 />
 )}
+{adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
         </main>
       </div>
     )
