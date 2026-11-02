@@ -435,3 +435,35 @@ button[type="submit"] {
   .ecard-guest-print { position: relative !important; page-break-after: always; break-after: page; margin: 0 auto !important; box-shadow: none !important; }
   .no-print { display: none !important; }
 }
+
+
+/* E-card template designer */
+.ecard-designer-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+.ecard-designer-controls > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #eadfca;
+  border-radius: 10px;
+  background: #fffdf8;
+}
+.ecard-designer-controls input[type="color"] {
+  display: block;
+  width: 100%;
+  height: 42px;
+  padding: 3px;
+  border: 1px solid #d8c9a8;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.ecard-live-preview {
+  transition: background-color .2s ease, color .2s ease;
+}
+@media (max-width: 600px) {
+  .ecard-designer-controls { grid-template-columns: 1fr; }
+}
