@@ -2713,7 +2713,7 @@ return (
               <p><strong>Tarehe:</strong> {eCardForm.event_date || '—'}</p>
               {eCardForm.event_time && <p><strong>Muda:</strong> {eCardForm.event_time}</p>}
               {eCardForm.venue && <p><strong>Mahali:</strong> {eCardForm.venue}</p>}
-              {eCardForm.location_url && <a className="primary-button" href={eCardForm.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>
+              {eCardForm.location_url && <a className="primary-button" href={eCardForm.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>}
               <p style={{color:'#9a792d',fontWeight:'bold'}}>ForteEvents</p>
             </div>
             {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
