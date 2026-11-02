@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
 import { supabase } from './supabaseClient'
 import './App.css'
 
@@ -676,37 +677,53 @@ function App() {
 
   const startECardScanner = async () => {
     try {
-      if (!('BarcodeDetector' in window)) {
-        setScanResult('Kifaa hiki hakina QR scanner ya ndani. Tumia sehemu ya kuingiza QR token chini.')
-        return
-      }
-      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      setScanResult('')
       setScannerActive(true)
-      const video = scanVideoRef.current
-      video.srcObject = stream
-      await video.play()
-      const scan = async () => {
-        if (!video || !video.srcObject) return
-        try {
-          const codes = await detector.detect(video)
-          if (codes.length) {
-            stream.getTracks().forEach(track => track.stop())
-            video.srcObject = null
-            setScannerActive(false)
-            const value = codes[0].rawValue
-            const found = value.match(/[?&]guest=([a-f0-9-]+)/i)
-            await checkInECardGuest(found ? found[1] : value)
-            return
+      await new Promise(resolve => requestAnimationFrame(resolve))
+      const scanner = new Html5Qrcode('ecard-qr-reader')
+      scanVideoRef.current = scanner
+      let handled = false
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+        async decodedText => {
+          if (handled) return
+          handled = true
+          setScannerActive(false)
+          try { await scanner.stop() } catch {}
+          try { await scanner.clear() } catch {}
+          scanVideoRef.current = null
+          let token = decodedText.trim()
+          try {
+            const parsed = new URL(token)
+            token = parsed.searchParams.get('guest') || token
+          } catch {
+            const found = token.match(/[?&]guest=([a-f0-9-]+)/i)
+            if (found) token = found[1]
           }
-        } catch {}
-        if (video.srcObject) requestAnimationFrame(scan)
-      }
-      requestAnimationFrame(scan)
+          await checkInECardGuest(token)
+        },
+        () => {}
+      )
     } catch (error) {
       setScannerActive(false)
-      setScanResult('Imeshindikana kuwasha kamera: ' + error.message)
+      if (scanVideoRef.current) {
+        try { await scanVideoRef.current.stop() } catch {}
+        try { await scanVideoRef.current.clear() } catch {}
+        scanVideoRef.current = null
+      }
+      setScanResult('Imeshindikana kuwasha kamera. Ruhusu camera kwenye browser na hakikisha unatumia HTTPS. Maelezo: ' + error.message)
     }
+  }
+
+  const stopECardScanner = async () => {
+    const scanner = scanVideoRef.current
+    if (scanner) {
+      try { await scanner.stop() } catch {}
+      try { await scanner.clear() } catch {}
+      scanVideoRef.current = null
+    }
+    setScannerActive(false)
   }
 
   const deleteECard = async (card) => {
@@ -2725,8 +2742,9 @@ return (
             {eCards.map(card => <option key={card.id} value={card.id}>{card.title}</option>)}
           </select>
           <button type="button" className="primary-button" onClick={startECardScanner} disabled={!guestCardId || scannerActive}>{scannerActive ? 'Scanner inafanya kazi...' : 'Washa kamera kuscan QR'}</button>
-          {scannerActive && <video ref={scanVideoRef} playsInline style={{width:'100%',maxWidth:'420px',marginTop:'12px',borderRadius:'12px'}} />}
-          <label>Au ingiza QR token</label>
+          {scannerActive && <button type="button" className="secondary-button" onClick={stopECardScanner}>Zima kamera</button>}
+          <div id="ecard-qr-reader" style={{width:'100%',maxWidth:'420px',marginTop:'12px',display:scannerActive?'block':'none'}} />
+          <label>Au ingiza QR token manually</label>
           <input value={scanToken} onChange={e => setScanToken(e.target.value)} placeholder="QR token" />
           <button type="button" className="secondary-button" onClick={() => checkInECardGuest(scanToken)} disabled={!guestCardId}>Thibitisha Kuingia</button>
           {scanResult && <p role="status" className="message">{scanResult}</p>}
