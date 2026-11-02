@@ -282,6 +282,8 @@ function App() {
   const [scanResult, setScanResult] = useState('')
   const [scannerActive, setScannerActive] = useState(false)
   const scanVideoRef = useRef(null)
+  const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
+  const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', event_date: '',
     event_time: '', venue: '', location_url: '', message: '', image_url: '',
@@ -562,6 +564,7 @@ function App() {
       title: '', occasion: 'Harusi', host_names: '', event_date: '',
       event_time: '', venue: '', location_url: '', message: '', image_url: '', theme: 'gold'
     })
+    setECardDesign(defaultECardDesign)
   }
 
   const saveECard = async (e) => {
@@ -579,6 +582,7 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
+        design: eCardDesign,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
         venue: eCardForm.venue.trim(),
@@ -614,6 +618,7 @@ function App() {
       message: card.message || '', image_url: card.image_url || '',
       theme: card.theme || 'gold'
     })
+    setECardDesign({ ...defaultECardDesign, ...(card.design || {}) })
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
   }
@@ -726,7 +731,7 @@ function App() {
     const loadPublicCard = async () => {
       setPublicECardLoading(true)
       const { data, error } = await supabase.from('e_cards')
-        .select('title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme')
+        .select('title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme, design')
         .eq('slug', slug).eq('is_published', true).maybeSingle()
       if (active) {
         setPublicECard(error ? null : data)
@@ -1744,18 +1749,20 @@ useEffect(() => {
             <><h2>ForteEvents</h2><p>Mwaliko huu haupatikani au bado haujachapishwa.</p></>
           ) : (
             <>
+              {(() => { const d={...defaultECardDesign,...(publicECard.design||{})}; return <div style={{background:d.background,color:d.text,fontFamily:d.font,textAlign:d.alignment,border:'1px solid '+d.accent,borderRadius:'16px',padding:'24px'}}>
               {publicECard.image_url && <img src={publicECard.image_url} alt="Picha ya mwaliko" style={{ width: '100%', maxHeight: '360px', objectFit: 'cover', borderRadius: '12px', marginBottom: '18px' }} />}
-              <p style={{ letterSpacing: '3px', color: '#9a792d', textTransform: 'uppercase' }}>{publicECard.occasion || 'Mwaliko'}</p>
-              <h1 style={{ color: '#9a792d' }}>{publicECard.title}</h1>
-              {publicECard.host_names && <h2>{publicECard.host_names}</h2>}
+              <p style={{ letterSpacing: '3px', color: d.accent, textTransform: 'uppercase' }}>{publicECard.occasion || 'Mwaliko'}</p>
+              <h1 style={{ color: d.accent, fontSize:d.titleSize }}>{publicECard.title}</h1>
+              {publicECard.host_names && <h2 style={{color:d.text}}>{publicECard.host_names}</h2>}
               {publicECard.message && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{publicECard.message}</p>}
-              <div style={{ borderTop: '1px solid #d6bd78', borderBottom: '1px solid #d6bd78', padding: '16px', margin: '20px 0' }}>
+              <div style={{ borderTop: '1px solid '+d.accent, borderBottom: '1px solid '+d.accent, padding: '16px', margin: '20px 0' }}>
                 <p><strong>Tarehe:</strong> {publicECard.event_date}</p>
                 {publicECard.event_time && <p><strong>Muda:</strong> {publicECard.event_time}</p>}
                 {publicECard.venue && <p><strong>Mahali:</strong> {publicECard.venue}</p>}
                 {publicECard.location_url && <a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>}
               </div>
-              <p style={{ color: '#9a792d', fontWeight: 'bold' }}>ForteEvents — Make your event extraordinary</p>
+              <p style={{ color: d.accent, fontWeight: 'bold' }}>ForteEvents — Make your event extraordinary</p>
+              </div> })()}
             </>
           )}
         </div>
@@ -2780,23 +2787,48 @@ return (
               {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha iliyochaguliwa" style={{width:'100%',maxWidth:'240px',borderRadius:'8px',marginTop:'8px'}} />}
               <label>Au weka link ya picha (hiari, https://)</label>
               <input type="url" value={eCardForm.image_url} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
-              <label>Muonekano</label>
-              <select value={eCardForm.theme} onChange={e => setECardForm(v => ({...v, theme:e.target.value}))}><option value="gold">Gold & White</option><option value="classic">Classic White</option></select>
+              <label>Template ya kuanzia</label>
+              <select value={eCardDesign.template} onChange={e => {
+                const presets = {
+                  classic:{background:'#fffdf8',accent:'#9a792d',text:'#332b20',font:'Georgia, serif',alignment:'center',titleSize:'32px'},
+                  royal:{background:'#fffaf0',accent:'#76521b',text:'#2d2418',font:'Georgia, serif',alignment:'center',titleSize:'36px'},
+                  modern:{background:'#ffffff',accent:'#a47b25',text:'#252525',font:'Arial, sans-serif',alignment:'left',titleSize:'30px'},
+                  floral:{background:'#fffaf7',accent:'#9b6b55',text:'#49352d',font:'Georgia, serif',alignment:'center',titleSize:'34px'},
+                  minimal:{background:'#ffffff',accent:'#806b45',text:'#333333',font:'Arial, sans-serif',alignment:'center',titleSize:'28px'}
+                }
+                setECardDesign({template:e.target.value,...presets[e.target.value]})
+              }}>
+                <option value="classic">Classic Gold</option><option value="royal">Royal Wedding</option><option value="modern">Modern</option><option value="floral">Floral</option><option value="minimal">Minimal</option>
+              </select>
+              <div className="ecard-designer-controls">
+                <div><label>Rangi ya background</label><input type="color" value={eCardDesign.background} onChange={e => setECardDesign(v => ({...v,background:e.target.value}))}/></div>
+                <div><label>Rangi ya kichwa</label><input type="color" value={eCardDesign.accent} onChange={e => setECardDesign(v => ({...v,accent:e.target.value}))}/></div>
+                <div><label>Rangi ya maandishi</label><input type="color" value={eCardDesign.text} onChange={e => setECardDesign(v => ({...v,text:e.target.value}))}/></div>
+              </div>
+              <label>Aina ya fonti</label>
+              <select value={eCardDesign.font} onChange={e => setECardDesign(v => ({...v,font:e.target.value}))}>
+                <option value="Georgia, serif">Elegant / Georgia</option><option value="'Times New Roman', serif">Classic / Times New Roman</option><option value="Arial, sans-serif">Modern / Arial</option><option value="'Trebuchet MS', sans-serif">Clean / Trebuchet</option><option value="cursive">Decorative / Cursive</option>
+              </select>
+              <label>Mpangilio wa maandishi</label>
+              <select value={eCardDesign.alignment} onChange={e => setECardDesign(v => ({...v,alignment:e.target.value}))}><option value="center">Katikati</option><option value="left">Kushoto</option><option value="right">Kulia</option></select>
+              <label>Ukubwa wa kichwa</label>
+              <select value={eCardDesign.titleSize} onChange={e => setECardDesign(v => ({...v,titleSize:e.target.value}))}><option value="28px">Ndogo</option><option value="32px">Wastani</option><option value="36px">Kubwa</option><option value="40px">Kubwa zaidi</option></select>
+              <button type="button" className="secondary-button" onClick={() => setECardDesign(defaultECardDesign)}>Rejesha muundo wa mwanzo</button>
               <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
               {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
             </form>
-            <div style={{marginTop:'24px', padding:'22px', border:'1px solid #d6bd78', borderRadius:'14px', background:'#fffdf8', textAlign:'center'}}>
-              <p style={{letterSpacing:'3px', color:'#9a792d', textTransform:'uppercase'}}>Preview ya mwaliko</p>
-              {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha ya preview" style={{width:'100%', maxHeight:'240px', objectFit:'cover', borderRadius:'10px'}} />}
-              <h2 style={{color:'#9a792d'}}>{eCardForm.title || 'Jina la tukio'}</h2>
-              <p style={{color:'#9a792d'}}>{eCardForm.occasion}</p>
+            <div className="ecard-live-preview" style={{marginTop:'24px',padding:'22px',border:'1px solid '+eCardDesign.accent,borderRadius:'14px',background:eCardDesign.background,color:eCardDesign.text,textAlign:eCardDesign.alignment,fontFamily:eCardDesign.font}}>
+              <p style={{letterSpacing:'3px',color:eCardDesign.accent,textTransform:'uppercase'}}>Preview ya mwaliko</p>
+              {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha ya preview" style={{width:'100%',maxHeight:'240px',objectFit:'cover',borderRadius:'10px'}}/>}
+              <h2 style={{color:eCardDesign.accent,fontSize:eCardDesign.titleSize}}>{eCardForm.title || 'Jina la tukio'}</h2>
+              <p style={{color:eCardDesign.accent}}>{eCardForm.occasion}</p>
               {eCardForm.host_names && <h3>{eCardForm.host_names}</h3>}
               <p style={{whiteSpace:'pre-wrap'}}>{eCardForm.message || 'Ujumbe wako wa mwaliko utaonekana hapa.'}</p>
               <p><strong>Tarehe:</strong> {eCardForm.event_date || '—'}</p>
               {eCardForm.event_time && <p><strong>Muda:</strong> {eCardForm.event_time}</p>}
               {eCardForm.venue && <p><strong>Mahali:</strong> {eCardForm.venue}</p>}
               {eCardForm.location_url && <a className="primary-button" href={eCardForm.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>}
-              <p style={{color:'#9a792d',fontWeight:'bold'}}>ForteEvents</p>
+              <p style={{color:eCardDesign.accent,fontWeight:'bold'}}>ForteEvents</p>
             </div>
             {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
           </div>
