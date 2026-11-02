@@ -2872,14 +2872,14 @@ return (
               <label>Jina la mgeni</label>
               <input value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Jina la mgeni" required />
               <label>Aina ya kadi</label>
-              <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE — mtu 1</option><option value="double">DOUBLE — watu 2</option></select>
+              <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE</option><option value="double">DOUBLE</option></select>
               <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
             </form>
             {eCardGuests.map(g => <div key={g.id} className="ecard-guest-print" style={{padding:'18px',border:'1px solid #d6bd78',borderRadius:'12px',marginBottom:'14px',background:'#fffdf8',maxWidth:'420px',textAlign:'center'}}>
               <p style={{letterSpacing:'2px',color:'#9a792d',fontSize:'12px'}}>FORTEEVENTS INVITATION</p>
               <h3>{eCards.find(card => card.id === guestCardId)?.title || 'Mwaliko'}</h3>
               <p style={{fontSize:'20px',fontWeight:'700'}}>{g.guest_name}</p>
-              <p>{g.invite_type.toUpperCase()} · {g.guest_count} {g.guest_count === 1 ? 'mtu' : 'watu'}</p>
+              <p>{g.invite_type.toUpperCase()}</p>
               <img alt="QR ya mwaliko" style={{width:'170px',height:'170px'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(window.location.origin+'/?card='+encodeURIComponent(eCards.find(card => card.id === guestCardId)?.slug || '')+'&guest='+g.token)} />
               <p style={{color:'#9a792d',fontWeight:'700'}}>Make your event extraordinary</p>
               <p>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</p>
