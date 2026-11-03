@@ -507,3 +507,23 @@ button[type="submit"] {
 .ecard-card-modern .ecard-card-inner{border:2px solid #b8a77e;background:#fff}
 .ecard-card-modern{--ecard-gold:#8b7447;--ecard-ink:#292929}
 @media(max-width:520px){.ecard-card-art{padding:7px}.ecard-card-inner{padding:25px 13px 20px;min-height:390px}.ecard-card-details{gap:8px}.ecard-card-details span{min-width:85px}}
+
+/* Floral Brown & Cream E-card */
+.ecard-template-floral-brown .ecard-template-art {
+  background: linear-gradient(145deg, #fffaf0, #f1dfc9);
+  border-color: #8b5e3c;
+  color: #8b5e3c;
+}
+.ecard-template-floral-brown .ecard-template-art:before,
+.ecard-template-floral-brown .ecard-template-art:after { color: #c77d48; opacity: .8; }
+.ecard-card-floral-brown { --ecard-gold: #8b5e3c; --ecard-ink: #503728; }
+.ecard-card-floral-brown .ecard-card-inner {
+  border-color: #8b5e3c;
+  outline-color: #d58a4c;
+  background: radial-gradient(ellipse at top, #fffdf8 0%, #fff7eb 62%, #f0dfca 100%);
+}
+.ecard-card-floral-brown .ecard-card-flower { color: #c77d48; }
+.ecard-card-floral-brown .ecard-card-welcome {
+  background: linear-gradient(90deg, #8b5e3c, #d58a4c, #8b5e3c);
+  color: #fffaf1;
+}
