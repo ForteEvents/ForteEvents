@@ -176,6 +176,93 @@ function AdminCustomers({ session, onBack }) {
 }
 
 
+function AdminECardTemplates({ onBack, session }) {
+  const [templates, setTemplates] = useState([])
+  const [name, setName] = useState('')
+  const [occasion, setOccasion] = useState('Harusi')
+  const [description, setDescription] = useState('')
+  const [file, setFile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [error, setError] = useState('')
+  const load = async () => {
+    setLoading(true)
+    const { data, error: loadError } = await supabase.from('e_card_templates').select('*').order('created_at', { ascending: false })
+    if (loadError) setError('Imeshindikana kupakia sampuli: ' + loadError.message)
+    else { setTemplates(data || []); setError('') }
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+  const upload = async e => {
+    e.preventDefault(); setNotice(''); setError('')
+    if (!name.trim() || !file) { setError('Weka jina la sampuli na uchague picha.'); return }
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setError('Tumia picha JPG, PNG au WEBP isiyozidi 5MB.'); return
+    }
+    if (!window.crypto?.randomUUID) { setError('Tafadhali tumia kivinjari kilichosasishwa.'); return }
+    setBusy(true)
+    try {
+      const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+      const path = 'templates/' + window.crypto.randomUUID() + '.' + ext
+      const { error: uploadError } = await supabase.storage.from('e-card-templates').upload(path, file, { upsert: false, contentType: file.type })
+      if (uploadError) throw uploadError
+      const { data: urlData } = supabase.storage.from('e-card-templates').getPublicUrl(path)
+      const { error: insertError } = await supabase.from('e_card_templates').insert({
+        name: name.trim(), occasion, description: description.trim(), image_url: urlData.publicUrl,
+        theme: 'gold', design: { template: 'classic' }, is_active: true, created_by: session.user.id
+      })
+      if (insertError) throw insertError
+      setName(''); setDescription(''); setFile(null)
+      const picker = document.getElementById('ecard-template-file'); if (picker) picker.value = ''
+      setNotice('Sampuli imeongezwa na sasa inaonekana kwa wateja.')
+      await load()
+    } catch (err) { setError('Sampuli haijaongezwa: ' + err.message) }
+    finally { setBusy(false) }
+  }
+  const toggle = async item => {
+    setError(''); setNotice('')
+    const { error: updateError } = await supabase.from('e_card_templates').update({ is_active: !item.is_active, updated_at: new Date().toISOString() }).eq('id', item.id)
+    if (updateError) setError('Imeshindikana kubadili hali: ' + updateError.message)
+    else { setNotice('Hali ya sampuli imebadilishwa.'); await load() }
+  }
+  const remove = async item => {
+    if (!window.confirm('Una uhakika unataka kufuta sampuli hii?')) return
+    setBusy(true)
+    const { error: deleteError } = await supabase.from('e_card_templates').delete().eq('id', item.id)
+    if (deleteError) setError('Imeshindikana kufuta sampuli: ' + deleteError.message)
+    else { setNotice('Sampuli imefutwa.'); await load() }
+    setBusy(false)
+  }
+  return <>
+    <div className="page-header"><div><h1>Sampuli za E-card</h1><p>Pakia miundo rasmi ambayo wateja watachagua wanapotengeneza mialiko.</p></div><button className="secondary-button" onClick={load}>Refresh</button></div>
+    <div className="card">
+      <h2>Ongeza sampuli mpya</h2>
+      <form onSubmit={upload}>
+        <label>Jina la muundo</label><input value={name} onChange={e => setName(e.target.value)} placeholder="Mfano: Royal Wedding Gold" required />
+        <label>Aina ya tukio</label><select value={occasion} onChange={e => setOccasion(e.target.value)}><option>Harusi</option><option>Send-off</option><option>Birthday</option><option>Kitchen Party</option><option>Graduation</option><option>Shukrani</option><option>Tukio lingine</option></select>
+        <label>Maelezo mafupi</label><input value={description} onChange={e => setDescription(e.target.value)} placeholder="Maelezo ya muundo huu" />
+        <label>Picha ya sampuli (JPG, PNG au WEBP; hadi 5MB)</label><input id="ecard-template-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} required />
+        {file && <p>{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB</p>}
+        <button className="primary-button" type="submit" disabled={busy}>{busy ? 'Inapakia...' : 'Pakia sampuli'}</button>
+      </form>
+    </div>
+    {notice && <div className="card"><p>{notice}</p></div>}
+    {error && <div className="card"><p style={{color:'#b00020'}}>{error}</p></div>}
+    <div className="card"><h2>Miundo iliyopo</h2>
+      {loading ? <p>Inapakia...</p> : templates.length === 0 ? <p>Bado hujaongeza sampuli.</p> :
+        <div className="ecard-template-gallery">{templates.map(item => <div className="ecard-template-option" key={item.id}>
+          <img src={item.image_url} alt={item.name} style={{width:'100%',height:'190px',objectFit:'cover',borderRadius:'8px'}} />
+          <b>{item.name}</b><small>{item.occasion} · {item.description}</small>
+          <em>{item.is_active ? 'Inaonekana kwa wateja' : 'Imefichwa kwa wateja'}</em>
+          <button type="button" className="secondary-button" onClick={() => toggle(item)}>{item.is_active ? 'Ficha sampuli' : 'Onyesha sampuli'}</button>
+          <button type="button" className="secondary-button" disabled={busy} onClick={() => remove(item)}>Futa sampuli</button>
+        </div>)}</div>}
+    </div>
+    <button className="secondary-button" onClick={onBack}>Rudi Dashboard</button>
+  </>
+}
+
 function AdminECardManagement({ onBack }) {
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -1968,6 +2055,7 @@ useEffect(() => {
             <button className={adminPage === 'ecards' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecards')}>
               E-card Management
             </button>
+            <button className={adminPage === 'ecard-templates' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-templates')}>E-card Templates</button>
           </div>
 
           <div className="sidebar-bottom">
@@ -2067,6 +2155,7 @@ useEffect(() => {
 />
 )}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
         </main>
       </div>
     )
