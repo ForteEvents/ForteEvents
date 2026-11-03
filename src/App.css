@@ -467,3 +467,43 @@ button[type="submit"] {
 @media (max-width: 600px) {
   .ecard-designer-controls { grid-template-columns: 1fr; }
 }
+
+
+/* Ready-made E-card templates: customers fill details, ForteEvents owns the design */
+.ecard-template-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:12px 0 18px}
+.ecard-template-option{display:flex;flex-direction:column;gap:7px;text-align:left;padding:9px;border:1px solid #d8c99f;border-radius:12px;background:#fffdf8;color:#342b1c;cursor:pointer}
+.ecard-template-option.selected{border:2px solid #a77b20;box-shadow:0 0 0 2px #ead9a9}
+.ecard-template-art{height:105px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px double #b58a35;background:linear-gradient(135deg,#fffefa,#f6ecd0);color:#986f1d;position:relative;overflow:hidden}
+.ecard-template-art:before,.ecard-template-art:after{content:'❀';position:absolute;font-size:38px;opacity:.45}
+.ecard-template-art:before{left:3px;top:0}.ecard-template-art:after{right:3px;bottom:0}
+.ecard-template-art span{font-size:27px}.ecard-template-art strong{font-family:Georgia,serif;letter-spacing:2px;font-size:13px}.ecard-template-art small{font-size:9px;letter-spacing:2px}
+.ecard-template-option b{font-size:13px}.ecard-template-option>small{font-size:11px;color:#6c6252}.ecard-template-option em{font-size:11px;color:#98701d;font-style:normal;font-weight:700}
+.ecard-template-royal .ecard-template-art{background:#fff9ec;border-color:#9b7a42;color:#7c5319}
+.ecard-template-floral .ecard-template-art{background:#fff8f6;border-color:#b98d80;color:#9d655c}
+.ecard-template-modern .ecard-template-art{background:#fff;border-style:solid;color:#6d6049}
+.ecard-helper-note{font-size:13px;color:#78643c;background:#fbf5e7;padding:10px 12px;border-radius:8px}
+.ecard-card-art{--ecard-gold:#a77b24;--ecard-ink:#342719;box-sizing:border-box;width:100%;max-width:760px;margin:26px auto;padding:12px;background:#fffaf0;border-radius:16px;box-shadow:0 8px 28px rgba(70,48,10,.16);color:var(--ecard-ink);font-family:Georgia,serif;text-align:center}
+.ecard-card-inner{position:relative;overflow:hidden;min-height:450px;padding:30px 22px 24px;border:4px double var(--ecard-gold);outline:1px solid #e6d3a0;outline-offset:-9px;background:radial-gradient(ellipse at top,#fff 0%,#fffaf0 65%,#f7edda 100%)}
+.ecard-card-inner:before,.ecard-card-inner:after{content:'❀  ✿  ❀';position:absolute;color:var(--ecard-gold);opacity:.45;font-size:27px;letter-spacing:5px;pointer-events:none}
+.ecard-card-inner:before{top:8px;left:12px}.ecard-card-inner:after{bottom:8px;right:12px}
+.ecard-card-brand{font-family:Arial,sans-serif;font-size:13px;letter-spacing:3px;color:var(--ecard-gold);font-weight:700}
+.ecard-card-brand span{display:block;font-size:8px;letter-spacing:1.5px;margin-top:3px}
+.ecard-card-flower{font-size:32px;color:var(--ecard-gold);line-height:1.2}
+.ecard-card-kicker{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--ecard-gold);margin:18px 0 8px}
+.ecard-card-inner h2{font-size:clamp(25px,5vw,40px);line-height:1.15;color:var(--ecard-gold);margin:8px auto;max-width:620px}
+.ecard-card-divider{display:flex;align-items:center;gap:12px;max-width:360px;margin:12px auto;color:var(--ecard-gold)}
+.ecard-card-divider:before,.ecard-card-divider:after{content:'';height:1px;background:var(--ecard-gold);flex:1}
+.ecard-card-photo{display:block;width:min(100%,420px);max-height:230px;object-fit:cover;margin:14px auto;border:4px solid white;outline:1px solid #d6bd83;border-radius:8px}
+.ecard-card-invite{font-style:italic;margin:16px 0 5px}.ecard-card-inner h3{font-size:clamp(20px,4vw,30px);margin:5px;color:var(--ecard-ink)}
+.ecard-card-message{white-space:pre-wrap;line-height:1.65;max-width:580px;margin:12px auto}
+.ecard-card-details{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:22px auto 14px;padding:14px 4px;border-top:1px solid #c6a65d;border-bottom:1px solid #c6a65d}
+.ecard-card-details span{display:flex;flex-direction:column;gap:5px;min-width:105px;font-size:13px}
+.ecard-card-details b{font-family:Arial,sans-serif;font-size:10px;letter-spacing:2px;color:var(--ecard-gold)}
+.ecard-card-welcome{display:inline-block;margin:12px auto;padding:8px 28px;background:linear-gradient(90deg,#b98a28,#f2d77d,#b98a28);color:#33230b;font-weight:700;letter-spacing:3px}
+.ecard-card-footer{font-family:Arial,sans-serif;font-size:10px;letter-spacing:1px;color:#8b6b2b;margin:10px 0}
+.ecard-card-royal .ecard-card-inner{border-color:#87632c;background:linear-gradient(145deg,#fffaf0,#f4e6c6)}
+.ecard-card-floral .ecard-card-inner{border-color:#ad7c70;background:radial-gradient(ellipse at top,#fff 0%,#fff7f5 72%,#f5e4df 100%)}
+.ecard-card-floral{--ecard-gold:#a56e63;--ecard-ink:#49332f}
+.ecard-card-modern .ecard-card-inner{border:2px solid #b8a77e;background:#fff}
+.ecard-card-modern{--ecard-gold:#8b7447;--ecard-ink:#292929}
+@media(max-width:520px){.ecard-card-art{padding:7px}.ecard-card-inner{padding:25px 13px 20px;min-height:390px}.ecard-card-details{gap:8px}.ecard-card-details span{min-width:85px}}
