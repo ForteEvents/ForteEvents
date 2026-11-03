@@ -1157,6 +1157,31 @@ async function refundCredits(userId, amount) {
 }
 
 // ------------------------------------
+// NORMALIZE TANZANIA PHONE NUMBERS FOR BEEM
+// Beem expects destination numbers in international format,
+// e.g. 255748498095 (without + or leading 0).
+// ------------------------------------
+function normalizeBeemDestination(value) {
+  let phone = String(value || "").trim().replace(/[\\s().-]/g, "");
+
+  if (phone.startsWith("+")) phone = phone.slice(1);
+  if (phone.startsWith("00")) phone = phone.slice(2);
+
+  // Convert Tanzania local format 07XXXXXXXX / 06XXXXXXXX
+  // into 2557XXXXXXXX / 2556XXXXXXXX.
+  if (/^0[67]\\d{8}$/.test(phone)) {
+    phone = "255" + phone.slice(1);
+  }
+
+  // Reject malformed local Tanzanian numbers before calling Beem.
+  if (/^[67]\\d{8}$/.test(phone)) {
+    phone = "255" + phone;
+  }
+
+  return phone;
+}
+
+// ------------------------------------
 // SEND SMS THROUGH BEEM
 // ------------------------------------
 
@@ -1337,7 +1362,7 @@ app.post(
 
           return {
             recipient_id: String(index + 1),
-            dest_addr: String(recipient.phone).trim(),
+            dest_addr: normalizeBeemDestination(recipient.phone),
             name: String(recipient.name || "").trim(),
             customMessage: useCustom ? custom.message.trim() : null,
           };
