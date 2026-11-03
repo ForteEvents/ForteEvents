@@ -354,6 +354,8 @@ function App() {
   // E-CARD STATES
   const [eCards, setECards] = useState([])
   const [eCardsLoading, setECardsLoading] = useState(false)
+  const [ecardTemplates, setEcardTemplates] = useState([])
+  const [ecardTemplatesLoading, setEcardTemplatesLoading] = useState(false)
   const [eCardWalletBalance, setECardWalletBalance] = useState(0)
   const [eCardWalletLoading, setECardWalletLoading] = useState(false)
   const [eCardSaving, setECardSaving] = useState(false)
@@ -624,6 +626,21 @@ function App() {
     loadProfile()
   }, [session])
 
+
+  useEffect(() => {
+    if (page !== 'ecard') return
+    let active = true
+    const loadTemplates = async () => {
+      setEcardTemplatesLoading(true)
+      const { data, error } = await supabase.from('e_card_templates').select('id,name,occasion,description,image_url,theme,design').eq('is_active', true).order('created_at', { ascending: false })
+      if (!active) return
+      if (error) setECardMessage('Sampuli za E-card hazijapakiwa: ' + error.message)
+      else setEcardTemplates(data || [])
+      setEcardTemplatesLoading(false)
+    }
+    loadTemplates()
+    return () => { active = false }
+  }, [page])
 
   // =========================
   // E-CARD FUNCTIONS
@@ -2856,6 +2873,22 @@ return (
           <div className="page-header">
             <div><h1>Digital E-card</h1><p>Tengeneza na usambaze mialiko ya kidigitali.</p></div>
             <button type="button" className="secondary-button" onClick={loadECards}>Refresh</button>
+          </div>
+          <div className="card">
+            <h2>Chagua sampuli ya ForteEvents</h2>
+            <p>Chagua muundo unaoupenda. Kisha jaza majina, tarehe na taarifa za tukio lako.</p>
+            {ecardTemplatesLoading ? <p>Inapakia sampuli...</p> : ecardTemplates.length === 0 ?
+              <p>Kwa sasa hakuna sampuli mpya zilizowekwa. Unaweza kutumia miundo ya kawaida iliyo hapa chini.</p> :
+              <div className="ecard-template-gallery">{ecardTemplates.map(item => (
+                <button type="button" key={item.id} className="ecard-template-option" onClick={() => {
+                  setECardForm(v => ({ ...v, image_url: item.image_url, theme: item.theme || 'gold' }))
+                  setECardDesign(v => ({ ...defaultECardDesign, ...(item.design || {}), template: item.design?.template || 'classic' }))
+                  setECardMessage('Umechagua sampuli: ' + item.name + '. Sasa jaza taarifa zako.')
+                }}>
+                  <img src={item.image_url} alt={item.name} style={{width:'100%',height:'190px',objectFit:'cover',borderRadius:'8px'}} />
+                  <b>{item.name}</b><small>{item.occasion} · {item.description}</small><em>Chagua sampuli hii</em>
+                </button>
+              ))}</div>}
           </div>
           <div className="card">
             <h2>{editingECardId ? 'Hariri E-card' : 'Tengeneza E-card mpya'}</h2>
