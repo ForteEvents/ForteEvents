@@ -1456,7 +1456,16 @@ app.post(
           };
         }
 
-        if (response.ok) {
+        // HTTP 200 pekee haitoshi: hakiki majibu ya Beem.
+        // Beem send response: successful=true, code=100,
+        // valid=1 kwa recipient mmoja tunayemtuma kwa kila request.
+        const beemAccepted =
+          response.ok &&
+          beemData?.successful === true &&
+          Number(beemData?.code) === 100 &&
+          Number(beemData?.valid) === 1;
+
+        if (beemAccepted) {
           sentRecipients.push({
             recipient,
             message: personalizedMessage,
@@ -1468,7 +1477,15 @@ app.post(
             recipient,
             message: personalizedMessage,
             smsCount,
-            error: beemData,
+            error: {
+              httpStatus: response.status,
+              providerCode: beemData?.code ?? null,
+              providerMessage:
+                beemData?.message ||
+                beemData?.error ||
+                "Beem haijathibitisha kupokea SMS hii.",
+              response: beemData,
+            },
           });
         }
       }
@@ -1507,36 +1524,30 @@ app.post(
       // SAVE SMS HISTORY TO SUPABASE
       // -----------------------------
 
-      if (sentRecipients.length > 0) {
-        const historyRows =
-          sentRecipients.map(
-            (item) => ({
-              user_id:
-                req.user.id,
+      const historyRows = [
+        ...sentRecipients.map((item) => ({
+          user_id: req.user.id,
+          event_id: eventId || null,
+          recipient: item.recipient.dest_addr,
+          message: item.message,
+          sms_count: item.smsCount,
+          status: "sent",
+          error_message: null,
+          sent_at: new Date().toISOString(),
+        })),
+        ...failedRecipients.map((item) => ({
+          user_id: req.user.id,
+          event_id: eventId || null,
+          recipient: item.recipient.dest_addr,
+          message: item.message,
+          sms_count: item.smsCount,
+          status: "failed",
+          error_message: JSON.stringify(item.error),
+          sent_at: new Date().toISOString(),
+        })),
+      ];
 
-              event_id:
-                eventId || null,
-
-              recipient:
-                item.recipient.dest_addr,
-
-              message:
-                item.message,
-
-              sms_count:
-                item.smsCount,
-
-              status:
-                "sent",
-
-              error_message:
-                null,
-
-              sent_at:
-                new Date().toISOString(),
-            })
-          );
-
+      if (historyRows.length > 0) {
         const { error: historyError } =
           await supabaseAdmin
             .from("sms_history")
@@ -1555,8 +1566,10 @@ app.post(
 
         message:
           failedCount > 0
-            ? "SMS zimetumwa kwa mafanikio kwa baadhi ya wapokeaji."
-            : "SMS zimetumwa kikamilifu.",
+            ? sentRecipients.length > 0
+              ? "Beem imepokea maombi ya SMS kwa baadhi ya wapokeaji; wengine wamekataliwa. Angalia matokeo hapa chini."
+              : "Beem imekataa maombi yote ya SMS. Credits za waliokataliwa zimerudishwa."
+            : "Beem imepokea maombi yote ya SMS. Ufikishaji kwenye simu utathibitishwa na delivery report.",
 
         balance:
           finalBalance,
