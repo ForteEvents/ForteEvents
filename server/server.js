@@ -1671,12 +1671,6 @@ console.log(
         const historyRows =
           sentRecipients.map(
             (item) => ({
-              id:
-                Date.now() +
-                Math.floor(
-                  Math.random() * 1000
-                ),
-
               user_id:
                 req.user.id,
 
