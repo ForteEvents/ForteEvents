@@ -3,6 +3,64 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { supabase } from './supabaseClient'
 import './App.css'
 
+
+async function createECardPng(card) {
+  const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+  const lines = [
+    { text: 'FORTEEVENTS', y: 105, size: 25, weight: 700, spacing: 5 },
+    { text: 'MAKE YOUR EVENT EXTRAORDINARY', y: 135, size: 12, spacing: 2 },
+    { text: card.occasion || 'MWALIKO', y: 205, size: 18, spacing: 5 },
+    { text: card.title || 'MWALIKO', y: 265, size: 38, weight: 700 },
+    { text: 'Tunayo furaha kukukaribisha', y: 325, size: 20 },
+    { text: card.host_names || '', y: 375, size: 29, weight: 700 },
+    { text: card.event_date || '', y: 465, size: 19, weight: 700 },
+    { text: card.event_time || '', y: 505, size: 18 },
+    { text: card.venue || '', y: 550, size: 18 },
+    { text: 'KARIBU SANA', y: 640, size: 24, weight: 700, spacing: 4 },
+    { text: 'Imetengenezwa kwa upendo na ForteEvents', y: 700, size: 13 }
+  ]
+  const message = String(card.message || '').split(/\r?\n/).slice(0, 3)
+  message.forEach((line, index) => lines.splice(6 + index, 0, { text: line.slice(0, 65), y: 405 + index * 25, size: 15 }))
+  const textSvg = lines.map(line => `<text x="600" y="${line.y}" text-anchor="middle" font-family="Georgia,serif" font-size="${line.size}" font-weight="${line.weight || 400}" letter-spacing="${line.spacing || 0}" fill="#67452f">${esc(line.text)}</text>`).join('')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="#f8f0e3"/><rect x="28" y="28" width="1144" height="744" rx="12" fill="#fffaf1" stroke="#8b5e3c" stroke-width="8"/><rect x="48" y="48" width="1104" height="704" rx="8" fill="none" stroke="#d58a4c" stroke-width="2"/><g fill="#c77d48" font-size="55" opacity=".8"><text x="75" y="105">❀</text><text x="1060" y="105">❀</text><text x="75" y="735">✿</text><text x="1060" y="735">✿</text></g>${textSvg}</svg>`
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+  const objectUrl = URL.createObjectURL(blob)
+  try {
+    const image = new Image()
+    image.src = objectUrl
+    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject })
+    const canvas = document.createElement('canvas')
+    canvas.width = 1200; canvas.height = 800
+    canvas.getContext('2d').drawImage(image, 0, 0)
+    return await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('PNG haikuundwa.')), 'image/png'))
+  } finally { URL.revokeObjectURL(objectUrl) }
+}
+
+async function shareECard(card, mode, setMessage) {
+  const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
+  const message = `Habari! Tunakualika kwenye ${card.title}. Fungua mwaliko kupitia link hii: ${url}`
+  if (mode === 'link') {
+    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer')
+    return
+  }
+  try {
+    const png = await createECardPng(card)
+    const file = new File([png], 'ForteEvents-mwaliko.png', { type: 'image/png' })
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      const shareData = mode === 'both' ? { files: [file], text: message, title: card.title } : { files: [file], title: card.title }
+      await navigator.share(shareData)
+      setMessage('Chagua WhatsApp au programu nyingine kwenye dirisha la kushare.')
+      return
+    }
+    const downloadUrl = URL.createObjectURL(png)
+    const anchor = document.createElement('a')
+    anchor.href = downloadUrl; anchor.download = 'ForteEvents-mwaliko.png'; anchor.click()
+    URL.revokeObjectURL(downloadUrl)
+    if (mode === 'both') window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer')
+    setMessage(mode === 'both' ? 'Picha imepakuliwa. WhatsApp imefunguliwa; ambatisha picha uliyopakua.' : 'Picha ya mwaliko imepakuliwa kwenye kifaa chako.')
+  } catch (error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: ' + error.message) }
+}
+
 function AdminCustomers({ session, onBack }) {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -2963,6 +3021,7 @@ return (
                   {id:'classic',name:'Classic Gold',desc:'Harusi na sherehe rasmi',sample:'✿',tone:'gold'},
                   {id:'royal',name:'Royal Wedding',desc:'Muonekano wa kifahari',sample:'❀',tone:'royal'},
                   {id:'floral',name:'Floral Garden',desc:'Maua na mapambo ya upole',sample:'❁',tone:'floral'},
+                  {id:'floral-brown',name:'Floral Brown & Cream',desc:'Maua ya rangi ya kahawia, krimu na machungwa',sample:'❀',tone:'floral-brown'},
                   {id:'modern',name:'Modern White',desc:'Rahisi na wa kisasa',sample:'◇',tone:'modern'}
                 ].map(item => (
                   <button type="button" key={item.id} className={`ecard-template-option ecard-template-${item.tone} ${eCardDesign.template===item.id?'selected':''}`} onClick={() => setECardDesign(v => ({...v,template:item.id}))}>
@@ -3064,11 +3123,9 @@ return (
                 <button type="button" className="secondary-button" onClick={() => deleteECard(card)}>Futa</button>
                 {card.is_published && <>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
-                    <button type="button" className="primary-button" onClick={() => {
-                      const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
-                      const message = `Habari! Tunakualika kwenye ${card.title}. Fungua mwaliko kupitia link hii: ${url}`;
-                      window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
-                    }}>Tuma WhatsApp</button>
+                    <button type="button" className="primary-button" onClick={() => shareECard(card, 'link', setECardMessage)}>WhatsApp — Link</button>
+                    <button type="button" className="secondary-button" onClick={() => shareECard(card, 'image', setECardMessage)}>WhatsApp — Picha</button>
+                    <button type="button" className="secondary-button" onClick={() => shareECard(card, 'both', setECardMessage)}>WhatsApp — Link + Picha</button>
                     <button type="button" className="secondary-button" onClick={async () => {
                       const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
                       try {
