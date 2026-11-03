@@ -933,9 +933,8 @@ const sendContributionSms = async () => {
 
     if (contributionSmsMode === 'personal') {
       message =
-        'Habari ' + item.full_name +
-        ', event: ' + (contributionEvent.event_name || '') +
-        '. Ahadi yako ni TZS ' + pledged.toLocaleString() +
+        message +
+        ' Ahadi yako ni TZS ' + pledged.toLocaleString() +
         ', umelipa TZS ' + paid.toLocaleString() +
         ', salio TZS ' + balance.toLocaleString() +
         '. Asante kwa mchango wako.'
@@ -2776,21 +2775,43 @@ return (
               <option value="personal">3. Ujumbe binafsi wenye ahadi, malipo na salio</option>
             </select>
 
-            {contributionSmsMode !== 'personal' && (
-              <>
-                <label>Ujumbe wa SMS</label>
-                <textarea
-                  value={contributionSmsMessage}
-                  onChange={(e) => setContributionSmsMessage(e.target.value)}
-                  rows={4}
-                  placeholder="Andika ujumbe wa SMS"
-                />
-                <p>
-                  Unaweza kutumia {'{jina}'}, {'{ahadi}'}, {'{amelipa}'},
-                  {'{salio}'} na {'{event}'} ndani ya ujumbe.
-                </p>
-              </>
-            )}
+            <label>Andika au hariri ujumbe wa SMS</label>
+            <textarea
+              value={contributionSmsMessage}
+              onChange={(e) => setContributionSmsMessage(e.target.value)}
+              rows={4}
+              placeholder="Andika ujumbe wa SMS"
+            />
+            <p>
+              Unaweza kutumia {'{jina}'} na {'{event}'} kwa aina zote.
+              Kwa ujumbe binafsi, mfumo utaongeza moja kwa moja ahadi,
+              kiasi alicholipa na salio la kila mchangiaji.
+            </p>
+            {(() => {
+              const sample = contributors.find((item) => item.phone?.trim()) || contributors[0]
+              if (!sample) return <p>Hakuna mchangiaji wa kuonyesha mfano wa ujumbe.</p>
+              const pledged = Number(sample.pledged_amount || 0)
+              const paid = Number(sample.paid_amount || 0)
+              const balance = Math.max(0, pledged - paid)
+              let preview = contributionSmsMessage
+                .replaceAll('{jina}', sample.full_name || '')
+                .replaceAll('{ahadi}', pledged.toLocaleString())
+                .replaceAll('{amelipa}', paid.toLocaleString())
+                .replaceAll('{salio}', balance.toLocaleString())
+                .replaceAll('{event}', contributionEvent?.event_name || '')
+              if (contributionSmsMode === 'personal') {
+                preview += ' Ahadi yako ni TZS ' + pledged.toLocaleString() +
+                  ', umelipa TZS ' + paid.toLocaleString() +
+                  ', salio TZS ' + balance.toLocaleString() +
+                  '. Asante kwa mchango wako.'
+              }
+              return (
+                <div style={{ background: '#fffdf7', border: '1px solid #d6c18a', borderRadius: '8px', padding: '12px', marginTop: '10px' }}>
+                  <strong>Muonekano wa SMS kwa {sample.full_name}:</strong>
+                  <p style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>{preview}</p>
+                </div>
+              )
+            })()}
 
             <button
               className="primary-button"
