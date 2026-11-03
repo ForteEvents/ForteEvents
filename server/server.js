@@ -958,45 +958,22 @@ app.post(
         });
       }
 
-      const oldBalance =
-        Number(
-          customer.sms_balance || 0
-        );
+      const { data: newBalance, error: updateError } =
+        await supabaseAdmin.rpc("adjust_sms_credits", {
+          p_user_id: userId,
+          p_amount: creditAmount,
+        });
 
-      const newBalance =
-        oldBalance +
-        creditAmount;
+      if (updateError) throw updateError;
 
-      const {
-        data: updated,
-        error:
-          updateError,
-      } =
+      const { data: updated, error: updatedError } =
         await supabaseAdmin
           .from("profiles")
-          .update({
-            sms_balance:
-              newBalance,
-
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq(
-            "id",
-            userId
-          )
-          .select(
-            "id, full_name, email, sms_balance"
-          )
+          .select("id, full_name, email, sms_balance")
+          .eq("id", userId)
           .single();
 
-      if (updateError) {
-        return res.status(500).json({
-          ok: false,
-          error:
-            updateError.message,
-        });
-      }
+      if (updatedError) throw updatedError;
 
       return res.json({
         ok: true,
@@ -1170,62 +1147,13 @@ app.get(
 // Inatumika pale Beem ikikataa SMS
 // baada ya credits kuwa reserved.
 
-async function refundCredits(
-  userId,
-  amount
-) {
-  const {
-    data: profile,
-    error:
-      readError,
-  } =
-    await supabaseAdmin
-      .from("profiles")
-      .select(
-        "sms_balance"
-      )
-      .eq(
-        "id",
-        userId
-      )
-      .single();
-
-  if (readError) {
-    throw readError;
-  }
-
-  const currentBalance =
-    Number(
-      profile.sms_balance || 0
-    );
-
-  const newBalance =
-    currentBalance +
-    amount;
-
-  const {
-    error:
-      updateError,
-  } =
-    await supabaseAdmin
-      .from("profiles")
-      .update({
-        sms_balance:
-          newBalance,
-
-        updated_at:
-          new Date().toISOString(),
-      })
-      .eq(
-        "id",
-        userId
-      );
-
-  if (updateError) {
-    throw updateError;
-  }
-
-  return newBalance;
+async function refundCredits(userId, amount) {
+  const { data, error } = await supabaseAdmin.rpc("adjust_sms_credits", {
+    p_user_id: userId,
+    p_amount: amount,
+  });
+  if (error) throw error;
+  return data;
 }
 
 // ------------------------------------
@@ -1348,126 +1276,38 @@ app.post(
     // credits ambazo hana.
 
     try {
-      const {
-        data: currentProfile,
-        error:
-          profileError,
-      } =
-        await supabaseAdmin
+      const { data: updatedBalance, error: reserveError } =
+        await supabaseAdmin.rpc("reserve_sms_credits", {
+          p_user_id: req.user.id,
+          p_amount: requiredCredits,
+        });
+
+      if (reserveError) throw reserveError;
+
+      if (updatedBalance === null) {
+        const { data: profile } = await supabaseAdmin
           .from("profiles")
-          .select(
-            "id, sms_balance"
-          )
-          .eq(
-            "id",
-            req.user.id
-          )
+          .select("sms_balance")
+          .eq("id", req.user.id)
           .maybeSingle();
 
-      if (profileError) {
-        return res.status(500).json({
-          ok: false,
-          error:
-            "Imeshindikana kusoma customer balance.",
-        });
-      }
+        if (!profile) {
+          return res.status(404).json({
+            ok: false,
+            error: "Customer profile haijapatikana.",
+          });
+        }
 
-      if (!currentProfile) {
-        return res.status(404).json({
-          ok: false,
-          error:
-            "Customer profile haijapatikana.",
-        });
-      }
-
-console.log(
-  "CUSTOMER PROFILE:",
-  currentProfile
-);
-      const currentBalance =
-        Number(
-          currentProfile.sms_balance ||
-            0
-        );
-
-      if (
-        currentBalance <
-        requiredCredits
-      ) {
         return res.status(400).json({
           ok: false,
-
-          error:
-            "SMS credits zako hazitoshi.",
-
-          balance:
-            currentBalance,
-
-          required:
-            requiredCredits,
+          error: "SMS credits zako hazitoshi.",
+          balance: Number(profile.sms_balance || 0),
+          required: requiredCredits,
         });
       }
 
-      const newBalance =
-        currentBalance -
-        requiredCredits;
+      reservedBalance = Number(updatedBalance);
 
-      const {
-        data: updatedProfile,
-        error:
-          reserveError,
-      } =
-        await supabaseAdmin
-          .from("profiles")
-          .update({
-            sms_balance:
-              newBalance,
-
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq(
-            "id",
-            req.user.id
-          )
-          .gte(
-            "sms_balance",
-            requiredCredits
-          )
-          .select(
-            "id, sms_balance"
-          )
-          .maybeSingle();
-
-      if (
-        reserveError
-      ) {
-        console.error(
-          "CREDIT RESERVE ERROR:",
-          reserveError
-        );
-
-        return res.status(500).json({
-          ok: false,
-          error:
-            "Imeshindikana kuhifadhi SMS credits.",
-        });
-      }
-
-      if (
-        !updatedProfile
-      ) {
-        return res.status(409).json({
-          ok: false,
-          error:
-            "SMS credits zimebadilika. Tafadhali jaribu tena.",
-        });
-      }
-
-      reservedBalance =
-        Number(
-          updatedProfile.sms_balance
-        );
     } catch (error) {
       console.error(
         "CREDIT CHECK ERROR:",
