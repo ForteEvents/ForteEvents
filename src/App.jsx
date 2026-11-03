@@ -590,10 +590,7 @@ function App() {
         location_url: eCardForm.location_url.trim() || null,
         message: eCardForm.message.trim(),
         image_url: eCardForm.image_url.trim() || null,
-        user_id: session.user.id,
-        slug: editingECardId
-          ? eCards.find((card) => String(card.id) === String(editingECardId))?.slug
-          : (window.crypto?.randomUUID?.() || ('card-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9)))
+        user_id: session.user.id
       }
       const query = editingECardId
         ? supabase.from('e_cards').update(payload).eq('id', editingECardId).eq('user_id', session.user.id).select().single()
@@ -2799,7 +2796,11 @@ return (
                 if (!file) return
                 if (file.size > 5 * 1024 * 1024) { setECardMessage('Picha isizidi 5MB.'); e.target.value = ''; return }
                 const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-                const path = session.user.id + '/' + (window.crypto?.randomUUID?.() || Date.now()) + '.' + ext
+                if (!window.crypto?.randomUUID) {
+                  setECardMessage('Kivinjari hiki hakiwezi kutengeneza jina salama la faili. Tafadhali tumia kivinjari kilichosasishwa.')
+                  return
+                }
+                const path = session.user.id + '/' + window.crypto.randomUUID() + '.' + ext
                 setECardSaving(true)
                 const { error } = await supabase.storage.from('e-card-images').upload(path, file, { upsert: false, contentType: file.type })
                 if (error) setECardMessage('Picha haikupakiwa: ' + error.message)
