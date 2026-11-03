@@ -988,7 +988,7 @@ app.post(
           creditAmount,
 
         previousBalance:
-          oldBalance,
+          Number(newBalance) - creditAmount,
 
         balance:
           Number(
