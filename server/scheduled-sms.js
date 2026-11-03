@@ -264,60 +264,21 @@ export async function processDueSchedules({
         return total + countSmsParts(personalizedMessage);
       }, 0);
 
-      // Hifadhi salio la sasa kabla ya kutoa credits.
-      let balanceReserved = false;
+      const { data: updatedBalance, error: reserveError } =
+        await supabaseAdmin.rpc("reserve_sms_credits", {
+          p_user_id: claimed.user_id,
+          p_amount: requiredCredits,
+        });
 
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const { data: profile, error: profileError } =
-          await supabaseAdmin
-            .from("profiles")
-            .select("sms_balance")
-            .eq("id", claimed.user_id)
-            .single();
-
-        if (profileError || !profile) {
-          throw new Error("Imeshindikana kusoma salio la mteja.");
-        }
-
-        const currentBalance = Number(profile.sms_balance || 0);
-
-        if (currentBalance < requiredCredits) {
-          throw new Error(
-            `Salio halitoshi. Zinahitajika SMS ${requiredCredits}, salio ni ${currentBalance}.`
-          );
-        }
-
-        const newBalance = currentBalance - requiredCredits;
-
-        const { data: updatedProfile, error: reserveError } =
-          await supabaseAdmin
-            .from("profiles")
-            .update({
-              sms_balance: newBalance,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", claimed.user_id)
-            .eq("sms_balance", currentBalance)
-            .select("sms_balance")
-            .maybeSingle();
-
-        if (reserveError) {
-          throw reserveError;
-        }
-
-        if (updatedProfile) {
-          reserved = true;
-          reservedBalance = newBalance;
-          balanceReserved = true;
-          break;
-        }
-      }
-
-      if (!balanceReserved) {
+      if (reserveError) throw reserveError;
+      if (updatedBalance === null) {
         throw new Error(
-          "Salio linabadilika mara kwa mara. Jaribu kupanga SMS tena."
+          `Salio halitoshi. Zinahitajika SMS ${requiredCredits}.`
         );
       }
+
+      reserved = true;
+      reservedBalance = Number(updatedBalance);
 
       const historyRows = [];
 
@@ -420,37 +381,13 @@ export async function processDueSchedules({
       // Rudisha credits za SMS zilizoshindwa.
       if (reserved && failedCredits > 0) {
         let refunded = false;
-
-        for (let attempt = 0; attempt < 5; attempt++) {
-          const { data: profile, error: readError } =
-            await supabaseAdmin
-              .from("profiles")
-              .select("sms_balance")
-              .eq("id", claimed.user_id)
-              .single();
-
-          if (readError || !profile) {
-            break;
-          }
-
-          const currentBalance = Number(profile.sms_balance || 0);
-
-          const { data: refundData, error: refundError } =
-            await supabaseAdmin
-              .from("profiles")
-              .update({
-                sms_balance: currentBalance + failedCredits,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", claimed.user_id)
-              .eq("sms_balance", currentBalance)
-              .select("sms_balance")
-              .maybeSingle();
-
-          if (!refundError && refundData) {
-            refunded = true;
-            break;
-          }
+        const { error: refundError } = await supabaseAdmin.rpc("adjust_sms_credits", {
+          p_user_id: claimed.user_id,
+          p_amount: failedCredits,
+        });
+        refunded = !refundError;
+        if (refundError) {
+          console.error("SCHEDULE REFUND ERROR:", refundError);
         }
 
         if (!refunded) {
