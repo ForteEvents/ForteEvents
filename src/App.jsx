@@ -3071,7 +3071,7 @@ return (
             <div className="ecard-professional-preview" aria-label="Muonekano wa kadi ya mwaliko">
               <div className="ecard-main-panel">
                 
-                <div className="ecard-brand-lockup"><strong>ForteEvents</strong><small>Make your event extraordinary</small></div>
+                <div className="ecard-brand-lockup"><img src="/forteevents-logo.png" alt="ForteEvents" /></div>
                 <div className="ecard-main-heading">
                   <div className="ecard-document-title">KADI YA MWALIKO</div>
                   <div className="ecard-script-title">{eCardForm.occasion || 'MWALIKO'}</div>
