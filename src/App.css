@@ -527,3 +527,29 @@ button[type="submit"] {
   background: linear-gradient(90deg, #8b5e3c, #d58a4c, #8b5e3c);
   color: #fffaf1;
 }
+
+
+/* ForteEvents fixed gold wedding invitation */
+.ecard-guest-sheet{width:100%;max-width:760px;margin:20px auto 26px;page-break-after:always;break-after:page}
+.ecard-guest-card{position:relative;overflow:hidden;min-height:900px;padding:30px 34px 26px;text-align:center;color:#21180e;font-family:Georgia,'Times New Roman',serif;background:radial-gradient(ellipse at 50% 10%,#fff 0%,#fffaf0 68%,#f4e6c9 100%);border:7px double #bd891d;outline:1px solid #e7c66f;outline-offset:-15px;box-shadow:0 8px 28px rgba(91,61,10,.14)}
+.ecard-guest-card:before,.ecard-guest-card:after{content:'✿  ❀  ✿';position:absolute;left:0;right:0;color:#c79a39;font-size:32px;letter-spacing:18px;opacity:.48;pointer-events:none}
+.ecard-guest-card:before{top:8px}.ecard-guest-card:after{bottom:8px}
+.ecard-brand-mark{color:#9a6811;font-size:16px;font-weight:700;letter-spacing:4px;margin:14px 0 26px}
+.ecard-brand-mark small{display:block;font-size:10px;letter-spacing:1.5px;font-style:italic;margin-top:5px}
+.ecard-guest-card>h2{font-family:cursive,Georgia,serif!important;font-size:clamp(42px,7vw,64px)!important;font-weight:400!important;font-style:italic;color:#bd8110!important;margin:12px 0 18px!important}
+.ecard-guest-intro{font-size:20px;line-height:1.55;margin:14px auto 24px}
+.ecard-gold-ribbon{margin:0 auto;padding:16px 18px;max-width:620px;background:linear-gradient(100deg,#bd8110,#ffe59a,#c58a18);border:1px solid #d5a63d;border-radius:8px;font-size:clamp(25px,4vw,39px);font-weight:700;color:#241908}
+.ecard-guest-name{font-size:clamp(28px,5vw,42px);font-weight:700;margin:26px 0 20px}
+.ecard-guest-date{font-size:clamp(23px,4vw,34px);font-style:italic;color:#ae7710;margin:12px 0}
+.ecard-guest-time,.ecard-guest-venue{font-size:20px;line-height:1.5;margin:8px auto}
+.ecard-guest-message{max-width:610px;margin:24px auto;padding:16px 20px;border:1px solid #bd891d;border-radius:18px;background:#fff9ed;font-size:18px;line-height:1.5;white-space:pre-wrap}
+.ecard-guest-bottom{display:flex;align-items:center;justify-content:space-around;gap:22px;margin:28px auto 8px;max-width:640px}
+.ecard-guest-bottom>div:first-child{flex:1;font-size:21px;color:#a06c10}
+.ecard-guest-bottom p{font-size:17px;color:#342718}
+.ecard-guest-bottom small{font-size:11px;color:#876321}
+.ecard-qr-wrap{width:155px;flex:none;padding:8px;border:3px solid #c18a1c;border-radius:12px;background:white}
+.ecard-qr-wrap img{display:block;width:100%;height:auto}
+.ecard-qr-wrap strong{display:block;margin-top:6px;padding:6px;background:#dca51e;border-radius:8px;color:#211707;letter-spacing:2px}
+.ecard-guest-actions{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;padding:10px}
+@media(max-width:560px){.ecard-guest-card{min-height:0;padding:22px 18px}.ecard-guest-intro{font-size:16px}.ecard-guest-message{font-size:15px}.ecard-guest-bottom{gap:10px}.ecard-qr-wrap{width:120px}.ecard-guest-bottom>div:first-child{font-size:17px}}
+@media print{ @page{size:A4 portrait;margin:8mm} body{background:#fff!important}.ecard-guest-sheet{max-width:none;margin:0 auto!important;page-break-after:always;break-after:page}.ecard-guest-card{min-height:265mm;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ecard-guest-actions{display:none!important} }
