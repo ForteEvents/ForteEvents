@@ -619,3 +619,48 @@ button[type="submit"] {
 .ecard-guest-card{position:relative;overflow:hidden}.ecard-guest-card .ecard-detail-flow,.ecard-guest-card .ecard-family-message{margin:18px auto}.ecard-guest-invitation{margin:18px auto}.ecard-guest-invitation p{font-size:17px}.ecard-guest-bottom{border-top:1px solid rgba(183,132,37,.45);padding-top:16px}.ecard-guest-bottom>div:first-child{font-size:12px;color:#876321}.ecard-guest-bottom small{font-size:11px}.ecard-qr-wrap{border-radius:3px;border:2px solid #bd8b2d}.ecard-guest-message{border:0;border-radius:0;background:transparent;padding:5px 0}.ecard-form-hint{font-size:12px;color:#78664b;margin:4px 0 12px}
 @media(max-width:700px){.ecard-professional-preview{grid-template-columns:minmax(0,1fr);aspect-ratio:auto;min-height:0;padding:10px}.ecard-main-panel{padding:22px 14px 12px;border-bottom:1px solid #d5b66f}.ecard-pass-panel{min-height:390px}.ecard-floral-top,.ecard-floral-bottom{width:100px}.ecard-detail-line{gap:5px}}
 @media print{.ecard-guest-message,.ecard-detail-line{background:transparent!important;border:0!important;box-shadow:none!important}.ecard-guest-card .ecard-family-message{background:transparent!important;border:0!important}}
+
+/* Clear separation of wedding couple names from the event sentence */
+.ecard-invitation-couple{display:block;width:max-content;max-width:96%;margin:5px auto 2px;padding:4px 16px 5px;border-bottom:1px solid #b98a32;color:#3e2b17;font-family:Georgia,serif;font-size:clamp(17px,2vw,24px);font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.ecard-invitation-titles{font-size:clamp(13px,1.45vw,18px)}
+
+/* Wedding Invitation — Floral Brown & Cream visual direction */
+.ecard-professional-preview{background:linear-gradient(135deg,#f5e8d4 0%,#fff8ec 42%,#ead8bd 100%)!important;border:7px double #79503a!important;border-radius:18px!important;box-shadow:0 18px 42px rgba(74,43,25,.24),inset 0 0 0 5px rgba(255,255,255,.7)!important;padding:17px!important;gap:15px!important}
+.ecard-main-panel{background:linear-gradient(160deg,rgba(255,252,244,.97),rgba(246,231,208,.94))!important;border:1px solid #c78a60!important;border-radius:10px!important;box-shadow:inset 0 0 0 5px rgba(255,255,255,.62),inset 0 0 0 7px rgba(157,93,55,.12)!important;padding:18px 26px 15px!important}
+.ecard-brand-lockup{color:#70452f!important}
+.ecard-brand-lockup strong{font-family:Georgia,serif!important;letter-spacing:.02em}
+.ecard-main-heading{padding:5px 24px 10px;border-bottom:1px solid rgba(151,91,55,.35)}
+.ecard-document-title{color:#70452f!important;letter-spacing:.22em!important}
+.ecard-script-title{color:#a65d36!important;text-shadow:0 1px #fff!important;font-family:Georgia,serif!important}
+.ecard-invitation-label{color:#79503a!important;letter-spacing:.42em!important}
+.ecard-family-copy>strong{color:#70452f!important;font-family:Georgia,serif!important}
+.ecard-invitation-copy{color:#563b2b!important}
+.ecard-invitation-titles{color:#80513a!important;letter-spacing:.025em}
+.ecard-invitation-recipient,.ecard-invitation-couple{color:#9d5633!important;border-bottom:1px solid #c17c4f!important}
+.ecard-date-line{color:#a45d39!important;font-family:Georgia,serif!important;font-weight:700}
+.ecard-detail-flow{border-top:1px solid rgba(151,91,55,.36)!important;border-bottom:1px solid rgba(151,91,55,.36)!important;padding:10px 4px!important}
+.ecard-detail-line b{color:#a65d36!important;letter-spacing:.13em}
+.ecard-detail-line span{color:#573d2e!important}
+.ecard-family-message{color:#704b37!important;border-top:1px solid rgba(151,91,55,.38)!important;font-family:Georgia,serif!important;font-style:italic!important}
+.ecard-floral-ornament{width:clamp(125px,18vw,215px)!important;filter:drop-shadow(0 3px 2px rgba(88,51,30,.13))}
+.ecard-floral-top{right:7px!important;top:3px!important;transform:rotate(4deg)!important}
+.ecard-floral-bottom{width:clamp(112px,15vw,175px)!important;transform:rotate(178deg)!important}
+.ecard-pass-panel{background:linear-gradient(160deg,#fffaf0,#eedcc4)!important;border:2px solid #a96b47!important;border-radius:12px!important;box-shadow:inset 0 0 0 4px rgba(255,255,255,.65)!important}
+.ecard-pass-ribbon{background:linear-gradient(100deg,#754a34,#b9764b,#754a34)!important;color:#fff7e9!important;letter-spacing:.1em}
+.ecard-pass-type{background:#80513a!important;border-color:#d6a27b!important}
+.ecard-pass-checkin{background:#a45d39!important}
+.ecard-pass-name{color:#593c2a!important;font-family:Georgia,serif!important}
+.ecard-pass-floral-art{width:145px!important;max-height:110px!important}
+.ecard-card-inner{background:linear-gradient(145deg,#fff9ed 0%,#f5e5d0 52%,#fff8eb 100%)!important;border:5px double #79503a!important;outline:2px solid #d59a70!important;outline-offset:-13px!important;box-shadow:0 12px 32px rgba(68,41,27,.16)!important}
+.ecard-card-inner:before,.ecard-card-inner:after{content:''!important}
+.ecard-card-brand{color:#754a34!important}
+.ecard-card-kicker{color:#a65d36!important}
+.ecard-card-inner h2{color:#754a34!important;font-family:Georgia,serif!important}
+.ecard-card-divider:before,.ecard-card-divider:after{background:#b97b54!important}
+.ecard-card-photo{border-color:#fff8ed!important;outline-color:#b97b54!important;border-radius:2px!important}
+.ecard-public-floral-top{width:clamp(135px,20vw,205px)!important;right:5px!important;top:3px!important}
+.ecard-public-floral-bottom{width:170px!important}
+.ecard-public-qr-wrap{border-color:#a96b47!important;background:#fffaf0!important}
+.ecard-card-inner .ecard-detail-flow{border-color:rgba(151,91,55,.38)!important}
+.ecard-card-inner .ecard-family-message{color:#704b37!important}
+@media(max-width:650px){.ecard-professional-preview{padding:8px!important}.ecard-main-panel{padding:12px 10px!important}.ecard-floral-top{width:118px!important;opacity:.78}.ecard-card-inner{padding:25px 16px 20px!important}}
