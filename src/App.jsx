@@ -38,7 +38,7 @@ function buildECardInvitationSentence(card,name){const p=buildECardInvitationPar
 function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p></div>}
 function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 220 170" aria-hidden="true" focusable="false"><g fill="none" stroke="#ad791d" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 158 C48 125 54 90 92 62 C126 38 150 37 203 8"/><path d="M54 119 C28 111 20 91 22 72 C44 76 61 91 54 119Z" fill="#e8d5a8"/><path d="M93 83 C70 82 58 67 57 48 C78 49 95 62 93 83Z" fill="#f4e8cc"/><path d="M139 53 C130 31 139 15 155 5 C166 24 160 44 139 53Z" fill="#e8d5a8"/></g><g fill="#fffaf0" stroke="#a87518" strokeWidth="2.2"><ellipse cx="165" cy="83" rx="12" ry="25"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(60 165 83)"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(120 165 83)"/><circle cx="165" cy="83" r="9" fill="#d4a13c"/><ellipse cx="103" cy="35" rx="9" ry="19"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(60 103 35)"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(120 103 35)"/><circle cx="103" cy="35" r="7" fill="#d4a13c"/></g></svg>}
 function buildECardDetailItems(card){const contacts=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean);return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',[card?.dress_code,...(card?.dress_colors||[])].filter(Boolean).join(' · ')],['RSVP',[card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:'',...contacts].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
-function ECardDetails({card,className=''}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{card?.dress_code&&<>{card.dress_code} </>}{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>{color}</span>)}</>:value}</span></p>)}</div>}
+function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{card?.dress_code&&<>{card.dress_code} </>}{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>{color}</span>)}</>:value}</span></p>)}</div>}
 
 async function createECardPng(card, guest = null) {
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
@@ -481,7 +481,7 @@ function App() {
     event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
     food_note: '', dress_code: '', dress_colors: [], rsvp_deadline: '', rsvp_contact_name: '',
     rsvp_contact_phone: '', rsvp_contact_name_2: '', rsvp_contact_phone_2: '',
-    location_url: '', message: '', image_url: '', theme: 'gold'
+    location_url: '', message: DEFAULT_ECARD_MESSAGE, image_url: '', theme: 'gold'
   })
 
   useEffect(() => {
@@ -774,7 +774,7 @@ function App() {
       event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
       food_note: '', dress_code: '', dress_colors: [], rsvp_deadline: '', rsvp_contact_name: '',
       rsvp_contact_phone: '', rsvp_contact_name_2: '', rsvp_contact_phone_2: '',
-      location_url: '', message: '', image_url: '', theme: 'gold'
+      location_url: '', message: DEFAULT_ECARD_MESSAGE, image_url: '', theme: 'gold'
     })
     setECardDesign(defaultECardDesign)
   }
@@ -803,7 +803,7 @@ function App() {
         reception_time: eCardForm.reception_time || null,
         rsvp_deadline: eCardForm.rsvp_deadline || null,
         location_url: eCardForm.location_url.trim() || null,
-        message: eCardForm.message.trim(),
+        message: eCardForm.message.trim() || DEFAULT_ECARD_MESSAGE,
         image_url: eCardForm.image_url.trim() || null,
         user_id: session.user.id
       }
@@ -834,7 +834,7 @@ function App() {
       rsvp_deadline: card.rsvp_deadline || '', rsvp_contact_name: card.rsvp_contact_name || '',
       rsvp_contact_phone: card.rsvp_contact_phone || '', rsvp_contact_name_2: card.rsvp_contact_name_2 || '',
       rsvp_contact_phone_2: card.rsvp_contact_phone_2 || '', location_url: card.location_url || '',
-      message: card.message || '', image_url: card.image_url || '', theme: card.theme || 'gold'
+      message: card.message || DEFAULT_ECARD_MESSAGE, image_url: card.image_url || '', theme: card.theme || 'gold'
     })
     setECardDesign(defaultECardDesign)
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
@@ -2002,7 +2002,7 @@ useEffect(() => {
                   <ECardInvitationCopy card={publicECard} recipientName={publicECard.guest?.guest_name || '[JINA LA MWALIKWA]'} />
                   <ECardDetails card={publicECard} className="ecard-public-details" />
                   <p className="ecard-family-message">{String(publicECard.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
-                  {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} /></>}
+                  {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><div className="ecard-public-qr-wrap"><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px'}} /></div></>}
                   
                   {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
@@ -3039,7 +3039,7 @@ return (
                 <div className="ecard-family-copy"><span>Familia ya</span><strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong></div>
                 <ECardInvitationCopy card={eCardForm} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} />
                 <div className="ecard-date-line">{eCardForm.event_date ? new Date(eCardForm.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
-                <ECardDetails card={eCardForm} />
+                <ECardDetails card={eCardForm} showDate={false} />
                 <p className="ecard-family-message">{String(eCardForm.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
                 <ECardFloralOrnament className="ecard-floral-bottom" />
               </div>
@@ -3099,7 +3099,7 @@ return (
               <label>Google Maps location link (hiari)</label>
               <input type="url" value={eCardForm.location_url} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
               <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
-              <label>Ujumbe wa familia (unaweza kuhariri)</label>
+              <label>Ujumbe wa Familia</label>
               <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
               <p className="ecard-form-hint">Ujumbe huu utaonekana chini ya taarifa za mwaliko. Unaweza kuubadilisha au kuacha mfano huu.</p>
               <label>Pakia picha ya mwaliko (JPG, PNG au WEBP; hadi 5MB)</label>
