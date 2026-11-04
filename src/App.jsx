@@ -32,10 +32,10 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
  if(occasion.includes('send'))eventLine='kwenye send-off ya binti yao '+(card?.title||'[JINA LA MHUSIKA]')+'.'
  else if(occasion.includes('harusi')){coupleName=[card?.bride_name,card?.groom_name].filter(Boolean).join(' na ')||card?.title||'[MAJINA YA BIBI NA BWANA HARUSI]';eventLine='kwenye harusi ya vijana wao wapendwa'}
  else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
- return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
+ return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
 }
 function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
-function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 220 170" aria-hidden="true" focusable="false"><g fill="none" stroke="#ad791d" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 158 C48 125 54 90 92 62 C126 38 150 37 203 8"/><path d="M54 119 C28 111 20 91 22 72 C44 76 61 91 54 119Z" fill="#e8d5a8"/><path d="M93 83 C70 82 58 67 57 48 C78 49 95 62 93 83Z" fill="#f4e8cc"/><path d="M139 53 C130 31 139 15 155 5 C166 24 160 44 139 53Z" fill="#e8d5a8"/></g><g fill="#fffaf0" stroke="#a87518" strokeWidth="2.2"><ellipse cx="165" cy="83" rx="12" ry="25"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(60 165 83)"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(120 165 83)"/><circle cx="165" cy="83" r="9" fill="#d4a13c"/><ellipse cx="103" cy="35" rx="9" ry="19"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(60 103 35)"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(120 103 35)"/><circle cx="103" cy="35" r="7" fill="#d4a13c"/></g></svg>}
+function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 260 205" aria-hidden="true" focusable="false"><g fill="none" stroke="#79503a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M8 196 C48 164 65 128 93 104 C124 77 169 61 245 8"/><path d="M47 163 C19 159 10 137 14 116 C39 120 54 139 47 163Z" fill="#b7a47b"/><path d="M79 128 C51 123 43 101 49 82 C73 89 86 107 79 128Z" fill="#d0bd91"/><path d="M124 89 C99 82 94 60 103 43 C126 52 137 70 124 89Z" fill="#b7a47b"/><path d="M178 57 C157 42 158 21 174 7 C192 24 194 43 178 57Z" fill="#d0bd91"/></g><g stroke="#9a5632" strokeWidth="2.2" fill="#e98b50"><ellipse cx="174" cy="106" rx="13" ry="30"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(45 174 106)"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(90 174 106)"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(135 174 106)"/><circle cx="174" cy="106" r="11" fill="#a85a31"/><ellipse cx="104" cy="53" rx="10" ry="23" fill="#f1b17d"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(45 104 53)"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(90 104 53)"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(135 104 53)"/><circle cx="104" cy="53" r="8" fill="#a85a31"/></g><g fill="#d8b48a" stroke="#8c593b" strokeWidth="1.5"><circle cx="174" cy="106" r="4"/><circle cx="104" cy="53" r="3"/></g></svg>}
 function buildECardDetailItems(card){const contacts=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean);return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',[card?.dress_code,...(card?.dress_colors||[])].filter(Boolean).join(' · ')],['RSVP',[card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:'',...contacts].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
 function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{card?.dress_code&&<>{card.dress_code} </>}{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>{color}</span>)}</>:value}</span></p>)}</div>}
 
@@ -46,15 +46,15 @@ async function createECardPng(card, guest = null) {
     : window.location.origin + '/?card=' + encodeURIComponent(card.slug || '')
   const qrImage = await QRCode.toDataURL(invitationUrl, { errorCorrectionLevel: 'H', margin: 1, width: 260, color: { dark: '#000000', light: '#FFFFFF' } })
   const date = card.event_date ? new Date(card.event_date + 'T00:00:00').toLocaleDateString('sw-TZ', {day:'numeric',month:'long',year:'numeric'}) : 'Tarehe ya tukio'
-  const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
-  const detailSvg = details.map(([label,value],i) => {
-    const y=(invitationParts.coupleName?625:605)+i*36
-    return '<text x="650" y="'+y+'" text-anchor="middle" font-family="Georgia" font-size="19" fill="#302318"><tspan font-weight="bold" fill="#9b6b16">'+esc(label)+': </tspan><tspan>'+esc(value)+'</tspan></text>'
-  }).join('')
   const guestName = guest?.guest_name || 'JINA LA MWALIKWA'
   const guestType = guest ? (guest.invite_type || 'single').toUpperCase() : 'GUEST PASS'
   const invitationParts=buildECardInvitationParts(card,guestName)
   const invitationLines=[invitationParts.intro,invitationParts.titles,'— '+invitationParts.recipient+' —',invitationParts.eventLine,...(invitationParts.coupleName?['— '+invitationParts.coupleName+' —']:[])]
+  const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
+  const detailSvg = details.map(([label,value],i) => {
+    const y=(invitationParts.coupleName?625:605)+i*36
+    return '<text x="650" y="'+y+'" text-anchor="middle" font-family="Georgia" font-size="19" fill="#59402f"><tspan font-weight="bold" fill="#a85e34">'+esc(label)+': </tspan><tspan>'+esc(value)+'</tspan></text>'
+  }).join('')
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">'+
     '<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#a96b09"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#b7790c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8efdf"/></linearGradient></defs>'+
     '<rect width="1536" height="1024" fill="url(#paper)"/><rect x="20" y="20" width="1496" height="984" rx="8" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="34" y="34" width="1468" height="956" fill="none" stroke="#d6a33d" stroke-width="2"/>'+
@@ -74,7 +74,7 @@ async function createECardPng(card, guest = null) {
     '<rect x="1120" y="430" width="280" height="54" rx="24" fill="#24190f" stroke="#d6a33d" stroke-width="3"/><text x="1260" y="466" text-anchor="middle" font-family="Arial" font-size="25" font-weight="bold" fill="#fff">'+esc(guestType === "SINGLE" ? "SINGLE · MTU 1" : guestType === "DOUBLE" ? "DOUBLE · WATU 2" : guestType)+'</text>'+
     '<rect x="1115" y="510" width="290" height="290" rx="16" fill="#fff" stroke="#c18a1c" stroke-width="4"/><image x="1130" y="525" width="260" height="260" href="'+qrImage+'" xlink:href="'+qrImage+'"/>'+
     '<rect x="1120" y="820" width="280" height="54" rx="22" fill="#b77a0d"/><text x="1260" y="855" text-anchor="middle" font-family="Arial" font-size="22" fill="#fff">✓  Scan at Check-in</text>'+
-    '<text x="1260" y="915" text-anchor="middle" font-family="Georgia" font-size="17" font-style="italic" fill="#302318">ForteEvents · Make your event extraordinary</text></svg>'
+    '<text x="1260" y="895" text-anchor="middle" font-family="Georgia" font-size="14" font-weight="bold" fill="#9a5935">SCAN: KADI KAMILI + RAMANI</text><text x="1260" y="925" text-anchor="middle" font-family="Georgia" font-size="14" font-style="italic" fill="#59402f">ForteEvents · Make your event extraordinary</text></svg>'
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   const objectUrl = URL.createObjectURL(blob)
   try {
@@ -96,10 +96,10 @@ async function shareECard(card, mode, setMessage) {
   try {
     const png = await createECardPng(card)
     const file = new File([png], 'ForteEvents-mwaliko.png', {type:'image/png'})
-    if (navigator.share && navigator.canShare?.({files:[file]})) { await navigator.share(mode === 'both' ? {files:[file],text:message,title:card.title} : {files:[file],title:card.title}); setMessage('Chagua WhatsApp au programu nyingine kwenye dirisha la kushare.'); return }
+    if (navigator.share && navigator.canShare?.({files:[file]})) { await navigator.share({files:[file],text:message,title:card.title}); setMessage('Shiriki picha pamoja na ujumbe wenye kiungo cha kadi kamili; ramani itafunguka kupitia kiungo au QR.'); return }
     const downloadUrl=URL.createObjectURL(png); const anchor=document.createElement('a'); anchor.href=downloadUrl; anchor.download='ForteEvents-mwaliko.png'; anchor.click(); URL.revokeObjectURL(downloadUrl)
-    if(mode==='both') window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer')
-    setMessage(mode==='both'?'Picha imepakuliwa. WhatsApp imefunguliwa; ambatisha picha uliyopakua.':'Picha ya mwaliko imepakuliwa.')
+    window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer')
+    setMessage('Picha imepakuliwa na WhatsApp imefunguliwa. Ambatisha picha pamoja na kiungo kilichoandaliwa ili mteja afungue ramani.')
   } catch(error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: '+error.message) }
 }
 
