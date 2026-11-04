@@ -767,7 +767,8 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
-        design: eCardDesign,
+        design: defaultECardDesign,
+        event_time: eCardForm.event_time || null,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
         venue: eCardForm.venue.trim(),
@@ -808,7 +809,7 @@ function App() {
       rsvp_contact_phone_2: card.rsvp_contact_phone_2 || '', location_url: card.location_url || '',
       message: card.message || '', image_url: card.image_url || '', theme: card.theme || 'gold'
     })
-    setECardDesign({ ...defaultECardDesign, ...(card.design || {}) })
+    setECardDesign(defaultECardDesign)
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
   }
@@ -1963,7 +1964,7 @@ useEffect(() => {
             <><h2>ForteEvents</h2><p>Mwaliko huu haupatikani au bado haujachapishwa.</p></>
           ) : (
             <>
-              {(() => { const d={...defaultECardDesign,...(publicECard.design||{})}; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template || 'classic'}`}>
+              {(() => { const d=defaultECardDesign; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template}`}>
                 <div className="ecard-card-inner">
                   <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
                   <div className="ecard-card-flower ecard-card-flower-top">✿</div>
