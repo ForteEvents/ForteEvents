@@ -36,11 +36,22 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
 }
 function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 260 205" aria-hidden="true" focusable="false"><g fill="none" stroke="#79503a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M8 196 C48 164 65 128 93 104 C124 77 169 61 245 8"/><path d="M47 163 C19 159 10 137 14 116 C39 120 54 139 47 163Z" fill="#b7a47b"/><path d="M79 128 C51 123 43 101 49 82 C73 89 86 107 79 128Z" fill="#d0bd91"/><path d="M124 89 C99 82 94 60 103 43 C126 52 137 70 124 89Z" fill="#b7a47b"/><path d="M178 57 C157 42 158 21 174 7 C192 24 194 43 178 57Z" fill="#d0bd91"/></g><g stroke="#9a5632" strokeWidth="2.2" fill="#e98b50"><ellipse cx="174" cy="106" rx="13" ry="30"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(45 174 106)"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(90 174 106)"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(135 174 106)"/><circle cx="174" cy="106" r="11" fill="#a85a31"/><ellipse cx="104" cy="53" rx="10" ry="23" fill="#f1b17d"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(45 104 53)"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(90 104 53)"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(135 104 53)"/><circle cx="104" cy="53" r="8" fill="#a85a31"/></g><g fill="#d8b48a" stroke="#8c593b" strokeWidth="1.5"><circle cx="174" cy="106" r="4"/><circle cx="104" cy="53" r="3"/></g></svg>}
-function buildECardDetailItems(card){const contacts=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean);return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',[card?.dress_code,...(card?.dress_colors||[])].filter(Boolean).join(' · ')],['RSVP',[card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:'',...contacts].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
-function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{card?.dress_code&&<>{card.dress_code} </>}{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>{color}</span>)}</>:value}</span></p>)}</div>}
+function buildECardDetailItems(card){return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',[card?.dress_code,...(card?.dress_colors||[])].filter(Boolean).join(' · ')],['RSVP',card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:''],['MAWASILIANO 1',[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · ')],['MAWASILIANO 2',[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
+function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{card?.dress_code&&<>{card.dress_code} </>}{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>{color}</span>)}</>:label==='MAWASILIANO 1'?<><strong>{card?.rsvp_contact_name}</strong>{card?.rsvp_contact_phone&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone}>{card.rsvp_contact_phone}</a>}</>:label==='MAWASILIANO 2'?<><strong>{card?.rsvp_contact_name_2}</strong>{card?.rsvp_contact_phone_2&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone_2}>{card.rsvp_contact_phone_2}</a>}</>:value}</span></p>)}</div>}
 
 async function createECardPng(card, guest = null) {
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+  const wrap = (value, max = 42) => {
+    const words = String(value ?? '').split(/\\s+/)
+    const lines = []
+    let line = ''
+    for (const word of words) {
+      if (line && (line + ' ' + word).length > max) { lines.push(line); line = word }
+      else line = line ? line + ' ' + word : word
+    }
+    if (line) lines.push(line)
+    return lines.slice(0, 3)
+  }
   const invitationUrl = guest
     ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token)
     : window.location.origin + '/?card=' + encodeURIComponent(card.slug || '')
@@ -48,39 +59,41 @@ async function createECardPng(card, guest = null) {
   const date = card.event_date ? new Date(card.event_date + 'T00:00:00').toLocaleDateString('sw-TZ', {day:'numeric',month:'long',year:'numeric'}) : 'Tarehe ya tukio'
   const guestName = guest?.guest_name || 'JINA LA MWALIKWA'
   const guestType = guest ? (guest.invite_type || 'single').toUpperCase() : 'GUEST PASS'
-  const invitationParts=buildECardInvitationParts(card,guestName)
-  const invitationLines=[invitationParts.intro,invitationParts.titles,'— '+invitationParts.recipient+' —',invitationParts.eventLine,...(invitationParts.coupleName?['— '+invitationParts.coupleName+' —']:[])]
+  const invitationParts = buildECardInvitationParts(card, guestName)
   const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
-  const detailSvg = details.map(([label,value],i) => {
-    const x = i % 2 === 0 ? 105 : 585
-    const y = 620 + Math.floor(i / 2) * 68
-    return '<g><rect x="'+x+'" y="'+y+'" width="440" height="54" rx="12" fill="#fffaf0" fill-opacity=".94" stroke="#d8bc7d" stroke-width="1.5"/><path d="M'+(x+14)+' '+(y+10)+' v34" stroke="#bd8b2d" stroke-width="3" stroke-linecap="round"/><text x="'+(x+28)+'" y="'+(y+21)+'" font-family="Arial" font-size="11" font-weight="bold" letter-spacing="2" fill="#a16c22">'+esc(label)+'</text><text x="'+(x+28)+'" y="'+(y+42)+'" font-family="Georgia" font-size="16" fill="#493321">'+esc(value)+'</text></g>'
+  const detailTop = 790
+  const detailRowHeight = 88
+  const detailRows = Math.ceil(details.length / 2)
+  const detailSvg = details.map(([label, value], i) => {
+    const x = i % 2 === 0 ? 95 : 555
+    const y = detailTop + Math.floor(i / 2) * detailRowHeight
+    const lines = wrap(value, 31)
+    return '<g><path d="M' + x + ' ' + (y - 7) + ' l6 6 -6 6 -6 -6Z" fill="#b7794b"/><text x="' + (x + 17) + '" y="' + y + '" font-family="Arial" font-size="15" font-weight="bold" letter-spacing="1.4" fill="#9a5935">' + esc(label) + '</text><text x="' + (x + 17) + '" y="' + (y + 29) + '" font-family="Georgia" font-size="20" fill="#493321">' + lines.map((line, j) => '<tspan x="' + (x + 17) + '" dy="' + (j ? 24 : 0) + '">' + esc(line) + '</tspan>').join('') + '</text><path d="M' + x + ' ' + (y + 65) + ' h405" stroke="#d9c5a6" stroke-width="1.2"/></g>'
   }).join('')
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">'+
-    '<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#a96b09"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#b7790c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8efdf"/></linearGradient></defs>'+
-    '<rect width="1536" height="1024" fill="url(#paper)"/><rect x="20" y="20" width="1496" height="984" rx="8" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="34" y="34" width="1468" height="956" fill="none" stroke="#d6a33d" stroke-width="2"/>'+
-    '<path d="M1030 20 C1125 90 1165 160 1015 240 M45 760 C155 810 205 895 340 980" fill="none" stroke="#d9b66b" stroke-width="3" opacity=".5"/>'+
-    '<g transform="translate(820 12) scale(1.12)" stroke-linecap="round" stroke-linejoin="round"><path d="M12 205 C65 155 90 95 190 20" fill="none" stroke="#79503a" stroke-width="5"/><path d="M68 150 C28 151 14 125 22 96 C55 101 76 122 68 150Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><path d="M116 105 C80 99 72 70 88 45 C118 56 132 80 116 105Z" fill="#d0bd91" stroke="#79503a" stroke-width="2"/><path d="M153 67 C127 51 132 23 153 8 C177 29 178 51 153 67Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><g transform="translate(192 105)" fill="#e99a69" stroke="#9a5632" stroke-width="2"><ellipse cy="-27" rx="15" ry="31"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(45)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(90)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(135)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(180)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(225)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(270)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g><g transform="translate(92 45) scale(.68)" fill="#f2c49a" stroke="#9a5632" stroke-width="2"><ellipse cy="-24" rx="13" ry="27"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(45)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(90)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(135)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(180)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(225)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(270)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(315)"/><circle r="12" fill="#a85a31"/></g></g>'+
-    '<g transform="translate(38 805) rotate(180 125 100) scale(.9)" stroke-linecap="round" stroke-linejoin="round"><path d="M12 205 C65 155 90 95 190 20" fill="none" stroke="#79503a" stroke-width="5"/><path d="M68 150 C28 151 14 125 22 96 C55 101 76 122 68 150Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><path d="M116 105 C80 99 72 70 88 45 C118 56 132 80 116 105Z" fill="#d0bd91" stroke="#79503a" stroke-width="2"/><g transform="translate(192 105)" fill="#e99a69" stroke="#9a5632" stroke-width="2"><ellipse cy="-27" rx="15" ry="31"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(45)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(90)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(135)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(180)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(225)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(270)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g></g>'+
-    '<g><text x="180" y="125" text-anchor="middle" font-family="Georgia" font-size="42" font-weight="bold" fill="#9b6814">ForteEvents</text><text x="180" y="157" text-anchor="middle" font-family="Georgia" font-size="16" font-style="italic" fill="#81521b">Make your event extraordinary</text></g>'+
-    '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
-    '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
-    '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
-    '<text x="650" y="378" text-anchor="middle" font-family="Georgia" font-size="20" fill="#21170f">'+esc(invitationParts.intro)+'</text>'+
-    '<text x="650" y="410" text-anchor="middle" font-family="Georgia" font-size="14" fill="#79503a">'+esc(invitationParts.titles)+'</text>'+
-    '<text x="650" y="456" text-anchor="middle" font-family="Georgia" font-size="31" font-weight="bold" fill="#9d5633">'+esc("— "+invitationParts.recipient+" —")+'</text>'+
-    '<text x="650" y="496" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+esc(invitationParts.eventLine)+'</text>'+
-    (invitationParts.coupleName?'<text x="650" y="542" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#754a34">'+esc("— "+invitationParts.coupleName+" —")+'</text>':'')+
-    '<text x="650" y="'+(invitationParts.coupleName?585:550)+'" text-anchor="middle" font-family="Georgia" font-size="22" fill="#21170f">'+esc(date)+'</text>'+
-    detailSvg+
-    '<text x="650" y="910" text-anchor="middle" font-family="Georgia" font-size="17" font-style="italic" fill="#59452a">'+esc(String(card?.message||"").trim()||DEFAULT_ECARD_MESSAGE)+'</text>'+
-    '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
-    '<rect x="1090" y="245" width="340" height="66" rx="8" fill="url(#gold)"/><text x="1260" y="289" text-anchor="middle" font-family="Georgia" font-size="29" font-weight="bold" fill="#24190b">YOUR GUEST PASS</text>'+
-    '<text x="1260" y="380" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#20170f">'+esc(guestName)+'</text><path d="M1120 405 H1400" stroke="#d5ad58" stroke-width="2"/>'+
-    '<rect x="1120" y="430" width="280" height="54" rx="24" fill="#24190f" stroke="#d6a33d" stroke-width="3"/><text x="1260" y="466" text-anchor="middle" font-family="Arial" font-size="25" font-weight="bold" fill="#fff">'+esc(guestType === "SINGLE" ? "SINGLE · MTU 1" : guestType === "DOUBLE" ? "DOUBLE · WATU 2" : guestType)+'</text>'+
-    '<rect x="1115" y="510" width="290" height="290" rx="16" fill="#fff" stroke="#c18a1c" stroke-width="4"/><image x="1130" y="525" width="260" height="260" href="'+qrImage+'" xlink:href="'+qrImage+'"/>'+
-    '<rect x="1120" y="820" width="280" height="54" rx="22" fill="#b77a0d"/><text x="1260" y="855" text-anchor="middle" font-family="Arial" font-size="22" fill="#fff">✓  Scan at Check-in</text>'+
-    '<text x="1260" y="895" text-anchor="middle" font-family="Georgia" font-size="14" font-weight="bold" fill="#9a5935">SCAN: KADI KAMILI + RAMANI</text><text x="1260" y="925" text-anchor="middle" font-family="Georgia" font-size="14" font-style="italic" fill="#59402f">ForteEvents · Make your event extraordinary</text></svg>'
+  const messageLines = wrap(String(card?.message || '').trim() || DEFAULT_ECARD_MESSAGE, 74)
+  const messageY = detailTop + detailRows * detailRowHeight + 30
+  const passY = messageY + messageLines.length * 30 + 90
+  const canvasHeight = passY + 410
+  const flower = '<g stroke-linecap="round" stroke-linejoin="round"><path d="M0 190 C70 140 105 80 190 20 M50 140 C15 140 0 112 12 86 C45 92 62 115 50 140Z M110 82 C77 73 72 45 90 22 C120 34 130 59 110 82Z" fill="#c5b995" stroke="#79503a" stroke-width="4"/><g transform="translate(190 70)" fill="#e99a69" stroke="#9a5632" stroke-width="3"><ellipse cy="-25" rx="16" ry="32"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(45)"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(90)"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(135)"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(180)"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(225)"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(270)"/><ellipse cy="-25" rx="16" ry="32" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g></g>'
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="' + canvasHeight + '" viewBox="0 0 1080 ' + canvasHeight + '">' +
+    '<defs><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f5e7d5"/></linearGradient><linearGradient id="gold" x2="1"><stop stop-color="#9a5935"/><stop offset=".5" stop-color="#e6bf83"/><stop offset="1" stop-color="#9a5935"/></linearGradient></defs>' +
+    '<rect width="1080" height="' + canvasHeight + '" fill="url(#paper)"/><rect x="22" y="22" width="1036" height="' + (canvasHeight - 44) + '" rx="12" fill="none" stroke="url(#gold)" stroke-width="7"/><rect x="40" y="40" width="1000" height="' + (canvasHeight - 80) + '" rx="8" fill="none" stroke="#c99a70" stroke-width="1.5"/>' +
+    '<g transform="translate(35 35) scale(.82)">' + flower + '</g><g transform="translate(1045 35) scale(-.82 .82)">' + flower + '</g>' +
+    '<text x="540" y="112" text-anchor="middle" font-family="Georgia" font-size="46" font-weight="bold" fill="#754a34">ForteEvents</text><text x="540" y="145" text-anchor="middle" font-family="Georgia" font-size="18" font-style="italic" fill="#81521b">Make your event extraordinary</text>' +
+    '<path d="M250 178 H830" stroke="url(#gold)" stroke-width="2"/><text x="540" y="235" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#754a34">KADI YA MWALIKO</text>' +
+    '<text x="540" y="310" text-anchor="middle" font-family="Georgia" font-size="64" font-style="italic" fill="#a65d36">' + esc((card.occasion || 'MWALIKO').toUpperCase()) + '</text><text x="540" y="350" text-anchor="middle" font-family="Georgia" font-size="24" letter-spacing="6" fill="#79503a">INVITATION</text>' +
+    '<path d="M330 380 H750" stroke="url(#gold)" stroke-width="2"/><text x="540" y="430" text-anchor="middle" font-family="Georgia" font-size="26" fill="#493321">Familia ya</text><text x="540" y="480" text-anchor="middle" font-family="Georgia" font-size="38" font-weight="bold" fill="#70452f">' + esc(card.host_names || 'JINA LA FAMILIA') + '</text>' +
+    '<text x="540" y="545" text-anchor="middle" font-family="Georgia" font-size="25" font-style="italic" fill="#493321">' + esc(invitationParts.intro) + '</text><text x="540" y="590" text-anchor="middle" font-family="Georgia" font-size="18" fill="#79503a">' + esc(invitationParts.titles) + '</text>' +
+    '<text x="540" y="650" text-anchor="middle" font-family="Georgia" font-size="37" font-weight="bold" fill="#9d5633">' + esc(invitationParts.recipient) + '</text><text x="540" y="700" text-anchor="middle" font-family="Georgia" font-size="23" fill="#493321">' + esc(invitationParts.eventLine) + '</text>' +
+    (invitationParts.coupleName ? '<text x="540" y="755" text-anchor="middle" font-family="Georgia" font-size="38" font-weight="bold" fill="#754a34">' + esc(invitationParts.coupleName) + '</text>' : '') +
+    '<text x="540" y="785" text-anchor="middle" font-family="Georgia" font-size="23" font-weight="bold" fill="#a45d39">' + esc(date) + '</text>' + detailSvg +
+    '<text x="540" y="' + messageY + '" text-anchor="middle" font-family="Arial" font-size="15" font-weight="bold" letter-spacing="2" fill="#9a5935">UJUMBE WA FAMILIA</text>' +
+    messageLines.map((line, i) => '<text x="540" y="' + (messageY + 30 + i * 30) + '" text-anchor="middle" font-family="Georgia" font-size="21" font-style="italic" fill="#59452a">' + esc(line) + '</text>').join('') +
+    '<path d="M160 ' + (passY - 28) + ' H920" stroke="url(#gold)" stroke-width="2"/><text x="540" y="' + (passY + 20) + '" text-anchor="middle" font-family="Georgia" font-size="24" font-weight="bold" fill="#754a34">GUEST PASS</text>' +
+    '<text x="540" y="' + (passY + 62) + '" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" fill="#493321">' + esc(guestName) + '</text>' +
+    '<rect x="350" y="' + (passY + 82) + '" width="380" height="48" rx="22" fill="#24190f" stroke="#d6a33d" stroke-width="3"/><text x="540" y="' + (passY + 114) + '" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="#fff">' + esc(guestType === 'SINGLE' ? 'SINGLE · MTU 1' : guestType === 'DOUBLE' ? 'DOUBLE · WATU 2' : guestType) + '</text>' +
+    '<rect x="405" y="' + (passY + 145) + '" width="270" height="230" rx="12" fill="#fff" stroke="#bd8b2d" stroke-width="4"/><image x="425" y="' + (passY + 160) + '" width="230" height="200" href="' + qrImage + '" xlink:href="' + qrImage + '"/>' +
+    '<text x="540" y="' + (passY + 400) + '" text-anchor="middle" font-family="Georgia" font-size="18" font-weight="bold" fill="#754a34">ForteEvents · Make your event extraordinary</text></svg>'
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   const objectUrl = URL.createObjectURL(blob)
   try {
@@ -88,7 +101,8 @@ async function createECardPng(card, guest = null) {
     image.src = objectUrl
     await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject })
     const canvas = document.createElement('canvas')
-    canvas.width = 1536; canvas.height = 1024
+    canvas.width = 1080
+    canvas.height = canvasHeight
     const context = canvas.getContext('2d')
     context.drawImage(image, 0, 0)
     return await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('PNG haikuundwa.')), 'image/png'))
@@ -98,7 +112,7 @@ async function createECardPng(card, guest = null) {
 async function shareECard(card, mode, setMessage) {
   const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
   const mapLink = String(card?.location_url || '').trim()
-  const message = `Habari! Tunakualika kwenye ${card.title}. Fungua kadi kamili na ramani ya tukio kupitia link hii: ${url}${mapLink ? '\nGoogle Maps: ' + mapLink : ''}`
+  const message = `Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink ? '\n\nKIUNGO CHA RAMANI YA UKUMBI:\n' + mapLink : ''}`
   if (mode === 'link') { window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer'); return }
   try {
     const png = await createECardPng(card)
@@ -2009,7 +2023,7 @@ useEffect(() => {
                   <p className="ecard-family-message">{String(publicECard.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
                   {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><div className="ecard-public-qr-wrap"><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px'}} /></div></>}
                   
-                  {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
+                  {publicECard.location_url && <section className="ecard-map-link-section"><div className="ecard-map-link-heading">RAMANI YA UKUMBI</div><a className="ecard-map-link-url" href={publicECard.location_url} target="_blank" rel="noopener noreferrer">{publicECard.location_url}</a><a className="ecard-map-open-link" href={publicECard.location_url} target="_blank" rel="noopener noreferrer">Fungua ramani moja kwa moja <span aria-hidden="true">↗</span></a></section>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
                   <ECardFloralOrnament className="ecard-public-floral-bottom" />
                 </div>
@@ -3045,6 +3059,7 @@ return (
                 <ECardInvitationCopy card={eCardForm} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} />
                 <div className="ecard-date-line">{eCardForm.event_date ? new Date(eCardForm.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
                 <ECardDetails card={eCardForm} showDate={false} />
+                {eCardForm.location_url && <div className="ecard-map-link-section ecard-preview-map"><div className="ecard-map-link-heading">RAMANI YA UKUMBI</div><a className="ecard-map-link-url" href={eCardForm.location_url} target="_blank" rel="noopener noreferrer">{eCardForm.location_url}</a></div>}
                 <p className="ecard-family-message">{String(eCardForm.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
                 <ECardFloralOrnament className="ecard-floral-bottom" />
               </div>
