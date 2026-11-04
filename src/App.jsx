@@ -5,6 +5,27 @@ import { supabase } from './supabaseClient'
 import './App.css'
 
 
+function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
+  const [src, setSrc] = useState('')
+  useEffect(() => {
+    let active = true
+    setSrc('')
+    QRCode.toDataURL(value, {
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      width: 260,
+      color: { dark: '#000000', light: '#FFFFFF' }
+    }).then(dataUrl => {
+      if (active) setSrc(dataUrl)
+    }).catch(() => {
+      if (active) setSrc('')
+    })
+    return () => { active = false }
+  }, [value])
+  return src ? <img alt={alt} src={src} style={style} /> : <span role="status">Inaandaa QR...</span>
+}
+
+
 async function createECardPng(card, guest = null) {
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
   const guestUrl = guest ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token) : ''
@@ -1980,7 +2001,7 @@ useEffect(() => {
                     {(publicECard.dress_code || publicECard.dress_colors?.length) && <span><b>DRESS CODE</b>{[publicECard.dress_code, ...(publicECard.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
                     {(publicECard.rsvp_deadline || publicECard.rsvp_contact_name || publicECard.rsvp_contact_phone || publicECard.rsvp_contact_name_2 || publicECard.rsvp_contact_phone_2) && <span><b>RSVP</b>{[publicECard.rsvp_deadline ? 'Mwisho: ' + publicECard.rsvp_deadline : '', [publicECard.rsvp_contact_name, publicECard.rsvp_contact_phone].filter(Boolean).join(' '), [publicECard.rsvp_contact_name_2, publicECard.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
                   </div>
-                  {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><img alt="QR ya mwaliko" style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(window.location.origin+window.location.pathname+'?card='+encodeURIComponent(new URLSearchParams(window.location.search).get('card'))+'&guest='+encodeURIComponent(publicECard.guest.token))}/></>}
+                  {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} /></>}
                   <p className="ecard-card-welcome">KARIBU SANA</p>
                   {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
@@ -3169,7 +3190,7 @@ return (
                   {card?.food_note && <div className="ecard-guest-message"><b>CHAKULA:</b> {card.food_note}</div>}
                   {(card?.dress_code || card?.dress_colors?.length) && <div className="ecard-guest-message"><b>DRESS CODE:</b> {card?.dress_code} {(card?.dress_colors || []).join(' • ')}</div>}
                   {(card?.rsvp_deadline || card?.rsvp_contact_name || card?.rsvp_contact_phone || card?.rsvp_contact_name_2 || card?.rsvp_contact_phone_2) && <div className="ecard-guest-message"><b>RSVP:</b> {[card?.rsvp_deadline ? 'Mwisho: ' + card.rsvp_deadline : '', [card?.rsvp_contact_name, card?.rsvp_contact_phone].filter(Boolean).join(' '), [card?.rsvp_contact_name_2, card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</div>}
-                  <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Making your event extraordinary</small></div><div className="ecard-qr-wrap"><img alt="QR ya mwaliko" src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(guestUrl)}/><strong>{g.invite_type.toUpperCase()} · {g.guest_count || (g.invite_type === 'double' ? 2 : 1)}</strong></div></div>
+                  <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Making your event extraordinary</small></div><div className="ecard-qr-wrap"><GuestQr value={guestUrl} /><strong>{g.invite_type.toUpperCase()} · {g.guest_count || (g.invite_type === 'double' ? 2 : 1)}</strong></div></div>
                 </div>
                 <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const file=new File([png],'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'});const text='Karibu kwenye '+(card?.title||'sherehe yetu')+'. Fungua mwaliko wako: '+guestUrl;if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],text,title:card?.title||'Mwaliko wa ForteEvents'})}else{const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download=file.name;a.click();URL.revokeObjectURL(href);window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setECardMessage('Picha imepakuliwa. Ambatisha picha hiyo kwenye WhatsApp iliyofunguliwa.')}}catch(error){setECardMessage('Imeshindikana kushiriki: '+error.message)}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
               </div>
