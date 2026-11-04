@@ -59,6 +59,8 @@ async function createECardPng(card, guest = null) {
   }).join('')
   const guestName = guest?.guest_name || 'JINA LA MWALIKWA'
   const guestType = guest ? (guest.invite_type || 'single').toUpperCase() : 'GUEST PASS'
+  const invitationText = buildECardInvitationSentence(card, guestName)
+  const invitationLines = invitationText.match(/.{1,62}(?:\\s|$)/g) || [invitationText]
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">'+
     '<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#a96b09"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#b7790c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8efdf"/></linearGradient></defs>'+
     '<rect width="1536" height="1024" fill="url(#paper)"/><rect x="20" y="20" width="1496" height="984" rx="8" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="34" y="34" width="1468" height="956" fill="none" stroke="#d6a33d" stroke-width="2"/>'+
@@ -68,17 +70,17 @@ async function createECardPng(card, guest = null) {
     '<text x="650" y="135" text-anchor="middle" font-family="Georgia" font-size="80" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="33" letter-spacing="7" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
     '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
-    '<text x="650" y="405" text-anchor="middle" font-family="Georgia" font-size="25" fill="#21170f">'+esc(buildECardInvitationSentence(card, guestName))+'</text>'+
-    '<text x="650" y="485" text-anchor="middle" font-family="Georgia" font-size="25" fill="#21170f">'+esc(date)+'</text>'+
+    '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+invitationLines.map((line,i)=>'<tspan x="650" dy="'+(i===0?0:27)+'">'+esc(line.trim())+'</tspan>').join('')+'</text>'+
+    '<text x="650" y="505" text-anchor="middle" font-family="Georgia" font-size="23" fill="#21170f">'+esc(date)+'</text>'+
     detailSvg+
     '<text x="650" y="930" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#9b6814">KARIBU SANA</text>'+
     '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
     '<rect x="1090" y="245" width="340" height="66" rx="8" fill="url(#gold)"/><text x="1260" y="289" text-anchor="middle" font-family="Georgia" font-size="29" font-weight="bold" fill="#24190b">YOUR GUEST PASS</text>'+
     '<text x="1260" y="380" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#20170f">'+esc(guestName)+'</text><path d="M1120 405 H1400" stroke="#d5ad58" stroke-width="2"/>'+
-    '<rect x="1120" y="430" width="280" height="54" rx="24" fill="url(#gold)"/><text x="1260" y="466" text-anchor="middle" font-family="Arial" font-size="25" font-weight="bold" fill="#211707">'+esc(guestType)+'</text>'+
+    '<rect x="1120" y="430" width="280" height="54" rx="24" fill="#24190f" stroke="#d6a33d" stroke-width="3"/><text x="1260" y="466" text-anchor="middle" font-family="Arial" font-size="25" font-weight="bold" fill="#fff">'+esc(guestType === "SINGLE" ? "SINGLE · MTU 1" : guestType === "DOUBLE" ? "DOUBLE · WATU 2" : guestType)+'</text>'+
     '<rect x="1115" y="510" width="290" height="290" rx="16" fill="#fff" stroke="#c18a1c" stroke-width="4"/><image x="1130" y="525" width="260" height="260" href="'+qrImage+'" xlink:href="'+qrImage+'"/>'+
     '<rect x="1120" y="820" width="280" height="54" rx="22" fill="#b77a0d"/><text x="1260" y="855" text-anchor="middle" font-family="Arial" font-size="22" fill="#fff">✓  Scan at Check-in</text>'+
-    '<text x="1260" y="910" text-anchor="middle" font-family="Georgia" font-size="20" font-style="italic" fill="#302318">Thank you for being part</text><text x="1260" y="935" text-anchor="middle" font-family="Georgia" font-size="20" font-style="italic" fill="#302318">of our special day!</text></svg>'
+    '<text x="1260" y="910" text-anchor="middle" font-family="Georgia" font-size="20" font-style="italic" fill="#302318">WAKARIBISHWA SANA</text><text x="1260" y="935" text-anchor="middle" font-family="Georgia" font-size="20" font-style="italic" fill="#302318">KARIBU KUSHEREHEKEA NASI</text></svg>'
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   const objectUrl = URL.createObjectURL(blob)
   try {
@@ -3202,10 +3204,9 @@ return (
                 <div className="ecard-guest-card">
                   <div className="ecard-brand-mark">ForteEvents <small>Making your event extraordinary</small></div>
                   <h2>Mwaliko wa {card?.occasion || 'Tukio'}</h2>
-                  <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}<br/>{buildECardInvitationSentence(card, g.guest_name)}</div>
-                  <div className="ecard-gold-ribbon">{card?.title || 'Harusi'}</div>
-                  <div className="ecard-guest-name">{g.guest_name}</div>
-                  {card?.event_date && <div className="ecard-guest-date">{card.event_date}</div>}
+                  <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}</div>
+                  <div className="ecard-guest-invitation">{buildECardInvitationSentence(card, g.guest_name)}</div>
+                   {card?.event_date && <div className="ecard-guest-date">{card.event_date}</div>}
                   {(card?.bride_name || card?.groom_name) && <div className="ecard-guest-time">{[card?.bride_name, card?.groom_name].filter(Boolean).join(' & ')}</div>}
                   {card?.event_time && <div className="ecard-guest-time">Saa {card.event_time}</div>}
                   {card?.venue && <div className="ecard-guest-venue"><b>MAHALI:</b> {card.venue}</div>}
