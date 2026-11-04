@@ -71,15 +71,15 @@ async function createECardPng(card, guest = null) {
   }
   const detailSvg = details.map(([label,value],i) => {
     const x = i % 2 === 0 ? 105 : 585
-    const y = 610 + Math.floor(i / 2) * 56
+    const y = 600 + Math.floor(i / 2) * 66
     const isContact = label.startsWith('MAWASILIANO')
     const lines = wrapSvg(value, 34)
-    if (isContact) return '<g><text x="'+(x+5)+'" y="'+(y+18)+'" font-family="Arial" font-size="12" font-weight="bold" letter-spacing="1.4" fill="#9a5935">'+esc(label)+'</text><text x="'+(x+5)+'" y="'+(y+39)+'" font-family="Georgia" font-size="17" fill="#493321">'+lines.map((line,j)=>'<tspan x="'+(x+5)+'" dy="'+(j?19:0)+'">'+esc(line)+'</tspan>').join('')+'</text><path d="M'+x+' '+(y+48)+' h410" stroke="#d9c5a6" stroke-width="1"/></g>'
-    return '<g><rect x="'+x+'" y="'+y+'" width="440" height="48" rx="10" fill="#fffaf0" fill-opacity=".94" stroke="#d8bc7d" stroke-width="1.3"/><path d="M'+(x+13)+' '+(y+8)+' v32" stroke="#bd8b2d" stroke-width="3" stroke-linecap="round"/><text x="'+(x+27)+'" y="'+(y+18)+'" font-family="Arial" font-size="11" font-weight="bold" letter-spacing="1.4" fill="#a16c22">'+esc(label)+'</text><text x="'+(x+27)+'" y="'+(y+38)+'" font-family="Georgia" font-size="16" fill="#493321">'+lines.map((line,j)=>'<tspan x="'+(x+27)+'" dy="'+(j?17:0)+'">'+esc(line)+'</tspan>').join('')+'</text></g>'
+    if (isContact) return '<g><text x="'+(x+5)+'" y="'+(y+18)+'" font-family="Arial" font-size="13" font-weight="bold" letter-spacing="1.4" fill="#9a5935">'+esc(label)+'</text><text x="'+(x+5)+'" y="'+(y+39)+'" font-family="Georgia" font-size="20" fill="#493321">'+lines.map((line,j)=>'<tspan x="'+(x+5)+'" dy="'+(j?19:0)+'">'+esc(line)+'</tspan>').join('')+'</text><path d="M'+x+' '+(y+48)+' h410" stroke="#d9c5a6" stroke-width="1"/></g>'
+    return '<g><rect x="'+x+'" y="'+y+'" width="440" height="48" rx="10" fill="#fffaf0" fill-opacity=".94" stroke="#d8bc7d" stroke-width="1.3"/><path d="M'+(x+13)+' '+(y+8)+' v32" stroke="#bd8b2d" stroke-width="3" stroke-linecap="round"/><text x="'+(x+27)+'" y="'+(y+18)+'" font-family="Arial" font-size="13" font-weight="bold" letter-spacing="1.4" fill="#a16c22">'+esc(label)+'</text><text x="'+(x+27)+'" y="'+(y+38)+'" font-family="Georgia" font-size="20" fill="#493321">'+lines.map((line,j)=>'<tspan x="'+(x+27)+'" dy="'+(j?17:0)+'">'+esc(line)+'</tspan>').join('')+'</text></g>'
   }).join('')
   const familyMessage = String(card?.message||'').trim() || DEFAULT_ECARD_MESSAGE
-  const familyLines = wrapSvg(familyMessage, 68)
-  const familyMessageSvg = '<text x="650" y="925" text-anchor="middle" font-family="Georgia" font-size="18" font-style="italic" fill="#59452a">'+familyLines.map((line,i)=>'<tspan x="650" dy="'+(i?25:0)+'">'+esc(line)+'</tspan>').join('')+'</text>'
+  const familyLines = wrapSvg(familyMessage, 58)
+  const familyMessageSvg = '<text x="650" y="925" text-anchor="middle" font-family="Georgia" font-size="22" font-style="italic" fill="#59452a">'+familyLines.map((line,i)=>'<tspan x="650" dy="'+(i?31:0)+'">'+esc(line)+'</tspan>').join('')+'</text>'
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">'+
     '<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#a96b09"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#b7790c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8efdf"/></linearGradient></defs>'+
     '<rect width="1536" height="1024" fill="url(#paper)"/><rect x="20" y="20" width="1496" height="984" rx="8" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="34" y="34" width="1468" height="956" fill="none" stroke="#d6a33d" stroke-width="2"/>'+
@@ -89,13 +89,13 @@ async function createECardPng(card, guest = null) {
     '<g><text x="180" y="125" text-anchor="middle" font-family="Georgia" font-size="42" font-weight="bold" fill="#9b6814">ForteEvents</text><text x="180" y="157" text-anchor="middle" font-family="Georgia" font-size="16" font-style="italic" fill="#81521b">Make your event extraordinary</text></g>'+
     '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
-    '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
+    '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="48" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
     '<text x="650" y="378" text-anchor="middle" font-family="Georgia" font-size="20" fill="#21170f">'+esc(invitationParts.intro)+'</text>'+
     '<text x="650" y="410" text-anchor="middle" font-family="Georgia" font-size="14" fill="#79503a">'+esc(invitationParts.titles)+'</text>'+
     '<text x="650" y="456" text-anchor="middle" font-family="Georgia" font-size="31" font-weight="bold" fill="#9d5633">'+esc("— "+invitationParts.recipient+" —")+'</text>'+
     '<text x="650" y="496" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+esc(invitationParts.eventLine)+'</text>'+
     (invitationParts.coupleName?'<text x="650" y="542" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#754a34">'+esc("— "+invitationParts.coupleName+" —")+'</text>':'')+
-    '<text x="650" y="'+(invitationParts.coupleName?585:550)+'" text-anchor="middle" font-family="Georgia" font-size="22" fill="#21170f">'+esc(date)+'</text>'+
+    '<text x="650" y="'+(invitationParts.coupleName?585:550)+'" text-anchor="middle" font-family="Georgia" font-size="27" fill="#21170f">'+esc(date)+'</text>'+
     detailSvg+
     familyMessageSvg+
     '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
