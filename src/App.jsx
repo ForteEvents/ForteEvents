@@ -896,7 +896,9 @@ function App() {
   }, [session?.user?.id, profile?.role])
 
   useEffect(() => {
-    const slug = new URLSearchParams(window.location.search).get('card')
+    const params = new URLSearchParams(window.location.search)
+    const slug = params.get('card')
+    const guestToken = params.get('guest')
     if (!slug) return
     let active = true
     const loadPublicCard = async () => {
@@ -904,8 +906,15 @@ function App() {
       const { data, error } = await supabase.from('e_cards')
         .select('title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme, design')
         .eq('slug', slug).eq('is_published', true).maybeSingle()
+      let guest = null
+      if (!error && data && guestToken) {
+        const result = await supabase.from('e_card_guests')
+          .select('guest_name, invite_type, guest_count, token')
+          .eq('token', guestToken).eq('card_id', data.id).maybeSingle()
+        guest = result.error ? null : result.data
+      }
       if (active) {
-        setPublicECard(error ? null : data)
+        setPublicECard(error ? null : (data ? {...data, guest} : null))
         setPublicECardLoading(false)
       }
     }
@@ -1935,8 +1944,9 @@ useEffect(() => {
                     {publicECard.event_time && <span><b>MUDA</b>{publicECard.event_time}</span>}
                     {publicECard.venue && <span><b>MAHALI</b>{publicECard.venue}</span>}
                   </div>
-                  {publicECard.location_url && <a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>}
+                  {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><img alt="QR ya mwaliko" style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(window.location.origin+window.location.pathname+'?card='+encodeURIComponent(new URLSearchParams(window.location.search).get('card'))+'&guest='+encodeURIComponent(publicECard.guest.token))}/></>}
                   <p className="ecard-card-welcome">KARIBU SANA</p>
+                  {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
                   <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
                 </div>
@@ -3096,16 +3106,25 @@ return (
               <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE</option><option value="double">DOUBLE</option></select>
               <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
             </form>
-            {eCardGuests.map(g => <div key={g.id} className="ecard-guest-print" style={{padding:'18px',border:'1px solid #d6bd78',borderRadius:'12px',marginBottom:'14px',background:'#fffdf8',maxWidth:'420px',textAlign:'center'}}>
-              <p style={{letterSpacing:'2px',color:'#9a792d',fontSize:'12px'}}>FORTEEVENTS INVITATION</p>
-              <h3>{eCards.find(card => card.id === guestCardId)?.title || 'Mwaliko'}</h3>
-              <p style={{fontSize:'20px',fontWeight:'700'}}>{g.guest_name}</p>
-              <p>{g.invite_type.toUpperCase()}</p>
-              <img alt="QR ya mwaliko" style={{width:'170px',height:'170px'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(window.location.origin+'/?card='+encodeURIComponent(eCards.find(card => card.id === guestCardId)?.slug || '')+'&guest='+g.token)} />
-              <p style={{color:'#9a792d',fontWeight:'700'}}>Make your event extraordinary</p>
-              <p>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</p>
-              <button type="button" className="secondary-button no-print" onClick={() => window.print()}>Chapisha mwaliko huu</button>
-            </div>)}
+            {eCardGuests.map(g => {
+              const card = eCards.find(item => item.id === guestCardId)
+              const guestUrl = window.location.origin + '/?card=' + encodeURIComponent(card?.slug || '') + '&guest=' + encodeURIComponent(g.token)
+              return <div key={g.id} className="ecard-guest-print ecard-guest-sheet">
+                <div className="ecard-guest-card">
+                  <div className="ecard-brand-mark">FORTEEVENTS <small>Make your event extraordinary</small></div>
+                  <h2>Mwaliko wa Harusi</h2>
+                  <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}<br/>wanafuraha kukualika</div>
+                  <div className="ecard-gold-ribbon">{card?.title || 'Harusi'}</div>
+                  <div className="ecard-guest-name">{g.guest_name}</div>
+                  <div className="ecard-guest-date">{card?.event_date || ''}</div>
+                  <div className="ecard-guest-time">Saa {card?.event_time || ''}</div>
+                  <div className="ecard-guest-venue"><b>MAHALI:</b> {card?.venue || ''}</div>
+                  <div className="ecard-guest-message">{card?.message || 'Tukutane kusherehekea upendo wetu na baraka za Mungu.'}</div>
+                  <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Make your event extraordinary</small></div><div className="ecard-qr-wrap"><img alt="QR ya mwaliko" src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(guestUrl)}/><strong>{g.invite_type.toUpperCase()}</strong></div></div>
+                </div>
+                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={()=>window.open('https://wa.me/?text='+encodeURIComponent('Karibu kwenye '+(card?.title||'sherehe yetu')+': '+guestUrl),'_blank','noopener,noreferrer')}>Shiriki link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
+              </div>
+            })}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
             <h2>Kadi Zangu</h2>
