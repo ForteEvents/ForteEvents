@@ -3002,18 +3002,7 @@ return (
           <div className="card">
             <h2>Chagua sampuli ya ForteEvents</h2>
             <p>Chagua muundo unaoupenda. Kisha jaza majina, tarehe na taarifa za tukio lako.</p>
-            {ecardTemplatesLoading ? <p>Inapakia sampuli...</p> : ecardTemplates.length === 0 ?
-              <p>Kwa sasa hakuna sampuli mpya zilizowekwa. Unaweza kutumia miundo ya kawaida iliyo hapa chini.</p> :
-              <div className="ecard-template-gallery">{ecardTemplates.map(item => (
-                <button type="button" key={item.id} className="ecard-template-option" onClick={() => {
-                  setECardForm(v => ({ ...v, image_url: item.image_url, theme: item.theme || 'gold' }))
-                  setECardDesign(v => ({ ...defaultECardDesign, ...(item.design || {}), template: item.design?.template || 'classic' }))
-                  setECardMessage('Umechagua sampuli: ' + item.name + '. Sasa jaza taarifa zako.')
-                }}>
-                  <img src={item.image_url} alt={item.name} style={{width:'100%',height:'190px',objectFit:'cover',borderRadius:'8px'}} />
-                  <b>{item.name}</b><small>{item.occasion} · {item.description}</small><em>Chagua sampuli hii</em>
-                </button>
-              ))}</div>}
+            <p>Muundo rasmi wa ForteEvents ni wa dhahabu na nyeupe. Mpangilio, fremu na mapambo vimefungwa; jaza taarifa za tukio lako hapa chini.</p>
           </div>
           <div className="card">
             <h2>{editingECardId ? 'Hariri E-card' : 'Tengeneza E-card mpya'}</h2>
@@ -3089,48 +3078,38 @@ return (
               {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha iliyochaguliwa" style={{width:'100%',maxWidth:'240px',borderRadius:'8px',marginTop:'8px'}} />}
               <label>Au weka link ya picha (hiari, https://)</label>
               <input type="url" value={eCardForm.image_url} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
-              <label>Chagua muundo wa kadi</label>
-              <div className="ecard-template-gallery">
-                {[
-                  {id:'classic',name:'Classic Gold',desc:'Harusi na sherehe rasmi',sample:'✿',tone:'gold'},
-                  {id:'royal',name:'Royal Wedding',desc:'Muonekano wa kifahari',sample:'❀',tone:'royal'},
-                  {id:'floral',name:'Floral Garden',desc:'Maua na mapambo ya upole',sample:'❁',tone:'floral'},
-                  {id:'floral-brown',name:'Floral Brown & Cream',desc:'Maua ya rangi ya kahawia, krimu na machungwa',sample:'❀',tone:'floral-brown'},
-                  {id:'modern',name:'Modern White',desc:'Rahisi na wa kisasa',sample:'◇',tone:'modern'}
-                ].map(item => (
-                  <button type="button" key={item.id} className={`ecard-template-option ecard-template-${item.tone} ${eCardDesign.template===item.id?'selected':''}`} onClick={() => setECardDesign(v => ({...v,template:item.id}))}>
-                    <span className="ecard-template-art"><span>{item.sample}</span><strong>MWALIKO</strong><small>ForteEvents</small></span>
-                    <b>{item.name}</b><small>{item.desc}</small>
-                    <em>{eCardDesign.template===item.id?'Imechaguliwa':'Chagua kadi hii'}</em>
-                  </button>
-                ))}
-              </div>
-              <p className="ecard-helper-note">Muundo, maua, fremu, rangi na mpangilio vimeandaliwa tayari na ForteEvents. Wewe jaza taarifa zako tu.</p>
+              <p className="ecard-helper-note">Muundo mmoja rasmi wa ForteEvents: fremu ya dhahabu na nyeupe, mapambo na mpangilio havibadilishwi. Sehemu za taarifa huonekana tu pale zinapojazwa.</p>
               <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
               {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
             </form>
             <div className={`ecard-live-preview ecard-card-art ecard-card-${eCardDesign.template || 'classic'}`}>
               <div className="ecard-card-inner">
-                <div className="ecard-card-brand">FORTEEVENTS <span>MAKE YOUR EVENT EXTRAORDINARY</span></div>
+                <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
                 <div className="ecard-card-flower ecard-card-flower-top">✿</div>
                 <p className="ecard-card-kicker">{eCardForm.occasion || 'MWALIKO'}</p>
                 <h2>{eCardForm.title || 'JINA LA TUKIO'}</h2>
                 <div className="ecard-card-divider"><span>✦</span></div>
                 {eCardForm.image_url && <img className="ecard-card-photo" src={eCardForm.image_url} alt="Picha ya tukio"/>}
                 <p className="ecard-card-invite">Tunayo furaha kukukaribisha</p>
-                <h3>{eCardForm.host_names || 'Majina ya wahusika'}</h3>
+                {eCardForm.host_names && <h3>{eCardForm.host_names}</h3>}
+                {(eCardForm.bride_name || eCardForm.groom_name) && <p className="ecard-card-message">{[eCardForm.bride_name, eCardForm.groom_name].filter(Boolean).join(' & ')}</p>}
                 {eCardForm.message && <p className="ecard-card-message">{eCardForm.message}</p>}
                 <div className="ecard-card-details">
-                  <span><b>TAREHE</b>{eCardForm.event_date || 'Tarehe ya tukio'}</span>
-                  <span><b>MUDA</b>{eCardForm.event_time || 'Muda wa tukio'}</span>
-                  <span><b>MAHALI</b>{eCardForm.venue || 'Mahali pa tukio'}</span>
+                  {eCardForm.event_date && <span><b>TAREHE</b>{eCardForm.event_date}</span>}
+                  {eCardForm.event_time && <span><b>MUDA</b>{eCardForm.event_time}</span>}
+                  {eCardForm.venue && <span><b>MAHALI</b>{eCardForm.venue}</span>}
+                  {(eCardForm.ceremony_time || eCardForm.ceremony_venue) && <span><b>IBADA</b>{[eCardForm.ceremony_time, eCardForm.ceremony_venue].filter(Boolean).join(' — ')}</span>}
+                  {(eCardForm.reception_time || eCardForm.reception_venue) && <span><b>RECEPTION</b>{[eCardForm.reception_time, eCardForm.reception_venue].filter(Boolean).join(' — ')}</span>}
+                  {eCardForm.food_note && <span><b>CHAKULA</b>{eCardForm.food_note}</span>}
+                  {(eCardForm.dress_code || eCardForm.dress_colors?.length) && <span><b>DRESS CODE</b>{[eCardForm.dress_code, ...(eCardForm.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
+                  {(eCardForm.rsvp_deadline || eCardForm.rsvp_contact_name || eCardForm.rsvp_contact_phone || eCardForm.rsvp_contact_name_2 || eCardForm.rsvp_contact_phone_2) && <span><b>RSVP</b>{[eCardForm.rsvp_deadline ? 'Mwisho: ' + eCardForm.rsvp_deadline : '', [eCardForm.rsvp_contact_name, eCardForm.rsvp_contact_phone].filter(Boolean).join(' '), [eCardForm.rsvp_contact_name_2, eCardForm.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
                 </div>
                 <p className="ecard-card-welcome">KARIBU SANA</p>
-                <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
+                <div className="ecard-card-footer">ForteEvents • Making your event extraordinary</div>
                 <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
               </div>
             </div>
-            {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
+{eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
           </div>
           <div className="card">
             <h2>Salio la E-card</h2>
