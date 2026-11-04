@@ -553,3 +553,10 @@ button[type="submit"] {
 .ecard-guest-actions{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;padding:10px}
 @media(max-width:560px){.ecard-guest-card{min-height:0;padding:22px 18px}.ecard-guest-intro{font-size:16px}.ecard-guest-message{font-size:15px}.ecard-guest-bottom{gap:10px}.ecard-qr-wrap{width:120px}.ecard-guest-bottom>div:first-child{font-size:17px}}
 @media print{ @page{size:A4 portrait;margin:8mm} body{background:#fff!important}.ecard-guest-sheet{max-width:none;margin:0 auto!important;page-break-after:always;break-after:page}.ecard-guest-card{min-height:265mm;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ecard-guest-actions{display:none!important} }
+
+
+/* Sample-first E-card studio */
+.ecard-sample-first-intro{max-width:760px;margin:22px auto 8px;padding:0 4px;text-align:center}
+.ecard-sample-first-intro h2{margin:0 0 8px;color:#8d671e;font-family:Georgia,serif;font-size:clamp(20px,3vw,27px)}
+.ecard-sample-first-intro p{margin:0 auto;color:#665a46;line-height:1.6;max-width:680px;font-size:14px}
+.ecard-sample-first-intro+.ecard-live-preview{margin-top:14px}
