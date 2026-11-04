@@ -4,61 +4,56 @@ import { supabase } from './supabaseClient'
 import './App.css'
 
 
-async function createECardPng(card) {
+async function createECardPng(card, guest = null) {
   const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
-  const lines = [
-    { text: 'FORTEEVENTS', y: 105, size: 25, weight: 700, spacing: 5 },
-    { text: 'MAKE YOUR EVENT EXTRAORDINARY', y: 135, size: 12, spacing: 2 },
-    { text: card.occasion || 'MWALIKO', y: 205, size: 18, spacing: 5 },
-    { text: card.title || 'MWALIKO', y: 265, size: 38, weight: 700 },
-    { text: 'Tunayo furaha kukukaribisha', y: 325, size: 20 },
-    { text: card.host_names || '', y: 375, size: 29, weight: 700 },
-    { text: card.event_date || '', y: 465, size: 19, weight: 700 },
-    { text: card.event_time || '', y: 505, size: 18 },
-    { text: card.venue || '', y: 550, size: 18 },
-    { text: 'KARIBU SANA', y: 640, size: 24, weight: 700, spacing: 4 },
-    { text: 'Imetengenezwa kwa upendo na ForteEvents', y: 700, size: 13 }
-  ]
-  const message = String(card.message || '').split(/\r?\n/).slice(0, 3)
-  message.forEach((line, index) => lines.splice(6 + index, 0, { text: line.slice(0, 65), y: 405 + index * 25, size: 15 }))
-  const textSvg = lines.map(line => `<text x="600" y="${line.y}" text-anchor="middle" font-family="Georgia,serif" font-size="${line.size}" font-weight="${line.weight || 400}" letter-spacing="${line.spacing || 0}" fill="#67452f">${esc(line.text)}</text>`).join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="#f8f0e3"/><rect x="28" y="28" width="1144" height="744" rx="12" fill="#fffaf1" stroke="#8b5e3c" stroke-width="8"/><rect x="48" y="48" width="1104" height="704" rx="8" fill="none" stroke="#d58a4c" stroke-width="2"/><g fill="#c77d48" font-size="55" opacity=".8"><text x="75" y="105">❀</text><text x="1060" y="105">❀</text><text x="75" y="735">✿</text><text x="1060" y="735">✿</text></g>${textSvg}</svg>`
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+  const guestUrl = guest ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token) : ''
+  const qrUrl = guest ? 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(guestUrl) : ''
+  const qrImage = guest ? await new Promise((resolve, reject) => { const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = () => { const canvas = document.createElement('canvas'); canvas.width=260; canvas.height=260; canvas.getContext('2d').drawImage(img,0,0); resolve(canvas.toDataURL('image/png')) }; img.onerror=()=>reject(new Error('QR haikuweza kupakiwa.')); img.src=qrUrl }) : ''
+  const title = esc(card.title || 'Harusi')
+  const hosts = esc(card.host_names || '')
+  const guestName = esc(guest?.guest_name || '')
+  const type = esc((guest?.invite_type || '').toUpperCase())
+  const date = esc(card.event_date || '')
+  const time = esc(card.event_time || '')
+  const venue = esc(card.venue || '')
+  const message = esc(card.message || 'Tukutane kusherehekea upendo wetu na baraka za Mungu.')
+  const occasion = esc(card.occasion || 'Harusi')
+  const qrBlock = guest ? `<rect x="735" y="1110" width="225" height="225" rx="12" fill="#fff" stroke="#c28a17" stroke-width="5"/><image href="${qrImage}" x="750" y="1125" width="195" height="195"/><rect x="745" y="1350" width="205" height="58" rx="20" fill="#d99b13"/><text x="847" y="1388" text-anchor="middle" font-family="Georgia" font-size="25" font-weight="bold" fill="#fff">${type}</text>` : ''
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1536" viewBox="0 0 1024 1536">
+  <defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#b87908"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#bd810c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8edda"/></linearGradient></defs>
+  <rect width="1024" height="1536" fill="url(#paper)"/><rect x="22" y="22" width="980" height="1492" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="39" y="39" width="946" height="1458" fill="none" stroke="#d6a33d" stroke-width="2"/>
+  <g fill="#c18a1c" opacity=".72" font-size="66"><text x="42" y="115">❀</text><text x="885" y="115">❀</text><text x="42" y="1450">✿</text><text x="885" y="1450">✿</text></g>
+  <text x="512" y="115" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="5" fill="#a36b08">FORTEEVENTS</text><text x="512" y="150" text-anchor="middle" font-family="Georgia" font-size="15" font-style="italic" fill="#8b5b18">Make your event extraordinary</text>
+  <text x="512" y="260" text-anchor="middle" font-family="cursive,Georgia" font-size="92" font-style="italic" fill="#bd8110">Mwaliko wa</text><text x="512" y="345" text-anchor="middle" font-family="cursive,Georgia" font-size="92" font-style="italic" fill="#bd8110">Harusi</text>
+  <path d="M170 370 Q512 410 854 370" fill="none" stroke="url(#gold)" stroke-width="5"/>
+  <text x="512" y="445" text-anchor="middle" font-family="Georgia" font-size="28" fill="#17130e">Familia ya ${hosts}</text><text x="512" y="490" text-anchor="middle" font-family="Georgia" font-size="25" fill="#17130e">wanafuraha kukualika</text>
+  <rect x="85" y="530" width="854" height="112" rx="24" fill="url(#gold)" stroke="#d09a25" stroke-width="3"/><text x="512" y="600" text-anchor="middle" font-family="Georgia" font-size="54" font-weight="bold" fill="#211707">${title}</text>
+  <text x="512" y="700" text-anchor="middle" font-family="Georgia" font-size="28" fill="#17130e">Mgeni wetu wa heshima</text><text x="512" y="765" text-anchor="middle" font-family="Georgia" font-size="52" font-weight="bold" fill="#17130e">${guestName || 'Karibu kwenye sherehe yetu'}</text>
+  <path d="M180 800 H844" stroke="#bd8719" stroke-width="2"/>
+  <text x="512" y="865" text-anchor="middle" font-family="Georgia" font-size="43" font-style="italic" fill="#bd8110">${date}</text><text x="512" y="920" text-anchor="middle" font-family="Georgia" font-size="32" fill="#17130e">Saa ${time}</text>
+  <text x="512" y="985" text-anchor="middle" font-family="Georgia" font-size="25" font-weight="bold" fill="#17130e">MAHALI: ${venue}</text>
+  <rect x="115" y="1020" width="794" height="105" rx="25" fill="#fff7e8" stroke="#bd8719" stroke-width="3"/><text x="512" y="1063" text-anchor="middle" font-family="Georgia" font-size="24" font-style="italic" fill="#17130e">${message.slice(0,85)}</text><text x="512" y="1095" text-anchor="middle" font-family="Georgia" font-size="24" font-style="italic" fill="#17130e">${message.slice(85,170)}</text>
+  ${qrBlock}
+  <rect x="130" y="1170" width="470" height="88" rx="24" fill="url(#gold)"/><text x="365" y="1225" text-anchor="middle" font-family="Georgia" font-size="32" font-weight="bold" fill="#211707">WAKARIBISHWA SANA</text>
+  <text x="365" y="1320" text-anchor="middle" font-family="Georgia" font-size="24" font-style="italic" fill="#17130e">Tunafurahi kushiriki nawe</text><text x="365" y="1355" text-anchor="middle" font-family="Georgia" font-size="24" font-style="italic" fill="#17130e">siku yetu ya pekee.</text>
+  <text x="512" y="1460" text-anchor="middle" font-family="Georgia" font-size="19" fill="#9a6d19">ForteEvents • Make your event extraordinary</text></svg>`
+  const blob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'})
   const objectUrl = URL.createObjectURL(blob)
-  try {
-    const image = new Image()
-    image.src = objectUrl
-    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject })
-    const canvas = document.createElement('canvas')
-    canvas.width = 1200; canvas.height = 800
-    canvas.getContext('2d').drawImage(image, 0, 0)
-    return await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('PNG haikuundwa.')), 'image/png'))
-  } finally { URL.revokeObjectURL(objectUrl) }
+  try { const image = new Image(); image.src=objectUrl; await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject}); const canvas=document.createElement('canvas'); canvas.width=1024; canvas.height=1536; canvas.getContext('2d').drawImage(image,0,0); return await new Promise((resolve,reject)=>canvas.toBlob(file=>file?resolve(file):reject(new Error('PNG haikuundwa.')),'image/png')) } finally { URL.revokeObjectURL(objectUrl) }
 }
 
 async function shareECard(card, mode, setMessage) {
   const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
   const message = `Habari! Tunakualika kwenye ${card.title}. Fungua mwaliko kupitia link hii: ${url}`
-  if (mode === 'link') {
-    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer')
-    return
-  }
+  if (mode === 'link') { window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer'); return }
   try {
     const png = await createECardPng(card)
-    const file = new File([png], 'ForteEvents-mwaliko.png', { type: 'image/png' })
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      const shareData = mode === 'both' ? { files: [file], text: message, title: card.title } : { files: [file], title: card.title }
-      await navigator.share(shareData)
-      setMessage('Chagua WhatsApp au programu nyingine kwenye dirisha la kushare.')
-      return
-    }
-    const downloadUrl = URL.createObjectURL(png)
-    const anchor = document.createElement('a')
-    anchor.href = downloadUrl; anchor.download = 'ForteEvents-mwaliko.png'; anchor.click()
-    URL.revokeObjectURL(downloadUrl)
-    if (mode === 'both') window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer')
-    setMessage(mode === 'both' ? 'Picha imepakuliwa. WhatsApp imefunguliwa; ambatisha picha uliyopakua.' : 'Picha ya mwaliko imepakuliwa kwenye kifaa chako.')
-  } catch (error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: ' + error.message) }
+    const file = new File([png], 'ForteEvents-mwaliko.png', {type:'image/png'})
+    if (navigator.share && navigator.canShare?.({files:[file]})) { await navigator.share(mode === 'both' ? {files:[file],text:message,title:card.title} : {files:[file],title:card.title}); setMessage('Chagua WhatsApp au programu nyingine kwenye dirisha la kushare.'); return }
+    const downloadUrl=URL.createObjectURL(png); const anchor=document.createElement('a'); anchor.href=downloadUrl; anchor.download='ForteEvents-mwaliko.png'; anchor.click(); URL.revokeObjectURL(downloadUrl)
+    if(mode==='both') window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer')
+    setMessage(mode==='both'?'Picha imepakuliwa. WhatsApp imefunguliwa; ambatisha picha uliyopakua.':'Picha ya mwaliko imepakuliwa.')
+  } catch(error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: '+error.message) }
 }
 
 function AdminCustomers({ session, onBack }) {
