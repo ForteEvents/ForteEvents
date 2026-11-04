@@ -1,4 +1,5 @@
 name: E-Card build check
+# Re-run the build after the local QR generation update.
 
 on:
   pull_request:
