@@ -428,9 +428,11 @@ function App() {
   const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
   const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
   const [eCardForm, setECardForm] = useState({
-    title: '', occasion: 'Harusi', host_names: '', event_date: '',
-    event_time: '', venue: '', location_url: '', message: '', image_url: '',
-    theme: 'gold'
+    title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
+    event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
+    food_note: '', dress_code: '', dress_colors: [], rsvp_deadline: '', rsvp_contact_name: '',
+    rsvp_contact_phone: '', rsvp_contact_name_2: '', rsvp_contact_phone_2: '',
+    location_url: '', message: '', image_url: '', theme: 'gold'
   })
 
   useEffect(() => {
@@ -719,8 +721,11 @@ function App() {
   const resetECardForm = () => {
     setEditingECardId(null)
     setECardForm({
-      title: '', occasion: 'Harusi', host_names: '', event_date: '',
-      event_time: '', venue: '', location_url: '', message: '', image_url: '', theme: 'gold'
+      title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
+      event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
+      food_note: '', dress_code: '', dress_colors: [], rsvp_deadline: '', rsvp_contact_name: '',
+      rsvp_contact_phone: '', rsvp_contact_name_2: '', rsvp_contact_phone_2: '',
+      location_url: '', message: '', image_url: '', theme: 'gold'
     })
     setECardDesign(defaultECardDesign)
   }
@@ -768,10 +773,15 @@ function App() {
     setEditingECardId(card.id)
     setECardForm({
       title: card.title || '', occasion: card.occasion || 'Harusi',
-      host_names: card.host_names || '', event_date: card.event_date || '',
-      event_time: card.event_time || '', venue: card.venue || '', location_url: card.location_url || '',
-      message: card.message || '', image_url: card.image_url || '',
-      theme: card.theme || 'gold'
+      host_names: card.host_names || '', bride_name: card.bride_name || '', groom_name: card.groom_name || '',
+      event_date: card.event_date || '', event_time: card.event_time || '', venue: card.venue || '',
+      ceremony_time: card.ceremony_time || '', ceremony_venue: card.ceremony_venue || '',
+      reception_time: card.reception_time || '', reception_venue: card.reception_venue || '',
+      food_note: card.food_note || '', dress_code: card.dress_code || '', dress_colors: card.dress_colors || [],
+      rsvp_deadline: card.rsvp_deadline || '', rsvp_contact_name: card.rsvp_contact_name || '',
+      rsvp_contact_phone: card.rsvp_contact_phone || '', rsvp_contact_name_2: card.rsvp_contact_name_2 || '',
+      rsvp_contact_phone_2: card.rsvp_contact_phone_2 || '', location_url: card.location_url || '',
+      message: card.message || '', image_url: card.image_url || '', theme: card.theme || 'gold'
     })
     setECardDesign({ ...defaultECardDesign, ...(card.design || {}) })
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
@@ -904,7 +914,7 @@ function App() {
     const loadPublicCard = async () => {
       setPublicECardLoading(true)
       const { data, error } = await supabase.from('e_cards')
-        .select('id, title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme, design')
+        .select('id, title, occasion, host_names, bride_name, groom_name, event_date, event_time, venue, ceremony_time, ceremony_venue, reception_time, reception_venue, food_note, dress_code, dress_colors, rsvp_deadline, rsvp_contact_name, rsvp_contact_phone, rsvp_contact_name_2, rsvp_contact_phone_2, location_url, message, image_url, theme, design')
         .eq('slug', slug).eq('is_published', true).maybeSingle()
       let guest = null
       if (!error && data && guestToken) {
@@ -2987,8 +2997,36 @@ return (
               <input value={eCardForm.host_names} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: John & Mary" />
               <label>Tarehe</label>
               <input type="date" value={eCardForm.event_date} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
-              <label>Muda</label>
+              <label>Muda wa tukio</label>
               <input type="time" value={eCardForm.event_time} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
+              <label>Jina la bibi harusi</label>
+              <input value={eCardForm.bride_name} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
+              <label>Jina la bwana harusi</label>
+              <input value={eCardForm.groom_name} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
+              <label>Muda wa ibada</label>
+              <input type="time" value={eCardForm.ceremony_time} onChange={e => setECardForm(v => ({...v, ceremony_time:e.target.value}))} />
+              <label>Mahali pa ibada</label>
+              <input value={eCardForm.ceremony_venue} onChange={e => setECardForm(v => ({...v, ceremony_venue:e.target.value}))} />
+              <label>Muda wa reception</label>
+              <input type="time" value={eCardForm.reception_time} onChange={e => setECardForm(v => ({...v, reception_time:e.target.value}))} />
+              <label>Mahali pa reception</label>
+              <input value={eCardForm.reception_venue} onChange={e => setECardForm(v => ({...v, reception_venue:e.target.value}))} />
+              <label>Ujumbe wa chakula / mapokezi</label>
+              <input value={eCardForm.food_note} onChange={e => setECardForm(v => ({...v, food_note:e.target.value}))} />
+              <label>Dress code</label>
+              <input value={eCardForm.dress_code} onChange={e => setECardForm(v => ({...v, dress_code:e.target.value}))} />
+              <label>Rangi za dress code (hadi 3, tenga kwa koma)</label>
+              <input value={(eCardForm.dress_colors || []).join(', ')} onChange={e => setECardForm(v => ({...v, dress_colors:e.target.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,3)}))} placeholder="Gold, Cream, White" />
+              <label>Tarehe ya mwisho ya RSVP</label>
+              <input type="date" value={eCardForm.rsvp_deadline} onChange={e => setECardForm(v => ({...v, rsvp_deadline:e.target.value}))} />
+              <label>Jina la mawasiliano 1</label>
+              <input value={eCardForm.rsvp_contact_name} onChange={e => setECardForm(v => ({...v, rsvp_contact_name:e.target.value}))} />
+              <label>Simu ya mawasiliano 1</label>
+              <input value={eCardForm.rsvp_contact_phone} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone:e.target.value}))} />
+              <label>Jina la mawasiliano 2</label>
+              <input value={eCardForm.rsvp_contact_name_2} onChange={e => setECardForm(v => ({...v, rsvp_contact_name_2:e.target.value}))} />
+              <label>Simu ya mawasiliano 2</label>
+              <input value={eCardForm.rsvp_contact_phone_2} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone_2:e.target.value}))} />
               <label>Mahali / Ukumbi</label>
               <input value={eCardForm.venue} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
               <label>Google Maps location link (hiari)</label>
@@ -3111,15 +3149,21 @@ return (
               const guestUrl = window.location.origin + '/?card=' + encodeURIComponent(card?.slug || '') + '&guest=' + encodeURIComponent(g.token)
               return <div key={g.id} className="ecard-guest-print ecard-guest-sheet">
                 <div className="ecard-guest-card">
-                  <div className="ecard-brand-mark">FORTEEVENTS <small>Make your event extraordinary</small></div>
+                  <div className="ecard-brand-mark">ForteEvents <small>Making your event extraordinary</small></div>
                   <h2>Mwaliko wa Harusi</h2>
                   <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}<br/>wanafuraha kukualika</div>
                   <div className="ecard-gold-ribbon">{card?.title || 'Harusi'}</div>
                   <div className="ecard-guest-name">{g.guest_name}</div>
                   <div className="ecard-guest-date">{card?.event_date || ''}</div>
-                  <div className="ecard-guest-time">Saa {card?.event_time || ''}</div>
-                  <div className="ecard-guest-venue"><b>MAHALI:</b> {card?.venue || ''}</div>
-                  <div className="ecard-guest-message">{card?.message || 'Tukutane kusherehekea upendo wetu na baraka za Mungu.'}</div>
+                  {(card?.bride_name || card?.groom_name) && <div className="ecard-guest-time">{card?.bride_name} &amp; {card?.groom_name}</div>}
+                  {card?.event_time && <div className="ecard-guest-time">Saa {card.event_time}</div>}
+                  {card?.venue && <div className="ecard-guest-venue"><b>MAHALI:</b> {card.venue}</div>}
+                  {(card?.ceremony_time || card?.ceremony_venue) && <div className="ecard-guest-venue"><b>IBADA:</b> {card?.ceremony_time || ''} {card?.ceremony_venue || ''}</div>}
+                  {(card?.reception_time || card?.reception_venue) && <div className="ecard-guest-venue"><b>RECEPTION:</b> {card?.reception_time || ''} {card?.reception_venue || ''}</div>}
+                  {card?.message && <div className="ecard-guest-message">{card.message}</div>}
+                  {card?.food_note && <div className="ecard-guest-message">{card.food_note}</div>}
+                  {(card?.dress_code || card?.dress_colors?.length) && <div className="ecard-guest-message"><b>DRESS CODE:</b> {card?.dress_code} {(card?.dress_colors || []).join(' • ')}</div>}
+                  {(card?.rsvp_contact_name || card?.rsvp_contact_name_2) && <div className="ecard-guest-message"><b>RSVP:</b> {card?.rsvp_deadline || ''} · {card?.rsvp_contact_name} {card?.rsvp_contact_phone} · {card?.rsvp_contact_name_2} {card?.rsvp_contact_phone_2}</div>
                   <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Make your event extraordinary</small></div><div className="ecard-qr-wrap"><img alt="QR ya mwaliko" src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(guestUrl)}/><strong>{g.invite_type.toUpperCase()}</strong></div></div>
                 </div>
                 <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={()=>window.open('https://wa.me/?text='+encodeURIComponent('Karibu kwenye '+(card?.title||'sherehe yetu')+': '+guestUrl),'_blank','noopener,noreferrer')}>Shiriki link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
