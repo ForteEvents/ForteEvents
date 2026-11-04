@@ -26,16 +26,19 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
 }
 
 
-function buildECardInvitationSentence(card, recipientName = '[JINA LA MWALIKWA]') {
-  const occasion = String(card?.occasion || '').toLowerCase()
-  const recipient = 'Bw&Bi. Mhe. Pro. Dkt. Bw./ Bi. ' + (recipientName || '[JINA LA MWALIKWA]')
-  if (occasion.includes('send')) return 'Wanayo furaha kukualika ' + recipient + ' kwenye send-off ya binti yao ' + (card?.title || '[JINA LA MHUSIKA]') + '.'
-  if (occasion.includes('harusi')) {
-    const couple = [card?.bride_name, card?.groom_name].filter(Boolean).join(' na ') || card?.title || '[MAJINA YA WAHUSIKA]'
-    return 'Wanayo furaha kukualika ' + recipient + ' kwenye harusi ya vijana wao wapendwa ' + couple + '.'
-  }
-  return 'Wanayo furaha kukualika ' + recipient + ' kwenye ' + String(card?.occasion || 'tukio').toLowerCase() + ' ya ' + (card?.title || '[JINA LA TUKIO]') + '.'
+const DEFAULT_ECARD_MESSAGE='Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee.'
+function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
+ const occasion=String(card?.occasion||'').toLowerCase();let eventLine
+ if(occasion.includes('send'))eventLine='kwenye send-off ya binti yao '+(card?.title||'[JINA LA MHUSIKA]')+'.'
+ else if(occasion.includes('harusi')){const couple=[card?.bride_name,card?.groom_name].filter(Boolean).join(' na ')||card?.title||'[MAJINA YA WAHUSIKA]';eventLine='kwenye harusi ya vijana wao wapendwa '+couple+'.'}
+ else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
+ return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine}
 }
+function buildECardInvitationSentence(card,name){const p=buildECardInvitationParts(card,name);return [p.intro,p.titles,'— '+p.recipient+' —',p.eventLine].join('\\n')}
+function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p></div>}
+function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 220 170" aria-hidden="true" focusable="false"><g fill="none" stroke="#ad791d" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 158 C48 125 54 90 92 62 C126 38 150 37 203 8"/><path d="M54 119 C28 111 20 91 22 72 C44 76 61 91 54 119Z" fill="#e8d5a8"/><path d="M93 83 C70 82 58 67 57 48 C78 49 95 62 93 83Z" fill="#f4e8cc"/><path d="M139 53 C130 31 139 15 155 5 C166 24 160 44 139 53Z" fill="#e8d5a8"/></g><g fill="#fffaf0" stroke="#a87518" strokeWidth="2.2"><ellipse cx="165" cy="83" rx="12" ry="25"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(60 165 83)"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(120 165 83)"/><circle cx="165" cy="83" r="9" fill="#d4a13c"/><ellipse cx="103" cy="35" rx="9" ry="19"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(60 103 35)"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(120 103 35)"/><circle cx="103" cy="35" r="7" fill="#d4a13c"/></g></svg>}
+function buildECardDetailItems(card){const contacts=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean);return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',[card?.dress_code,...(card?.dress_colors||[])].filter(Boolean).join(' · ')],['RSVP',[card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:'',...contacts].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
+function ECardDetails({card,className=''}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{card?.dress_code&&<>{card.dress_code} </>}{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>{color}</span>)}</>:value}</span></p>)}</div>}
 
 async function createECardPng(card, guest = null) {
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
@@ -1998,28 +2001,19 @@ useEffect(() => {
               {(() => { const d=defaultECardDesign; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template}`}>
                 <div className="ecard-card-inner">
                   <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
-                  <div className="ecard-card-flower ecard-card-flower-top">✿</div>
-                  <p className="ecard-card-kicker">{publicECard.occasion || 'MWALIKO'}</p>
-                  <h2>{publicECard.title}</h2>
+                  <ECardFloralOrnament className="ecard-public-floral-top" />
+                  <p className="ecard-card-kicker">{publicECard.occasion || 'MWALIKO'}</p><h2>{publicECard.title}</h2>
                   <div className="ecard-card-divider"><span>✦</span></div>
                   {publicECard.image_url && <img className="ecard-card-photo" src={publicECard.image_url} alt="Picha ya tukio"/>}
                   <p className="ecard-card-invite">Familia ya {publicECard.host_names || 'familia zetu'}</p>
-                  <p className="ecard-card-message">{buildECardInvitationSentence(publicECard, publicECard.guest?.guest_name || '[JINA LA MWALIKWA]')}</p>
-                  <div className="ecard-card-details">
-                    {publicECard.event_date && <span><b>TAREHE</b>{publicECard.event_date}</span>}
-                    {publicECard.event_time && <span><b>MUDA</b>{publicECard.event_time}</span>}
-                    {publicECard.venue && <span><b>MAHALI</b>{publicECard.venue}</span>}
-                    {(publicECard.ceremony_time || publicECard.ceremony_venue) && <span><b>IBADA</b>{[publicECard.ceremony_time, publicECard.ceremony_venue].filter(Boolean).join(' — ')}</span>}
-                    {(publicECard.reception_time || publicECard.reception_venue) && <span><b>RECEPTION</b>{[publicECard.reception_time, publicECard.reception_venue].filter(Boolean).join(' — ')}</span>}
-                    {publicECard.food_note && <span><b>CHAKULA</b>{publicECard.food_note}</span>}
-                    {(publicECard.dress_code || publicECard.dress_colors?.length) && <span><b>DRESS CODE</b>{[publicECard.dress_code, ...(publicECard.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
-                    {(publicECard.rsvp_deadline || publicECard.rsvp_contact_name || publicECard.rsvp_contact_phone || publicECard.rsvp_contact_name_2 || publicECard.rsvp_contact_phone_2) && <span><b>RSVP</b>{[publicECard.rsvp_deadline ? 'Mwisho: ' + publicECard.rsvp_deadline : '', [publicECard.rsvp_contact_name, publicECard.rsvp_contact_phone].filter(Boolean).join(' '), [publicECard.rsvp_contact_name_2, publicECard.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
-                  </div>
+                  <ECardInvitationCopy card={publicECard} recipientName={publicECard.guest?.guest_name || '[JINA LA MWALIKWA]'} />
+                  <ECardDetails card={publicECard} className="ecard-public-details" />
+                  <p className="ecard-family-message">{String(publicECard.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
                   {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} /></>}
-                  <p className="ecard-card-welcome">WAKARIBISHWA SANA · KARIBU KUSHEREHEKEA NASI</p>
+                  
                   {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
-                  <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
+                  <ECardFloralOrnament className="ecard-public-floral-bottom" />
                 </div>
               </div> })()}
             </>
@@ -3041,39 +3035,29 @@ return (
             </div>
             <div className="ecard-professional-preview" aria-label="Muonekano wa kadi ya mwaliko">
               <div className="ecard-main-panel">
-                <div className="ecard-floral-corner ecard-floral-top">❀ ✿ ❀</div>
+                
                 <div className="ecard-brand-lockup"><strong>ForteEvents</strong><small>Make your event extraordinary</small></div>
                 <div className="ecard-main-heading">
                   <div className="ecard-document-title">KADI YA MWALIKO</div>
                   <div className="ecard-script-title">{eCardForm.occasion || 'MWALIKO'}</div>
                   <div className="ecard-invitation-label">INVITATION</div>
                 </div>
-                <div className="ecard-family-copy">
-                  <span>Familia ya</span>
-                  <strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong>
-                  <p className="ecard-invitation-sentence">{buildECardInvitationSentence(eCardForm, guestName.trim() || '[JINA LA MWALIKWA]')}</p>
-                </div>
-                {eCardForm.occasion?.toLowerCase().includes('harusi') && <div className="ecard-couple-names">{[eCardForm.bride_name,eCardForm.groom_name].filter(Boolean).join(' na ') || 'MAJINA YA WAHUSIKA'}</div>}
+                <ECardFloralOrnament className="ecard-floral-top" />
+                <div className="ecard-family-copy"><span>Familia ya</span><strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong></div>
+                <ECardInvitationCopy card={eCardForm} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} />
                 <div className="ecard-date-line">{eCardForm.event_date ? new Date(eCardForm.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
-                <div className="ecard-detail-grid">
-                  {eCardForm.event_time && <div><b>MUDA</b><span>{eCardForm.event_time}</span></div>}
-                  {(eCardForm.ceremony_time || eCardForm.ceremony_venue) && <div><b>IBADA</b><span>{[eCardForm.ceremony_time,eCardForm.ceremony_venue].filter(Boolean).join(" · ")}</span></div>}
-                  {(eCardForm.reception_time || eCardForm.reception_venue) && <div><b>MAPOKEZI</b><span>{[eCardForm.reception_time,eCardForm.reception_venue].filter(Boolean).join(" · ")}</span></div>}
-                  {eCardForm.venue && <div><b>MAHALI</b><span>{eCardForm.venue}</span></div>}
-                  {(eCardForm.dress_code || eCardForm.dress_colors?.length) && <div><b>DRESS CODE</b><span>{[eCardForm.dress_code,...(eCardForm.dress_colors||[])].filter(Boolean).join(' · ')}</span></div>}
-                  {(eCardForm.rsvp_contact_name || eCardForm.rsvp_contact_phone) && <div><b>RSVP</b><span>{[eCardForm.rsvp_contact_name,eCardForm.rsvp_contact_phone].filter(Boolean).join(' · ')}</span></div>}
-                </div>
-                <div className="ecard-welcome-ribbon">KARIBU SANA</div>
-                <div className="ecard-floral-corner ecard-floral-bottom">❀ ✿ ❀</div>
+                <ECardDetails card={eCardForm} />
+                <p className="ecard-family-message">{String(eCardForm.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
+                <ECardFloralOrnament className="ecard-floral-bottom" />
               </div>
               <aside className="ecard-pass-panel">
-                <div className="ecard-pass-florals">🌹 ❀ 🌹</div>
+                <ECardFloralOrnament className="ecard-pass-floral-art" />
                 <div className="ecard-pass-ribbon">YOUR GUEST PASS</div>
                 <div className="ecard-pass-name">{guestName.trim() || "JINA LA MWALIKWA"}</div>
                 <div className="ecard-pass-type">{guestType === "single" ? "SINGLE · MTU 1" : "DOUBLE · WATU 2"}</div>
                 <div className="ecard-pass-qr"><GuestQr value={window.location.origin + '/?ecard-preview=forteevents'} /></div>
                 <div className="ecard-pass-checkin">✓ &nbsp; Scan at Check-in</div>
-                <p>WAKARIBISHWA SANA<br/>KARIBU KUSHEREHEKEA NASI</p>
+                <p>ForteEvents · Make your event extraordinary</p>
               </aside>
             </div>
             <form onSubmit={saveECard}>
@@ -3122,8 +3106,9 @@ return (
               <label>Google Maps location link (hiari)</label>
               <input type="url" value={eCardForm.location_url} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
               <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
-              <label>Ujumbe wa mwaliko</label>
-              <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Tunayo furaha kukualika..." />
+              <label>Ujumbe wa familia (unaweza kuhariri)</label>
+              <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
+              <p className="ecard-form-hint">Ujumbe huu utaonekana chini ya taarifa za mwaliko. Unaweza kuubadilisha au kuacha mfano huu.</p>
               <label>Pakia picha ya mwaliko (JPG, PNG au WEBP; hadi 5MB)</label>
               <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
                 const file = e.target.files?.[0]
@@ -3206,18 +3191,10 @@ return (
                   <div className="ecard-brand-mark">ForteEvents <small>Making your event extraordinary</small></div>
                   <h2>Mwaliko wa {card?.occasion || 'Tukio'}</h2>
                   <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}</div>
-                  <div className="ecard-guest-invitation">{buildECardInvitationSentence(card, g.guest_name)}</div>
-                   {card?.event_date && <div className="ecard-guest-date">{card.event_date}</div>}
-                  {(card?.bride_name || card?.groom_name) && <div className="ecard-guest-time">{[card?.bride_name, card?.groom_name].filter(Boolean).join(' & ')}</div>}
-                  {card?.event_time && <div className="ecard-guest-time">Saa {card.event_time}</div>}
-                  {card?.venue && <div className="ecard-guest-venue"><b>MAHALI:</b> {card.venue}</div>}
-                  {(card?.ceremony_time || card?.ceremony_venue) && <div className="ecard-guest-venue"><b>IBADA:</b> {card?.ceremony_time || ''} {card?.ceremony_venue || ''}</div>}
-                  {(card?.reception_time || card?.reception_venue) && <div className="ecard-guest-venue"><b>RECEPTION:</b> {card?.reception_time || ''} {card?.reception_venue || ''}</div>}
-                  {card?.message && <div className="ecard-guest-message">{card.message}</div>}
-                  {card?.food_note && <div className="ecard-guest-message"><b>CHAKULA:</b> {card.food_note}</div>}
-                  {(card?.dress_code || card?.dress_colors?.length) && <div className="ecard-guest-message"><b>DRESS CODE:</b> {card?.dress_code} {(card?.dress_colors || []).join(' • ')}</div>}
-                  {(card?.rsvp_deadline || card?.rsvp_contact_name || card?.rsvp_contact_phone || card?.rsvp_contact_name_2 || card?.rsvp_contact_phone_2) && <div className="ecard-guest-message"><b>RSVP:</b> {[card?.rsvp_deadline ? 'Mwisho: ' + card.rsvp_deadline : '', [card?.rsvp_contact_name, card?.rsvp_contact_phone].filter(Boolean).join(' '), [card?.rsvp_contact_name_2, card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</div>}
-                  <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Making your event extraordinary</small></div><div className="ecard-qr-wrap"><GuestQr value={guestUrl} /><strong>{g.invite_type.toUpperCase()} · {g.guest_count || (g.invite_type === 'double' ? 2 : 1)}</strong></div></div>
+                  <ECardInvitationCopy card={card} recipientName={g.guest_name} className="ecard-guest-invitation" />
+                  <ECardDetails card={card} className="ecard-guest-details" />
+                  <p className="ecard-family-message">{String(card?.message||'').trim() || DEFAULT_ECARD_MESSAGE}</p>
+                  <div className="ecard-guest-bottom"><div><small>ForteEvents · Make your event extraordinary</small></div><div className="ecard-qr-wrap"><GuestQr value={guestUrl} /><strong>{g.invite_type.toUpperCase()} · {g.guest_count || (g.invite_type === 'double' ? 2 : 1)}</strong></div></div>
                 </div>
                 <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const file=new File([png],'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'});const text='Karibu kwenye '+(card?.title||'sherehe yetu')+'. Fungua mwaliko wako: '+guestUrl;if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],text,title:card?.title||'Mwaliko wa ForteEvents'})}else{const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download=file.name;a.click();URL.revokeObjectURL(href);window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setECardMessage('Picha imepakuliwa. Ambatisha picha hiyo kwenye WhatsApp iliyofunguliwa.')}}catch(error){setECardMessage('Imeshindikana kushiriki: '+error.message)}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
               </div>
