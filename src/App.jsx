@@ -57,7 +57,7 @@ async function createECardPng(card, guest = null) {
     '<text x="650" y="135" text-anchor="middle" font-family="Georgia" font-size="80" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="33" letter-spacing="7" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
     '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
-    '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="28" font-style="italic" fill="#21170f">Wanayo furaha kukualika</text><text x="650" y="430" text-anchor="middle" font-family="Georgia" font-size="22" fill="#21170f">Mheshimiwa / Profesa Daktari / Bwana / Bi.</text>'+
+    '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="28" font-style="italic" fill="#21170f">Wanayo furaha kukualika</text><text x="650" y="430" text-anchor="middle" font-family="Georgia" font-size="22" fill="#21170f">Mheshimiwa Profesa Daktari Bwana na Bibi, Bwana au Bi.</text>'+
     '<text x="650" y="472" text-anchor="middle" font-family="Georgia" font-size="25" font-weight="bold" fill="#9a6710">'+esc(guestName)+'</text>'+
     '<rect x="300" y="505" width="700" height="92" rx="18" fill="url(#gold)" stroke="#bd861b" stroke-width="3"/><text x="650" y="565" text-anchor="middle" font-family="Georgia" font-size="38" font-weight="bold" fill="#211707">'+esc(card.title || 'JINA LA TUKIO')+'</text>'+
     '<text x="650" y="630" text-anchor="middle" font-family="Georgia" font-size="28" fill="#a36b08">'+esc(names || 'Majina ya wahusika')+'</text><text x="650" y="680" text-anchor="middle" font-family="Georgia" font-size="25" fill="#21170f">'+esc(date)+'</text>'+
@@ -3042,7 +3042,7 @@ return (
                   <span>Familia ya</span>
                   <strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong>
                   <p>Wanayo furaha kukualika</p>
-                  <div className="ecard-honorific-fixed">Mheshimiwa / Profesa Daktari / Bwana / Bi.</div>
+                  <div className="ecard-honorific-fixed">Mheshimiwa Profesa Daktari Bwana na Bibi, Bwana au Bi.</div>
                   <div className="ecard-guest-placeholder">{guestName.trim() || "[JINA LA MWALIKWA]"}</div>
                 </div>
                 <div className="ecard-event-ribbon">{eCardForm.title || 'JINA LA TUKIO'}</div>
