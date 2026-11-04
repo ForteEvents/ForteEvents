@@ -3043,15 +3043,15 @@ return (
                   <strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong>
                   <p>Wanayo furaha kukualika</p>
                   <div className="ecard-honorific-fixed">Mheshimiwa / Profesa Daktari / Bwana / Bi.</div>
-                  <div className="ecard-guest-placeholder">[JINA LA MWALIKWA]</div>
+                  <div className="ecard-guest-placeholder">{guestName.trim() || "[JINA LA MWALIKWA]"}</div>
                 </div>
                 <div className="ecard-event-ribbon">{eCardForm.title || 'JINA LA TUKIO'}</div>
                 <div className="ecard-couple-names">{[eCardForm.bride_name,eCardForm.groom_name].filter(Boolean).join(' & ') || 'MAJINA YA WAHUSIKA'}</div>
                 <div className="ecard-date-line">{eCardForm.event_date ? new Date(eCardForm.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
                 <div className="ecard-detail-grid">
                   {eCardForm.event_time && <div><b>MUDA</b><span>{eCardForm.event_time}</span></div>}
-                  {eCardForm.ceremony_time && <div><b>IBADA</b><span>{eCardForm.ceremony_time} {eCardForm.ceremony_venue}</span></div>}
-                  {eCardForm.reception_time && <div><b>MAPOKEZI</b><span>{eCardForm.reception_time} {eCardForm.reception_venue}</span></div>}
+                  {(eCardForm.ceremony_time || eCardForm.ceremony_venue) && <div><b>IBADA</b><span>{[eCardForm.ceremony_time,eCardForm.ceremony_venue].filter(Boolean).join(" · ")}</span></div>}
+                  {(eCardForm.reception_time || eCardForm.reception_venue) && <div><b>MAPOKEZI</b><span>{[eCardForm.reception_time,eCardForm.reception_venue].filter(Boolean).join(" · ")}</span></div>}
                   {eCardForm.venue && <div><b>MAHALI</b><span>{eCardForm.venue}</span></div>}
                   {(eCardForm.dress_code || eCardForm.dress_colors?.length) && <div><b>DRESS CODE</b><span>{[eCardForm.dress_code,...(eCardForm.dress_colors||[])].filter(Boolean).join(' · ')}</span></div>}
                   {(eCardForm.rsvp_contact_name || eCardForm.rsvp_contact_phone) && <div><b>RSVP</b><span>{[eCardForm.rsvp_contact_name,eCardForm.rsvp_contact_phone].filter(Boolean).join(' · ')}</span></div>}
@@ -3062,8 +3062,8 @@ return (
               <aside className="ecard-pass-panel">
                 <div className="ecard-pass-florals">🌹 ❀ 🌹</div>
                 <div className="ecard-pass-ribbon">YOUR GUEST PASS</div>
-                <div className="ecard-pass-name">JINA LA MWALIKWA</div>
-                <div className="ecard-pass-type">SINGLE / DOUBLE</div>
+                <div className="ecard-pass-name">{guestName.trim() || "JINA LA MWALIKWA"}</div>
+                <div className="ecard-pass-type">{guestType.toUpperCase()} / GUEST PASS</div>
                 <div className="ecard-pass-qr"><GuestQr value={window.location.origin + '/?ecard-preview=forteevents'} /></div>
                 <div className="ecard-pass-checkin">✓ &nbsp; Scan at Check-in</div>
                 <p>Thank you for being part<br/>of our special day!</p>
@@ -3074,7 +3074,7 @@ return (
               <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
               <label>Aina ya tukio</label>
               <select value={eCardForm.occasion} onChange={e => setECardForm(v => ({...v, occasion:e.target.value}))}>
-                <option>Harusi</option><option>Send-off</option><option>Birthday</option><option>Kitchen Party</option><option>Graduation</option><option>Shukrani</option><option>Tukio lingine</option>
+                <option>Harusi</option><option>Send-off</option><option>Kipaimara</option><option>Graduation</option><option>Birthday</option><option>Kitchen Party</option><option>Shukrani</option><option>Kupongeza</option><option>Kumuaga</option><option>Tukio lingine</option>
               </select>
               <label>Jina la familia inayoalika</label>
               <input value={eCardForm.host_names} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: Bwana na Bi. Amini Mlashi" />
