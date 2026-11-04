@@ -67,7 +67,7 @@ async function createECardPng(card, guest = null) {
     '<path d="M1010 35 C1130 150 1250 50 1498 230 M35 790 C170 850 140 970 360 990" fill="none" stroke="#e2bd67" stroke-width="5" opacity=".45"/>'+
     '<g font-family="Georgia" fill="#b47a18" opacity=".95"><text x="820" y="100" font-size="82">❀</text><text x="1200" y="105" font-size="66">✿</text><text x="38" y="980" font-size="90">❀</text><text x="880" y="980" font-size="70">✿</text><text x="1420" y="980" font-size="82">❀</text></g>'+
     '<g><text x="180" y="125" text-anchor="middle" font-family="Georgia" font-size="42" font-weight="bold" fill="#9b6814">ForteEvents</text><text x="180" y="157" text-anchor="middle" font-family="Georgia" font-size="16" font-style="italic" fill="#81521b">Make your event extraordinary</text></g>'+
-    '<text x="650" y="135" text-anchor="middle" font-family="Georgia" font-size="80" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="33" letter-spacing="7" fill="#23190f">INVITATION</text>'+
+    '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
     '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
     '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+invitationLines.map((line,i)=>'<tspan x="650" dy="'+(i===0?0:27)+'">'+esc(line.trim())+'</tspan>').join('')+'</text>'+
@@ -3044,6 +3044,7 @@ return (
                 <div className="ecard-floral-corner ecard-floral-top">❀ ✿ ❀</div>
                 <div className="ecard-brand-lockup"><strong>ForteEvents</strong><small>Make your event extraordinary</small></div>
                 <div className="ecard-main-heading">
+                  <div className="ecard-document-title">KADI YA MWALIKO</div>
                   <div className="ecard-script-title">{eCardForm.occasion || 'MWALIKO'}</div>
                   <div className="ecard-invitation-label">INVITATION</div>
                 </div>
