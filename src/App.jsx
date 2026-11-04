@@ -3001,8 +3001,8 @@ return (
             <button type="button" className="secondary-button" onClick={loadECards}>Refresh</button>
           </div>
           <div className="card">
-            <h2>Chagua sampuli ya ForteEvents</h2>
-            <p>Chagua muundo unaoupenda. Kisha jaza majina, tarehe na taarifa za tukio lako.</p>
+            <h2>Muundo rasmi wa ForteEvents</h2>
+            <p>Muundo mmoja wa dhahabu na nyeupe umetayarishwa tayari. Jaza taarifa za tukio lako hapa chini.</p>
             <p>Muundo rasmi wa ForteEvents ni wa dhahabu na nyeupe. Mpangilio, fremu na mapambo vimefungwa; jaza taarifa za tukio lako hapa chini.</p>
           </div>
           <div className="card">
@@ -3166,15 +3166,15 @@ return (
                   <div className="ecard-gold-ribbon">{card?.title || 'Harusi'}</div>
                   <div className="ecard-guest-name">{g.guest_name}</div>
                   {card?.event_date && <div className="ecard-guest-date">{card.event_date}</div>}
-                  {(card?.bride_name || card?.groom_name) && <div className="ecard-guest-time">{card?.bride_name} &amp; {card?.groom_name}</div>}
+                  {(card?.bride_name || card?.groom_name) && <div className="ecard-guest-time">{[card?.bride_name, card?.groom_name].filter(Boolean).join(' & ')}</div>}
                   {card?.event_time && <div className="ecard-guest-time">Saa {card.event_time}</div>}
                   {card?.venue && <div className="ecard-guest-venue"><b>MAHALI:</b> {card.venue}</div>}
                   {(card?.ceremony_time || card?.ceremony_venue) && <div className="ecard-guest-venue"><b>IBADA:</b> {card?.ceremony_time || ''} {card?.ceremony_venue || ''}</div>}
                   {(card?.reception_time || card?.reception_venue) && <div className="ecard-guest-venue"><b>RECEPTION:</b> {card?.reception_time || ''} {card?.reception_venue || ''}</div>}
                   {card?.message && <div className="ecard-guest-message">{card.message}</div>}
-                  {card?.food_note && <div className="ecard-guest-message">{card.food_note}</div>}
+                  {card?.food_note && <div className="ecard-guest-message"><b>CHAKULA:</b> {card.food_note}</div>}
                   {(card?.dress_code || card?.dress_colors?.length) && <div className="ecard-guest-message"><b>DRESS CODE:</b> {card?.dress_code} {(card?.dress_colors || []).join(' • ')}</div>}
-                  {(card?.rsvp_deadline || card?.rsvp_contact_name || card?.rsvp_contact_phone || card?.rsvp_contact_name_2 || card?.rsvp_contact_phone_2) && <div className="ecard-guest-message"><b>RSVP:</b> {card?.rsvp_deadline || ''} · {card?.rsvp_contact_name} {card?.rsvp_contact_phone} · {card?.rsvp_contact_name_2} {card?.rsvp_contact_phone_2}</div>
+                  {(card?.rsvp_deadline || card?.rsvp_contact_name || card?.rsvp_contact_phone || card?.rsvp_contact_name_2 || card?.rsvp_contact_phone_2) && <div className="ecard-guest-message"><b>RSVP:</b> {[card?.rsvp_deadline ? 'Mwisho: ' + card.rsvp_deadline : '', [card?.rsvp_contact_name, card?.rsvp_contact_phone].filter(Boolean).join(' '), [card?.rsvp_contact_name_2, card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</div>
                   <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Making your event extraordinary</small></div><div className="ecard-qr-wrap"><img alt="QR ya mwaliko" src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(guestUrl)}/><strong>{g.invite_type.toUpperCase()} · {g.guest_count || (g.invite_type === 'double' ? 2 : 1)}</strong></div></div>
                 </div>
                 <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const file=new File([png],'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'});const text='Karibu kwenye '+(card?.title||'sherehe yetu')+'. Fungua mwaliko wako: '+guestUrl;if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],text,title:card?.title||'Mwaliko wa ForteEvents'})}else{const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download=file.name;a.click();URL.revokeObjectURL(href);window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setECardMessage('Picha imepakuliwa. Ambatisha picha hiyo kwenye WhatsApp iliyofunguliwa.')}}catch(error){setECardMessage('Imeshindikana kushiriki: '+error.message)}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
