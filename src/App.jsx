@@ -41,7 +41,7 @@ function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c6
 
 function ECardFamilyMessage({message}) {
   const value = String(message || '').trim() || DEFAULT_ECARD_MESSAGE
-  const sentences = value.split(/(?<=[.!?])\\s+/).map(part => part.trim()).filter(Boolean)
+  const sentences = value.split(/(?<=[.!?])\s+/).map(part => part.trim()).filter(Boolean)
   return <div className="ecard-family-message">{sentences.map((sentence,index)=><p key={index}>{sentence}</p>)}</div>
 }
 
@@ -59,7 +59,7 @@ async function createECardPng(card, guest = null) {
   const invitationLines=[invitationParts.intro,invitationParts.titles,'— '+invitationParts.recipient+' —',invitationParts.eventLine,...(invitationParts.coupleName?['— '+invitationParts.coupleName+' —']:[])]
   const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
   const wrapSvg = (value, max = 34) => {
-    const words = String(value ?? '').split(/\\s+/)
+    const words = String(value ?? '').split(/\s+/)
     const lines = []
     let line = ''
     for (const word of words) {
