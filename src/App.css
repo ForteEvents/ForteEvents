@@ -785,3 +785,28 @@ button[type="submit"] {
  .ecard-detail-line>span{font-size:18px!important;line-height:1.45!important}
  .ecard-family-message{font-size:18px!important;line-height:1.65!important}
 }
+
+
+/* Official ForteEvents logo and a deliberate editorial type hierarchy */
+.ecard-card-brand{position:absolute!important;top:16px!important;left:18px!important;z-index:4!important;width:clamp(112px,18vw,176px)!important;max-width:32%!important;margin:0!important;padding:0!important;line-height:0!important;background:transparent!important}
+.ecard-card-brand img{display:block!important;width:100%!important;height:auto!important;max-height:88px!important;object-fit:contain!important;object-position:left top!important;filter:drop-shadow(0 2px 2px rgba(68,41,27,.12))!important}
+.ecard-card-kicker{font-family:Georgia,serif!important;font-style:italic!important;font-weight:700!important;letter-spacing:.18em!important}
+.ecard-card-inner h2{font-family:Georgia,serif!important;font-style:italic!important;font-weight:700!important;letter-spacing:.015em!important}
+.ecard-card-invite{font-family:Georgia,serif!important;font-style:italic!important;font-weight:600!important;letter-spacing:.015em!important}
+.ecard-invitation-copy p{font-family:Georgia,serif!important;font-style:italic!important}
+.ecard-invitation-titles{font-family:Arial,sans-serif!important;font-weight:500!important;letter-spacing:.08em!important;text-transform:none!important}
+.ecard-invitation-recipient{font-family:Georgia,serif!important;font-weight:700!important;font-style:italic!important;letter-spacing:.015em!important}
+.ecard-invitation-couple{font-family:Georgia,serif!important;font-weight:700!important;font-style:italic!important;letter-spacing:.02em!important}
+.ecard-detail-line b{font-family:Arial,sans-serif!important;font-weight:700!important;letter-spacing:.13em!important}
+.ecard-detail-line>span{font-family:Georgia,serif!important;font-weight:500!important}
+.ecard-family-message p{font-family:Georgia,serif!important;font-style:italic!important;font-weight:500!important;letter-spacing:.005em!important}
+@media(max-width:700px){
+ .ecard-card-brand{top:12px!important;left:12px!important;width:clamp(100px,29vw,140px)!important;max-width:34%!important}
+ .ecard-card-brand img{max-height:68px!important}
+}
+
+
+.ecard-brand-lockup{position:absolute!important;top:14px!important;left:16px!important;z-index:5!important;width:clamp(112px,18vw,176px)!important;max-width:32%!important;margin:0!important;padding:0!important;background:transparent!important;line-height:0!important}
+.ecard-brand-lockup img{display:block!important;width:100%!important;height:auto!important;max-height:86px!important;object-fit:contain!important;object-position:left top!important;filter:drop-shadow(0 2px 2px rgba(68,41,27,.12))!important}
+.ecard-main-panel{position:relative!important}
+@media(max-width:700px){.ecard-brand-lockup{top:10px!important;left:10px!important;width:clamp(100px,28vw,138px)!important;max-width:34%!important}.ecard-brand-lockup img{max-height:66px!important}}
