@@ -32,7 +32,7 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
  if(occasion.includes('send'))eventLine='kwenye send-off ya binti yao '+(card?.title||'[JINA LA MHUSIKA]')+'.'
  else if(occasion.includes('harusi')){coupleName=[card?.bride_name,card?.groom_name].filter(Boolean).join(' na ')||card?.title||'[MAJINA YA BIBI NA BWANA HARUSI]';eventLine='kwenye harusi ya vijana wao wapendwa'}
  else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
- return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Bw. / Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
+ return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
 }
 function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 220 170" aria-hidden="true" focusable="false"><g fill="none" stroke="#ad791d" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 158 C48 125 54 90 92 62 C126 38 150 37 203 8"/><path d="M54 119 C28 111 20 91 22 72 C44 76 61 91 54 119Z" fill="#e8d5a8"/><path d="M93 83 C70 82 58 67 57 48 C78 49 95 62 93 83Z" fill="#f4e8cc"/><path d="M139 53 C130 31 139 15 155 5 C166 24 160 44 139 53Z" fill="#e8d5a8"/></g><g fill="#fffaf0" stroke="#a87518" strokeWidth="2.2"><ellipse cx="165" cy="83" rx="12" ry="25"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(60 165 83)"/><ellipse cx="165" cy="83" rx="12" ry="25" transform="rotate(120 165 83)"/><circle cx="165" cy="83" r="9" fill="#d4a13c"/><ellipse cx="103" cy="35" rx="9" ry="19"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(60 103 35)"/><ellipse cx="103" cy="35" rx="9" ry="19" transform="rotate(120 103 35)"/><circle cx="103" cy="35" r="7" fill="#d4a13c"/></g></svg>}
@@ -48,7 +48,7 @@ async function createECardPng(card, guest = null) {
   const date = card.event_date ? new Date(card.event_date + 'T00:00:00').toLocaleDateString('sw-TZ', {day:'numeric',month:'long',year:'numeric'}) : 'Tarehe ya tukio'
   const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
   const detailSvg = details.map(([label,value],i) => {
-    const y=605+i*43
+    const y=(invitationParts.coupleName?625:605)+i*36
     return '<text x="650" y="'+y+'" text-anchor="middle" font-family="Georgia" font-size="19" fill="#302318"><tspan font-weight="bold" fill="#9b6b16">'+esc(label)+': </tspan><tspan>'+esc(value)+'</tspan></text>'
   }).join('')
   const guestName = guest?.guest_name || 'JINA LA MWALIKWA'
@@ -65,7 +65,7 @@ async function createECardPng(card, guest = null) {
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
     '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
     '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+invitationLines.map((line,i)=>'<tspan x="650" dy="'+(i===0?0:27)+'">'+esc(line.trim())+'</tspan>').join('')+'</text>'+
-    '<text x="650" y="505" text-anchor="middle" font-family="Georgia" font-size="23" fill="#21170f">'+esc(date)+'</text>'+
+    '<text x="650" y="'+(invitationParts.coupleName?550:505)+'" text-anchor="middle" font-family="Georgia" font-size="23" fill="#21170f">'+esc(date)+'</text>'+
     detailSvg+
     '<text x="650" y="910" text-anchor="middle" font-family="Georgia" font-size="17" font-style="italic" fill="#59452a">'+esc(String(card?.message||"").trim()||DEFAULT_ECARD_MESSAGE)+'</text>'+
     '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
