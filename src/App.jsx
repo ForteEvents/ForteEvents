@@ -1,28 +1,71 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import QRCode from 'qrcode'
 import { supabase } from './supabaseClient'
 import './App.css'
 
 
-async function createECardPng(card) {
-  const esc = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
-  const lines = [
-    { text: 'FORTEEVENTS', y: 105, size: 25, weight: 700, spacing: 5 },
-    { text: 'MAKE YOUR EVENT EXTRAORDINARY', y: 135, size: 12, spacing: 2 },
-    { text: card.occasion || 'MWALIKO', y: 205, size: 18, spacing: 5 },
-    { text: card.title || 'MWALIKO', y: 265, size: 38, weight: 700 },
-    { text: 'Tunayo furaha kukukaribisha', y: 325, size: 20 },
-    { text: card.host_names || '', y: 375, size: 29, weight: 700 },
-    { text: card.event_date || '', y: 465, size: 19, weight: 700 },
-    { text: card.event_time || '', y: 505, size: 18 },
-    { text: card.venue || '', y: 550, size: 18 },
-    { text: 'KARIBU SANA', y: 640, size: 24, weight: 700, spacing: 4 },
-    { text: 'Imetengenezwa kwa upendo na ForteEvents', y: 700, size: 13 }
-  ]
-  const message = String(card.message || '').split(/\r?\n/).slice(0, 3)
-  message.forEach((line, index) => lines.splice(6 + index, 0, { text: line.slice(0, 65), y: 405 + index * 25, size: 15 }))
-  const textSvg = lines.map(line => `<text x="600" y="${line.y}" text-anchor="middle" font-family="Georgia,serif" font-size="${line.size}" font-weight="${line.weight || 400}" letter-spacing="${line.spacing || 0}" fill="#67452f">${esc(line.text)}</text>`).join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="#f8f0e3"/><rect x="28" y="28" width="1144" height="744" rx="12" fill="#fffaf1" stroke="#8b5e3c" stroke-width="8"/><rect x="48" y="48" width="1104" height="704" rx="8" fill="none" stroke="#d58a4c" stroke-width="2"/><g fill="#c77d48" font-size="55" opacity=".8"><text x="75" y="105">❀</text><text x="1060" y="105">❀</text><text x="75" y="735">✿</text><text x="1060" y="735">✿</text></g>${textSvg}</svg>`
+function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
+  const [src, setSrc] = useState('')
+  useEffect(() => {
+    let active = true
+    setSrc('')
+    QRCode.toDataURL(value, {
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      width: 260,
+      color: { dark: '#000000', light: '#FFFFFF' }
+    }).then(dataUrl => {
+      if (active) setSrc(dataUrl)
+    }).catch(() => {
+      if (active) setSrc('')
+    })
+    return () => { active = false }
+  }, [value])
+  return src ? <img alt={alt} src={src} style={style} /> : <span role="status">Inaandaa QR...</span>
+}
+
+
+async function createECardPng(card, guest = null) {
+  const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
+  const guestUrl = guest ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token) : ''
+  const qrImage = guest ? await QRCode.toDataURL(guestUrl, {
+    errorCorrectionLevel: 'H',
+    margin: 1,
+    width: 260,
+    color: { dark: '#000000', light: '#FFFFFF' }
+  }) : ''
+  const lines = []
+  const add = (label, value) => {
+    const clean = String(value ?? '').trim()
+    if (clean) lines.push(label ? label + ': ' + clean : clean)
+  }
+  add('', [card.bride_name, card.groom_name].filter(Boolean).join(' & '))
+  add('TAREHE', card.event_date)
+  add('MUDA', card.event_time ? 'Saa ' + card.event_time : '')
+  add('MAHALI', card.venue)
+  add('IBADA', [card.ceremony_time, card.ceremony_venue].filter(Boolean).join(' — '))
+  add('RECEPTION', [card.reception_time, card.reception_venue].filter(Boolean).join(' — '))
+  add('CHAKULA', card.food_note)
+  add('DRESS CODE', [card.dress_code, ...(card.dress_colors || [])].filter(Boolean).join(' • '))
+  add('RSVP', [card.rsvp_deadline ? 'Mwisho: ' + card.rsvp_deadline : '', [card.rsvp_contact_name, card.rsvp_contact_phone].filter(Boolean).join(' '), [card.rsvp_contact_name_2, card.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | '))
+  const detailSvg = lines.map((line, i) => '<text x="512" y="' + (760 + i * 43) + '" text-anchor="middle" font-family="Georgia" font-size="24" fill="#332719">' + esc(line) + '</text>').join('')
+  const messageLines = String(card.message || '').split(/\r?\n/).filter(Boolean).slice(0, 3)
+  const messageSvg = messageLines.map((line, i) => '<text x="512" y="' + (1165 + i * 34) + '" text-anchor="middle" font-family="Georgia" font-size="22" font-style="italic" fill="#332719">' + esc(line.slice(0, 90)) + '</text>').join('')
+  const qrBlock = guest ? '<rect x="735" y="1260" width="225" height="225" rx="12" fill="#fff" stroke="#c28a17" stroke-width="5"/><image href="' + qrImage + '" x="750" y="1275" width="195" height="195"/><text x="847" y="1510" text-anchor="middle" font-family="Georgia" font-size="22" font-weight="bold" fill="#9a6811">' + esc((guest.invite_type || '').toUpperCase()) + ' · ' + esc(guest.guest_count || (guest.invite_type === 'double' ? 2 : 1)) + '</text>' : ''
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1536" viewBox="0 0 1024 1536">' +
+    '<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#b87908"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#bd810c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8edda"/></linearGradient></defs>' +
+    '<rect width="1024" height="1536" fill="url(#paper)"/><rect x="22" y="22" width="980" height="1492" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="39" y="39" width="946" height="1458" fill="none" stroke="#d6a33d" stroke-width="2"/>' +
+    '<g fill="#c18a1c" opacity=".72" font-size="66"><text x="42" y="115">❀</text><text x="885" y="115">❀</text><text x="42" y="1450">✿</text><text x="885" y="1450">✿</text></g>' +
+    '<text x="512" y="115" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="5" fill="#a36b08">FORTEEVENTS</text><text x="512" y="150" text-anchor="middle" font-family="Georgia" font-size="15" font-style="italic" fill="#8b5b18">Making your event extraordinary</text>' +
+    '<text x="512" y="255" text-anchor="middle" font-family="cursive,Georgia" font-size="76" font-style="italic" fill="#bd8110">' + esc(card.occasion || 'MWALIKO') + '</text>' +
+    '<path d="M170 290 Q512 330 854 290" fill="none" stroke="url(#gold)" stroke-width="5"/>' +
+    '<text x="512" y="385" text-anchor="middle" font-family="Georgia" font-size="28" fill="#17130e">' + esc(card.host_names || '') + '</text><text x="512" y="430" text-anchor="middle" font-family="Georgia" font-size="25" fill="#17130e">wanafuraha kukualika</text>' +
+    '<rect x="85" y="470" width="854" height="112" rx="24" fill="url(#gold)" stroke="#d09a25" stroke-width="3"/><text x="512" y="540" text-anchor="middle" font-family="Georgia" font-size="50" font-weight="bold" fill="#211707">' + esc(card.title || 'Mwaliko') + '</text>' +
+    (guest ? '<text x="512" y="650" text-anchor="middle" font-family="Georgia" font-size="25" fill="#17130e">Mgeni wetu wa heshima</text><text x="512" y="710" text-anchor="middle" font-family="Georgia" font-size="46" font-weight="bold" fill="#17130e">' + esc(guest.guest_name) + '</text>' : '') +
+    detailSvg + messageSvg +
+    '<text x="365" y="1390" text-anchor="middle" font-family="Georgia" font-size="29" font-weight="bold" fill="#a36b08">WAKARIBISHWA SANA</text><text x="365" y="1430" text-anchor="middle" font-family="Georgia" font-size="20" font-style="italic" fill="#332719">ForteEvents</text>' +
+    qrBlock + '</svg>'
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   const objectUrl = URL.createObjectURL(blob)
   try {
@@ -30,7 +73,7 @@ async function createECardPng(card) {
     image.src = objectUrl
     await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject })
     const canvas = document.createElement('canvas')
-    canvas.width = 1200; canvas.height = 800
+    canvas.width = 1024; canvas.height = 1536
     canvas.getContext('2d').drawImage(image, 0, 0)
     return await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('PNG haikuundwa.')), 'image/png'))
   } finally { URL.revokeObjectURL(objectUrl) }
@@ -39,26 +82,15 @@ async function createECardPng(card) {
 async function shareECard(card, mode, setMessage) {
   const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
   const message = `Habari! Tunakualika kwenye ${card.title}. Fungua mwaliko kupitia link hii: ${url}`
-  if (mode === 'link') {
-    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer')
-    return
-  }
+  if (mode === 'link') { window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer'); return }
   try {
     const png = await createECardPng(card)
-    const file = new File([png], 'ForteEvents-mwaliko.png', { type: 'image/png' })
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      const shareData = mode === 'both' ? { files: [file], text: message, title: card.title } : { files: [file], title: card.title }
-      await navigator.share(shareData)
-      setMessage('Chagua WhatsApp au programu nyingine kwenye dirisha la kushare.')
-      return
-    }
-    const downloadUrl = URL.createObjectURL(png)
-    const anchor = document.createElement('a')
-    anchor.href = downloadUrl; anchor.download = 'ForteEvents-mwaliko.png'; anchor.click()
-    URL.revokeObjectURL(downloadUrl)
-    if (mode === 'both') window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer')
-    setMessage(mode === 'both' ? 'Picha imepakuliwa. WhatsApp imefunguliwa; ambatisha picha uliyopakua.' : 'Picha ya mwaliko imepakuliwa kwenye kifaa chako.')
-  } catch (error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: ' + error.message) }
+    const file = new File([png], 'ForteEvents-mwaliko.png', {type:'image/png'})
+    if (navigator.share && navigator.canShare?.({files:[file]})) { await navigator.share(mode === 'both' ? {files:[file],text:message,title:card.title} : {files:[file],title:card.title}); setMessage('Chagua WhatsApp au programu nyingine kwenye dirisha la kushare.'); return }
+    const downloadUrl=URL.createObjectURL(png); const anchor=document.createElement('a'); anchor.href=downloadUrl; anchor.download='ForteEvents-mwaliko.png'; anchor.click(); URL.revokeObjectURL(downloadUrl)
+    if(mode==='both') window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer')
+    setMessage(mode==='both'?'Picha imepakuliwa. WhatsApp imefunguliwa; ambatisha picha uliyopakua.':'Picha ya mwaliko imepakuliwa.')
+  } catch(error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: '+error.message) }
 }
 
 function AdminCustomers({ session, onBack }) {
@@ -433,9 +465,11 @@ function App() {
   const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
   const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
   const [eCardForm, setECardForm] = useState({
-    title: '', occasion: 'Harusi', host_names: '', event_date: '',
-    event_time: '', venue: '', location_url: '', message: '', image_url: '',
-    theme: 'gold'
+    title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
+    event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
+    food_note: '', dress_code: '', dress_colors: [], rsvp_deadline: '', rsvp_contact_name: '',
+    rsvp_contact_phone: '', rsvp_contact_name_2: '', rsvp_contact_phone_2: '',
+    location_url: '', message: '', image_url: '', theme: 'gold'
   })
 
   useEffect(() => {
@@ -724,8 +758,11 @@ function App() {
   const resetECardForm = () => {
     setEditingECardId(null)
     setECardForm({
-      title: '', occasion: 'Harusi', host_names: '', event_date: '',
-      event_time: '', venue: '', location_url: '', message: '', image_url: '', theme: 'gold'
+      title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
+      event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
+      food_note: '', dress_code: '', dress_colors: [], rsvp_deadline: '', rsvp_contact_name: '',
+      rsvp_contact_phone: '', rsvp_contact_name_2: '', rsvp_contact_phone_2: '',
+      location_url: '', message: '', image_url: '', theme: 'gold'
     })
     setECardDesign(defaultECardDesign)
   }
@@ -745,10 +782,14 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
-        design: eCardDesign,
+        design: defaultECardDesign,
+        event_time: eCardForm.event_time || null,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
         venue: eCardForm.venue.trim(),
+        ceremony_time: eCardForm.ceremony_time || null,
+        reception_time: eCardForm.reception_time || null,
+        rsvp_deadline: eCardForm.rsvp_deadline || null,
         location_url: eCardForm.location_url.trim() || null,
         message: eCardForm.message.trim(),
         image_url: eCardForm.image_url.trim() || null,
@@ -773,12 +814,17 @@ function App() {
     setEditingECardId(card.id)
     setECardForm({
       title: card.title || '', occasion: card.occasion || 'Harusi',
-      host_names: card.host_names || '', event_date: card.event_date || '',
-      event_time: card.event_time || '', venue: card.venue || '', location_url: card.location_url || '',
-      message: card.message || '', image_url: card.image_url || '',
-      theme: card.theme || 'gold'
+      host_names: card.host_names || '', bride_name: card.bride_name || '', groom_name: card.groom_name || '',
+      event_date: card.event_date || '', event_time: card.event_time || '', venue: card.venue || '',
+      ceremony_time: card.ceremony_time || '', ceremony_venue: card.ceremony_venue || '',
+      reception_time: card.reception_time || '', reception_venue: card.reception_venue || '',
+      food_note: card.food_note || '', dress_code: card.dress_code || '', dress_colors: card.dress_colors || [],
+      rsvp_deadline: card.rsvp_deadline || '', rsvp_contact_name: card.rsvp_contact_name || '',
+      rsvp_contact_phone: card.rsvp_contact_phone || '', rsvp_contact_name_2: card.rsvp_contact_name_2 || '',
+      rsvp_contact_phone_2: card.rsvp_contact_phone_2 || '', location_url: card.location_url || '',
+      message: card.message || '', image_url: card.image_url || '', theme: card.theme || 'gold'
     })
-    setECardDesign({ ...defaultECardDesign, ...(card.design || {}) })
+    setECardDesign(defaultECardDesign)
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
   }
@@ -901,16 +947,25 @@ function App() {
   }, [session?.user?.id, profile?.role])
 
   useEffect(() => {
-    const slug = new URLSearchParams(window.location.search).get('card')
+    const params = new URLSearchParams(window.location.search)
+    const slug = params.get('card')
+    const guestToken = params.get('guest')
     if (!slug) return
     let active = true
     const loadPublicCard = async () => {
       setPublicECardLoading(true)
       const { data, error } = await supabase.from('e_cards')
-        .select('title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme, design')
+        .select('id, title, occasion, host_names, bride_name, groom_name, event_date, event_time, venue, ceremony_time, ceremony_venue, reception_time, reception_venue, food_note, dress_code, dress_colors, rsvp_deadline, rsvp_contact_name, rsvp_contact_phone, rsvp_contact_name_2, rsvp_contact_phone_2, location_url, message, image_url, theme, design')
         .eq('slug', slug).eq('is_published', true).maybeSingle()
+      let guest = null
+      if (!error && data && guestToken) {
+        const result = await supabase.from('e_card_guests')
+          .select('guest_name, invite_type, guest_count, token')
+          .eq('token', guestToken).eq('card_id', data.id).maybeSingle()
+        guest = result.error ? null : result.data
+      }
       if (active) {
-        setPublicECard(error ? null : data)
+        setPublicECard(error ? null : (data ? {...data, guest} : null))
         setPublicECardLoading(false)
       }
     }
@@ -1924,24 +1979,31 @@ useEffect(() => {
             <><h2>ForteEvents</h2><p>Mwaliko huu haupatikani au bado haujachapishwa.</p></>
           ) : (
             <>
-              {(() => { const d={...defaultECardDesign,...(publicECard.design||{})}; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template || 'classic'}`}>
+              {(() => { const d=defaultECardDesign; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template}`}>
                 <div className="ecard-card-inner">
-                  <div className="ecard-card-brand">FORTEEVENTS <span>MAKE YOUR EVENT EXTRAORDINARY</span></div>
+                  <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
                   <div className="ecard-card-flower ecard-card-flower-top">✿</div>
                   <p className="ecard-card-kicker">{publicECard.occasion || 'MWALIKO'}</p>
                   <h2>{publicECard.title}</h2>
                   <div className="ecard-card-divider"><span>✦</span></div>
                   {publicECard.image_url && <img className="ecard-card-photo" src={publicECard.image_url} alt="Picha ya tukio"/>}
                   <p className="ecard-card-invite">Tunayo furaha kukukaribisha</p>
-                  <h3>{publicECard.host_names}</h3>
+                  {publicECard.host_names && <h3>{publicECard.host_names}</h3>}
+                  {(publicECard.bride_name || publicECard.groom_name) && <p className="ecard-card-message">{[publicECard.bride_name, publicECard.groom_name].filter(Boolean).join(' & ')}</p>}
                   {publicECard.message && <p className="ecard-card-message">{publicECard.message}</p>}
                   <div className="ecard-card-details">
-                    <span><b>TAREHE</b>{publicECard.event_date}</span>
+                    {publicECard.event_date && <span><b>TAREHE</b>{publicECard.event_date}</span>}
                     {publicECard.event_time && <span><b>MUDA</b>{publicECard.event_time}</span>}
                     {publicECard.venue && <span><b>MAHALI</b>{publicECard.venue}</span>}
+                    {(publicECard.ceremony_time || publicECard.ceremony_venue) && <span><b>IBADA</b>{[publicECard.ceremony_time, publicECard.ceremony_venue].filter(Boolean).join(' — ')}</span>}
+                    {(publicECard.reception_time || publicECard.reception_venue) && <span><b>RECEPTION</b>{[publicECard.reception_time, publicECard.reception_venue].filter(Boolean).join(' — ')}</span>}
+                    {publicECard.food_note && <span><b>CHAKULA</b>{publicECard.food_note}</span>}
+                    {(publicECard.dress_code || publicECard.dress_colors?.length) && <span><b>DRESS CODE</b>{[publicECard.dress_code, ...(publicECard.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
+                    {(publicECard.rsvp_deadline || publicECard.rsvp_contact_name || publicECard.rsvp_contact_phone || publicECard.rsvp_contact_name_2 || publicECard.rsvp_contact_phone_2) && <span><b>RSVP</b>{[publicECard.rsvp_deadline ? 'Mwisho: ' + publicECard.rsvp_deadline : '', [publicECard.rsvp_contact_name, publicECard.rsvp_contact_phone].filter(Boolean).join(' '), [publicECard.rsvp_contact_name_2, publicECard.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
                   </div>
-                  {publicECard.location_url && <a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Pata Maelekezo ya Kufika</a>}
+                  {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} /></>}
                   <p className="ecard-card-welcome">KARIBU SANA</p>
+                  {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
                   <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
                 </div>
@@ -2954,20 +3016,9 @@ return (
             <button type="button" className="secondary-button" onClick={loadECards}>Refresh</button>
           </div>
           <div className="card">
-            <h2>Chagua sampuli ya ForteEvents</h2>
-            <p>Chagua muundo unaoupenda. Kisha jaza majina, tarehe na taarifa za tukio lako.</p>
-            {ecardTemplatesLoading ? <p>Inapakia sampuli...</p> : ecardTemplates.length === 0 ?
-              <p>Kwa sasa hakuna sampuli mpya zilizowekwa. Unaweza kutumia miundo ya kawaida iliyo hapa chini.</p> :
-              <div className="ecard-template-gallery">{ecardTemplates.map(item => (
-                <button type="button" key={item.id} className="ecard-template-option" onClick={() => {
-                  setECardForm(v => ({ ...v, image_url: item.image_url, theme: item.theme || 'gold' }))
-                  setECardDesign(v => ({ ...defaultECardDesign, ...(item.design || {}), template: item.design?.template || 'classic' }))
-                  setECardMessage('Umechagua sampuli: ' + item.name + '. Sasa jaza taarifa zako.')
-                }}>
-                  <img src={item.image_url} alt={item.name} style={{width:'100%',height:'190px',objectFit:'cover',borderRadius:'8px'}} />
-                  <b>{item.name}</b><small>{item.occasion} · {item.description}</small><em>Chagua sampuli hii</em>
-                </button>
-              ))}</div>}
+            <h2>Muundo rasmi wa ForteEvents</h2>
+            <p>Muundo mmoja wa dhahabu na nyeupe umetayarishwa tayari. Jaza taarifa za tukio lako hapa chini.</p>
+            <p>Muundo rasmi wa ForteEvents ni wa dhahabu na nyeupe. Mpangilio, fremu na mapambo vimefungwa; jaza taarifa za tukio lako hapa chini.</p>
           </div>
           <div className="card">
             <h2>{editingECardId ? 'Hariri E-card' : 'Tengeneza E-card mpya'}</h2>
@@ -2982,8 +3033,36 @@ return (
               <input value={eCardForm.host_names} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: John & Mary" />
               <label>Tarehe</label>
               <input type="date" value={eCardForm.event_date} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
-              <label>Muda</label>
+              <label>Muda wa tukio</label>
               <input type="time" value={eCardForm.event_time} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
+              <label>Jina la bibi harusi</label>
+              <input value={eCardForm.bride_name} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
+              <label>Jina la bwana harusi</label>
+              <input value={eCardForm.groom_name} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
+              <label>Muda wa ibada</label>
+              <input type="time" value={eCardForm.ceremony_time} onChange={e => setECardForm(v => ({...v, ceremony_time:e.target.value}))} />
+              <label>Mahali pa ibada</label>
+              <input value={eCardForm.ceremony_venue} onChange={e => setECardForm(v => ({...v, ceremony_venue:e.target.value}))} />
+              <label>Muda wa reception</label>
+              <input type="time" value={eCardForm.reception_time} onChange={e => setECardForm(v => ({...v, reception_time:e.target.value}))} />
+              <label>Mahali pa reception</label>
+              <input value={eCardForm.reception_venue} onChange={e => setECardForm(v => ({...v, reception_venue:e.target.value}))} />
+              <label>Ujumbe wa chakula / mapokezi</label>
+              <input value={eCardForm.food_note} onChange={e => setECardForm(v => ({...v, food_note:e.target.value}))} />
+              <label>Dress code</label>
+              <input value={eCardForm.dress_code} onChange={e => setECardForm(v => ({...v, dress_code:e.target.value}))} />
+              <label>Rangi za dress code (hadi 3, tenga kwa koma)</label>
+              <input value={(eCardForm.dress_colors || []).join(', ')} onChange={e => setECardForm(v => ({...v, dress_colors:e.target.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,3)}))} placeholder="Gold, Cream, White" />
+              <label>Tarehe ya mwisho ya RSVP</label>
+              <input type="date" value={eCardForm.rsvp_deadline} onChange={e => setECardForm(v => ({...v, rsvp_deadline:e.target.value}))} />
+              <label>Jina la mawasiliano 1</label>
+              <input value={eCardForm.rsvp_contact_name} onChange={e => setECardForm(v => ({...v, rsvp_contact_name:e.target.value}))} />
+              <label>Simu ya mawasiliano 1</label>
+              <input value={eCardForm.rsvp_contact_phone} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone:e.target.value}))} />
+              <label>Jina la mawasiliano 2</label>
+              <input value={eCardForm.rsvp_contact_name_2} onChange={e => setECardForm(v => ({...v, rsvp_contact_name_2:e.target.value}))} />
+              <label>Simu ya mawasiliano 2</label>
+              <input value={eCardForm.rsvp_contact_phone_2} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone_2:e.target.value}))} />
               <label>Mahali / Ukumbi</label>
               <input value={eCardForm.venue} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
               <label>Google Maps location link (hiari)</label>
@@ -3015,48 +3094,38 @@ return (
               {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha iliyochaguliwa" style={{width:'100%',maxWidth:'240px',borderRadius:'8px',marginTop:'8px'}} />}
               <label>Au weka link ya picha (hiari, https://)</label>
               <input type="url" value={eCardForm.image_url} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
-              <label>Chagua muundo wa kadi</label>
-              <div className="ecard-template-gallery">
-                {[
-                  {id:'classic',name:'Classic Gold',desc:'Harusi na sherehe rasmi',sample:'✿',tone:'gold'},
-                  {id:'royal',name:'Royal Wedding',desc:'Muonekano wa kifahari',sample:'❀',tone:'royal'},
-                  {id:'floral',name:'Floral Garden',desc:'Maua na mapambo ya upole',sample:'❁',tone:'floral'},
-                  {id:'floral-brown',name:'Floral Brown & Cream',desc:'Maua ya rangi ya kahawia, krimu na machungwa',sample:'❀',tone:'floral-brown'},
-                  {id:'modern',name:'Modern White',desc:'Rahisi na wa kisasa',sample:'◇',tone:'modern'}
-                ].map(item => (
-                  <button type="button" key={item.id} className={`ecard-template-option ecard-template-${item.tone} ${eCardDesign.template===item.id?'selected':''}`} onClick={() => setECardDesign(v => ({...v,template:item.id}))}>
-                    <span className="ecard-template-art"><span>{item.sample}</span><strong>MWALIKO</strong><small>ForteEvents</small></span>
-                    <b>{item.name}</b><small>{item.desc}</small>
-                    <em>{eCardDesign.template===item.id?'Imechaguliwa':'Chagua kadi hii'}</em>
-                  </button>
-                ))}
-              </div>
-              <p className="ecard-helper-note">Muundo, maua, fremu, rangi na mpangilio vimeandaliwa tayari na ForteEvents. Wewe jaza taarifa zako tu.</p>
+              <p className="ecard-helper-note">Muundo mmoja rasmi wa ForteEvents: fremu ya dhahabu na nyeupe, mapambo na mpangilio havibadilishwi. Sehemu za taarifa huonekana tu pale zinapojazwa.</p>
               <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
               {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
             </form>
             <div className={`ecard-live-preview ecard-card-art ecard-card-${eCardDesign.template || 'classic'}`}>
               <div className="ecard-card-inner">
-                <div className="ecard-card-brand">FORTEEVENTS <span>MAKE YOUR EVENT EXTRAORDINARY</span></div>
+                <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
                 <div className="ecard-card-flower ecard-card-flower-top">✿</div>
                 <p className="ecard-card-kicker">{eCardForm.occasion || 'MWALIKO'}</p>
                 <h2>{eCardForm.title || 'JINA LA TUKIO'}</h2>
                 <div className="ecard-card-divider"><span>✦</span></div>
                 {eCardForm.image_url && <img className="ecard-card-photo" src={eCardForm.image_url} alt="Picha ya tukio"/>}
                 <p className="ecard-card-invite">Tunayo furaha kukukaribisha</p>
-                <h3>{eCardForm.host_names || 'Majina ya wahusika'}</h3>
+                {eCardForm.host_names && <h3>{eCardForm.host_names}</h3>}
+                {(eCardForm.bride_name || eCardForm.groom_name) && <p className="ecard-card-message">{[eCardForm.bride_name, eCardForm.groom_name].filter(Boolean).join(' & ')}</p>}
                 {eCardForm.message && <p className="ecard-card-message">{eCardForm.message}</p>}
                 <div className="ecard-card-details">
-                  <span><b>TAREHE</b>{eCardForm.event_date || 'Tarehe ya tukio'}</span>
-                  <span><b>MUDA</b>{eCardForm.event_time || 'Muda wa tukio'}</span>
-                  <span><b>MAHALI</b>{eCardForm.venue || 'Mahali pa tukio'}</span>
+                  {eCardForm.event_date && <span><b>TAREHE</b>{eCardForm.event_date}</span>}
+                  {eCardForm.event_time && <span><b>MUDA</b>{eCardForm.event_time}</span>}
+                  {eCardForm.venue && <span><b>MAHALI</b>{eCardForm.venue}</span>}
+                  {(eCardForm.ceremony_time || eCardForm.ceremony_venue) && <span><b>IBADA</b>{[eCardForm.ceremony_time, eCardForm.ceremony_venue].filter(Boolean).join(' — ')}</span>}
+                  {(eCardForm.reception_time || eCardForm.reception_venue) && <span><b>RECEPTION</b>{[eCardForm.reception_time, eCardForm.reception_venue].filter(Boolean).join(' — ')}</span>}
+                  {eCardForm.food_note && <span><b>CHAKULA</b>{eCardForm.food_note}</span>}
+                  {(eCardForm.dress_code || eCardForm.dress_colors?.length) && <span><b>DRESS CODE</b>{[eCardForm.dress_code, ...(eCardForm.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
+                  {(eCardForm.rsvp_deadline || eCardForm.rsvp_contact_name || eCardForm.rsvp_contact_phone || eCardForm.rsvp_contact_name_2 || eCardForm.rsvp_contact_phone_2) && <span><b>RSVP</b>{[eCardForm.rsvp_deadline ? 'Mwisho: ' + eCardForm.rsvp_deadline : '', [eCardForm.rsvp_contact_name, eCardForm.rsvp_contact_phone].filter(Boolean).join(' '), [eCardForm.rsvp_contact_name_2, eCardForm.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
                 </div>
                 <p className="ecard-card-welcome">KARIBU SANA</p>
-                <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
+                <div className="ecard-card-footer">ForteEvents • Making your event extraordinary</div>
                 <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
               </div>
             </div>
-            {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
+{eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
           </div>
           <div className="card">
             <h2>Salio la E-card</h2>
@@ -3101,16 +3170,31 @@ return (
               <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE</option><option value="double">DOUBLE</option></select>
               <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
             </form>
-            {eCardGuests.map(g => <div key={g.id} className="ecard-guest-print" style={{padding:'18px',border:'1px solid #d6bd78',borderRadius:'12px',marginBottom:'14px',background:'#fffdf8',maxWidth:'420px',textAlign:'center'}}>
-              <p style={{letterSpacing:'2px',color:'#9a792d',fontSize:'12px'}}>FORTEEVENTS INVITATION</p>
-              <h3>{eCards.find(card => card.id === guestCardId)?.title || 'Mwaliko'}</h3>
-              <p style={{fontSize:'20px',fontWeight:'700'}}>{g.guest_name}</p>
-              <p>{g.invite_type.toUpperCase()}</p>
-              <img alt="QR ya mwaliko" style={{width:'170px',height:'170px'}} src={'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(window.location.origin+'/?card='+encodeURIComponent(eCards.find(card => card.id === guestCardId)?.slug || '')+'&guest='+g.token)} />
-              <p style={{color:'#9a792d',fontWeight:'700'}}>Make your event extraordinary</p>
-              <p>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</p>
-              <button type="button" className="secondary-button no-print" onClick={() => window.print()}>Chapisha mwaliko huu</button>
-            </div>)}
+            {eCardGuests.map(g => {
+              const card = eCards.find(item => item.id === guestCardId)
+              const guestUrl = window.location.origin + '/?card=' + encodeURIComponent(card?.slug || '') + '&guest=' + encodeURIComponent(g.token)
+              return <div key={g.id} className="ecard-guest-print ecard-guest-sheet">
+                <div className="ecard-guest-card">
+                  <div className="ecard-brand-mark">ForteEvents <small>Making your event extraordinary</small></div>
+                  <h2>Mwaliko wa {card?.occasion || 'Tukio'}</h2>
+                  <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}<br/>wanafuraha kukualika</div>
+                  <div className="ecard-gold-ribbon">{card?.title || 'Harusi'}</div>
+                  <div className="ecard-guest-name">{g.guest_name}</div>
+                  {card?.event_date && <div className="ecard-guest-date">{card.event_date}</div>}
+                  {(card?.bride_name || card?.groom_name) && <div className="ecard-guest-time">{[card?.bride_name, card?.groom_name].filter(Boolean).join(' & ')}</div>}
+                  {card?.event_time && <div className="ecard-guest-time">Saa {card.event_time}</div>}
+                  {card?.venue && <div className="ecard-guest-venue"><b>MAHALI:</b> {card.venue}</div>}
+                  {(card?.ceremony_time || card?.ceremony_venue) && <div className="ecard-guest-venue"><b>IBADA:</b> {card?.ceremony_time || ''} {card?.ceremony_venue || ''}</div>}
+                  {(card?.reception_time || card?.reception_venue) && <div className="ecard-guest-venue"><b>RECEPTION:</b> {card?.reception_time || ''} {card?.reception_venue || ''}</div>}
+                  {card?.message && <div className="ecard-guest-message">{card.message}</div>}
+                  {card?.food_note && <div className="ecard-guest-message"><b>CHAKULA:</b> {card.food_note}</div>}
+                  {(card?.dress_code || card?.dress_colors?.length) && <div className="ecard-guest-message"><b>DRESS CODE:</b> {card?.dress_code} {(card?.dress_colors || []).join(' • ')}</div>}
+                  {(card?.rsvp_deadline || card?.rsvp_contact_name || card?.rsvp_contact_phone || card?.rsvp_contact_name_2 || card?.rsvp_contact_phone_2) && <div className="ecard-guest-message"><b>RSVP:</b> {[card?.rsvp_deadline ? 'Mwisho: ' + card.rsvp_deadline : '', [card?.rsvp_contact_name, card?.rsvp_contact_phone].filter(Boolean).join(' '), [card?.rsvp_contact_name_2, card?.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</div>}
+                  <div className="ecard-guest-bottom"><div><b>WAKARIBISHWA SANA</b><p>Karibu kusherehekea nasi</p><small>ForteEvents • Making your event extraordinary</small></div><div className="ecard-qr-wrap"><GuestQr value={guestUrl} /><strong>{g.invite_type.toUpperCase()} · {g.guest_count || (g.invite_type === 'double' ? 2 : 1)}</strong></div></div>
+                </div>
+                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const file=new File([png],'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'});const text='Karibu kwenye '+(card?.title||'sherehe yetu')+'. Fungua mwaliko wako: '+guestUrl;if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],text,title:card?.title||'Mwaliko wa ForteEvents'})}else{const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download=file.name;a.click();URL.revokeObjectURL(href);window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setECardMessage('Picha imepakuliwa. Ambatisha picha hiyo kwenye WhatsApp iliyofunguliwa.')}}catch(error){setECardMessage('Imeshindikana kushiriki: '+error.message)}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
+              </div>
+            })}
           </div>
           <div className="card" style={{marginTop:'20px'}}>
             <h2>Kadi Zangu</h2>
