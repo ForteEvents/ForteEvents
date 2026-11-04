@@ -560,3 +560,39 @@ button[type="submit"] {
 .ecard-sample-first-intro h2{margin:0 0 8px;color:#8d671e;font-family:Georgia,serif;font-size:clamp(20px,3vw,27px)}
 .ecard-sample-first-intro p{margin:0 auto;color:#665a46;line-height:1.6;max-width:680px;font-size:14px}
 .ecard-sample-first-intro+.ecard-live-preview{margin-top:14px}
+
+/* ForteEvents professional landscape invitation studio */
+.ecard-professional-preview{width:100%;max-width:1120px;aspect-ratio:3/2;margin:24px auto 30px;padding:14px;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,2.1fr) minmax(245px,.92fr);gap:14px;border:5px double #bd861b;border-radius:14px;background:radial-gradient(ellipse at 65% 0%,#fff 0%,#fffaf0 62%,#f4e6cc 100%);box-shadow:0 12px 34px rgba(79,51,10,.18);font-family:Georgia,'Times New Roman',serif;color:#241a12;overflow:hidden}
+.ecard-main-panel{position:relative;min-width:0;text-align:center;padding:15px 22px 12px;border-right:1px solid #d5b66f;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,250,239,.65))}
+.ecard-brand-lockup{align-self:flex-start;text-align:left;color:#a36b08;margin:0 0 4px 8px}
+.ecard-brand-lockup strong{display:block;font-size:clamp(17px,2.1vw,28px);line-height:1.05}
+.ecard-brand-lockup small{font-size:clamp(8px,.9vw,11px);font-style:italic}
+.ecard-main-heading{margin:0 auto 7px}
+.ecard-script-title{font-size:clamp(34px,5.2vw,66px);font-style:italic;line-height:1;color:#b77b13;text-shadow:0 1px #fff}
+.ecard-invitation-label{font-size:clamp(13px,1.8vw,22px);letter-spacing:.32em;margin-top:3px}
+.ecard-family-copy{width:100%;margin:4px auto 10px;line-height:1.28}
+.ecard-family-copy>span{display:block;font-size:clamp(12px,1.4vw,17px)}
+.ecard-family-copy>strong{display:block;font-size:clamp(18px,2.4vw,29px);color:#573b20;overflow-wrap:anywhere}
+.ecard-family-copy p{margin:5px 0 2px;font-size:clamp(15px,1.9vw,23px);font-style:italic}
+.ecard-honorific-fixed{font-size:clamp(11px,1.35vw,16px)}
+.ecard-guest-placeholder{font-size:clamp(13px,1.7vw,20px);font-weight:bold;color:#a16d12;border-bottom:1px dashed #c9a04a;display:inline-block;min-width:42%;padding:2px 12px}
+.ecard-event-ribbon{width:min(96%,610px);padding:9px 12px;margin:3px auto 7px;background:linear-gradient(100deg,#bd8110,#ffe18a,#c58a18);border:2px solid #d6a33d;border-radius:9px;box-shadow:0 2px 5px #c8a45a;font-size:clamp(17px,2.5vw,31px);font-weight:bold;overflow-wrap:anywhere}
+.ecard-couple-names{font-size:clamp(14px,1.9vw,22px);font-weight:bold;color:#5c3c19}
+.ecard-date-line{font-size:clamp(11px,1.4vw,17px);margin:4px auto 7px;color:#8b5b18}
+.ecard-detail-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin:3px auto 7px;padding:9px 4px;border-top:1px solid #c9a24e;border-bottom:1px solid #c9a24e}
+.ecard-detail-grid>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.ecard-detail-grid b{font-family:Arial,sans-serif;font-size:clamp(8px,.95vw,11px);letter-spacing:.16em;color:#a16d12}
+.ecard-detail-grid span{font-size:clamp(10px,1.2vw,14px);overflow-wrap:anywhere}
+.ecard-welcome-ribbon{margin:5px auto;padding:7px 30px;background:linear-gradient(90deg,#bd8110,#ffe18a,#bd8110);font-size:clamp(13px,1.6vw,19px);font-weight:bold;letter-spacing:.18em;color:#2a1d0b}
+.ecard-floral-corner{color:#bd8110;letter-spacing:.3em;opacity:.8;font-size:clamp(16px,2vw,25px)}
+.ecard-floral-top{position:absolute;right:10px;top:5px}.ecard-floral-bottom{margin-top:auto}
+.ecard-pass-panel{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;text-align:center;padding:12px 10px;background:rgba(255,255,255,.62);border:3px solid #d2a23d;border-radius:34px}
+.ecard-pass-florals{font-size:clamp(20px,3vw,35px);line-height:1.1}
+.ecard-pass-ribbon{width:110%;padding:9px 2px;background:linear-gradient(100deg,#bd8110,#ffe18a,#bd8110);font-size:clamp(12px,1.6vw,20px);font-weight:bold;letter-spacing:.08em}
+.ecard-pass-name{font-size:clamp(15px,2.2vw,27px);font-weight:bold;overflow-wrap:anywhere}
+.ecard-pass-type{width:88%;padding:8px 2px;border-radius:18px;background:linear-gradient(90deg,#bd8110,#ffe18a,#bd8110);font-size:clamp(12px,1.6vw,19px);font-weight:bold}
+.ecard-pass-qr{width:min(76%,180px);aspect-ratio:1;padding:7px;background:#fff;border:3px solid #c18a1c;border-radius:12px;display:grid;place-items:center;overflow:hidden}
+.ecard-pass-qr img{width:100%;height:100%;object-fit:contain}
+.ecard-pass-checkin{width:92%;padding:8px 2px;border-radius:18px;background:#b77a0d;color:#fff;font-size:clamp(10px,1.2vw,15px)}
+.ecard-pass-panel p{font-size:clamp(10px,1.25vw,15px);font-style:italic;line-height:1.3;margin:0}
+@media(max-width:650px){.ecard-professional-preview{aspect-ratio:auto;grid-template-columns:1fr;padding:8px;gap:9px}.ecard-main-panel{border-right:0;border-bottom:1px solid #d5b66f;padding:12px 10px}.ecard-pass-panel{min-height:370px;border-radius:22px}.ecard-pass-qr{width:150px}.ecard-family-copy>strong{font-size:22px}.ecard-detail-grid{gap:6px}.ecard-pass-florals{font-size:25px}}
