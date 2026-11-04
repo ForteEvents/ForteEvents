@@ -596,3 +596,10 @@ button[type="submit"] {
 .ecard-pass-checkin{width:92%;padding:8px 2px;border-radius:18px;background:#b77a0d;color:#fff;font-size:clamp(10px,1.2vw,15px)}
 .ecard-pass-panel p{font-size:clamp(10px,1.25vw,15px);font-style:italic;line-height:1.3;margin:0}
 @media(max-width:650px){.ecard-professional-preview{aspect-ratio:auto;grid-template-columns:1fr;padding:8px;gap:9px}.ecard-main-panel{border-right:0;border-bottom:1px solid #d5b66f;padding:12px 10px}.ecard-pass-panel{min-height:370px;border-radius:22px}.ecard-pass-qr{width:150px}.ecard-family-copy>strong{font-size:22px}.ecard-detail-grid{gap:6px}.ecard-pass-florals{font-size:25px}}
+
+/* Formal E-card invitation and accessible guest-pass type labels */
+.ecard-pass-type{background:#24190f!important;color:#fff!important;border:2px solid #d6a33d!important;font-weight:800!important;text-shadow:none!important;letter-spacing:.06em}
+.ecard-invitation-sentence{max-width:94%;margin:7px auto 10px!important;font-size:clamp(13px,1.65vw,19px)!important;line-height:1.45!important;font-style:normal!important;color:#2b2117!important;overflow-wrap:anywhere}
+.ecard-card-welcome{font-weight:800;letter-spacing:.08em;color:#68440d}
+
+.ecard-document-title{font-family:Georgia,serif;font-size:clamp(12px,1.35vw,17px);font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8a5a12;margin:2px auto 7px;text-align:center}
