@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import QRCode from 'qrcode'
 import { supabase } from './supabaseClient'
 import './App.css'
 
@@ -7,18 +8,11 @@ import './App.css'
 async function createECardPng(card, guest = null) {
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
   const guestUrl = guest ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token) : ''
-  const qrUrl = guest ? 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(guestUrl) : ''
-  const qrImage = guest ? await new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 260; canvas.height = 260
-      canvas.getContext('2d').drawImage(img, 0, 0)
-      try { resolve(canvas.toDataURL('image/png')) } catch { reject(new Error('QR haikuweza kuingizwa kwenye picha.')) }
-    }
-    img.onerror = () => reject(new Error('QR haikuweza kupakiwa.'))
-    img.src = qrUrl
+  const qrImage = guest ? await QRCode.toDataURL(guestUrl, {
+    errorCorrectionLevel: 'H',
+    margin: 1,
+    width: 260,
+    color: { dark: '#000000', light: '#FFFFFF' }
   }) : ''
   const lines = []
   const add = (label, value) => {
