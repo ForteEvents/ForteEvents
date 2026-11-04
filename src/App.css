@@ -664,3 +664,20 @@ button[type="submit"] {
 .ecard-card-inner .ecard-detail-flow{border-color:rgba(151,91,55,.38)!important}
 .ecard-card-inner .ecard-family-message{color:#704b37!important}
 @media(max-width:650px){.ecard-professional-preview{padding:8px!important}.ecard-main-panel{padding:12px 10px!important}.ecard-floral-top{width:118px!important;opacity:.78}.ecard-card-inner{padding:25px 16px 20px!important}}
+
+
+/* Customer feedback: modest honorifics, clear guest/couple hierarchy */
+.ecard-invitation-titles{font-size:clamp(11px,1.05vw,14px)!important;font-weight:400!important;letter-spacing:0!important;font-family:Georgia,serif!important}
+.ecard-invitation-recipient{font-size:clamp(21px,2.35vw,29px)!important;font-weight:700!important}
+.ecard-invitation-couple{font-size:clamp(23px,2.7vw,34px)!important;font-weight:700!important}
+.ecard-invitation-copy p{font-size:clamp(13px,1.35vw,17px)!important;font-weight:400!important}
+.ecard-card-inner .ecard-invitation-titles{font-size:13px!important;font-weight:400!important}
+.ecard-card-inner .ecard-invitation-recipient{font-size:clamp(21px,2.2vw,28px)!important}
+.ecard-card-inner .ecard-invitation-couple{font-size:clamp(24px,2.6vw,34px)!important}
+
+/* Floral artwork must remain visible in the printed/public card, not editor-only */
+@media print{
+  .ecard-floral-top,.ecard-floral-bottom,.ecard-public-floral-top,.ecard-public-floral-bottom,
+  .ecard-guest-card .ecard-floral-ornament{display:block!important;visibility:visible!important;opacity:1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ecard-card-inner,.ecard-professional-preview,.ecard-main-panel{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

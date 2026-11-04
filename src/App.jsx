@@ -52,7 +52,7 @@ async function createECardPng(card, guest = null) {
   const invitationLines=[invitationParts.intro,invitationParts.titles,'— '+invitationParts.recipient+' —',invitationParts.eventLine,...(invitationParts.coupleName?['— '+invitationParts.coupleName+' —']:[])]
   const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
   const detailSvg = details.map(([label,value],i) => {
-    const y=(invitationParts.coupleName?625:605)+i*36
+    const y=(invitationParts.coupleName?635:600)+i*32
     return '<text x="650" y="'+y+'" text-anchor="middle" font-family="Georgia" font-size="19" fill="#59402f"><tspan font-weight="bold" fill="#a85e34">'+esc(label)+': </tspan><tspan>'+esc(value)+'</tspan></text>'
   }).join('')
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">'+
@@ -64,8 +64,12 @@ async function createECardPng(card, guest = null) {
     '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
     '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
-    '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+invitationLines.map((line,i)=>'<tspan x="650" dy="'+(i===0?0:27)+'">'+esc(line.trim())+'</tspan>').join('')+'</text>'+
-    '<text x="650" y="'+(invitationParts.coupleName?550:505)+'" text-anchor="middle" font-family="Georgia" font-size="23" fill="#21170f">'+esc(date)+'</text>'+
+    '<text x="650" y="378" text-anchor="middle" font-family="Georgia" font-size="20" fill="#21170f">'+esc(invitationParts.intro)+'</text>'+
+    '<text x="650" y="410" text-anchor="middle" font-family="Georgia" font-size="14" fill="#79503a">'+esc(invitationParts.titles)+'</text>'+
+    '<text x="650" y="456" text-anchor="middle" font-family="Georgia" font-size="31" font-weight="bold" fill="#9d5633">'+esc("— "+invitationParts.recipient+" —")+'</text>'+
+    '<text x="650" y="496" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+esc(invitationParts.eventLine)+'</text>'+
+    (invitationParts.coupleName?'<text x="650" y="542" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#754a34">'+esc("— "+invitationParts.coupleName+" —")+'</text>':'')+
+    '<text x="650" y="'+(invitationParts.coupleName?585:550)+'" text-anchor="middle" font-family="Georgia" font-size="22" fill="#21170f">'+esc(date)+'</text>'+
     detailSvg+
     '<text x="650" y="910" text-anchor="middle" font-family="Georgia" font-size="17" font-style="italic" fill="#59452a">'+esc(String(card?.message||"").trim()||DEFAULT_ECARD_MESSAGE)+'</text>'+
     '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
@@ -91,7 +95,8 @@ async function createECardPng(card, guest = null) {
 
 async function shareECard(card, mode, setMessage) {
   const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
-  const message = `Habari! Tunakualika kwenye ${card.title}. Fungua mwaliko kupitia link hii: ${url}`
+  const mapLink = String(card?.location_url || '').trim()
+  const message = `Habari! Tunakualika kwenye ${card.title}. Fungua kadi kamili na ramani ya tukio kupitia link hii: ${url}${mapLink ? '\\nGoogle Maps: ' + mapLink : ''}`
   if (mode === 'link') { window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer'); return }
   try {
     const png = await createECardPng(card)
