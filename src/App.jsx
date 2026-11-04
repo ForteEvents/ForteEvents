@@ -52,6 +52,19 @@ async function createECardPng(card, guest = null) {
     ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token)
     : window.location.origin + '/?card=' + encodeURIComponent(card.slug || '')
   const qrImage = await QRCode.toDataURL(invitationUrl, { errorCorrectionLevel: 'H', margin: 1, width: 260, color: { dark: '#000000', light: '#FFFFFF' } })
+  let logoDataUrl = ''
+  try {
+    const logoResponse = await fetch('/forteevents-logo.png')
+    if (logoResponse.ok) {
+      const logoBlob = await logoResponse.blob()
+      logoDataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || ''))
+        reader.onerror = reject
+        reader.readAsDataURL(logoBlob)
+      })
+    }
+  } catch (error) { console.warn('ForteEvents logo haikuweza kupakiwa kwenye kadi:', error) }
   const date = card.event_date ? new Date(card.event_date + 'T00:00:00').toLocaleDateString('sw-TZ', {day:'numeric',month:'long',year:'numeric'}) : 'Tarehe ya tukio'
   const guestName = guest?.guest_name || 'JINA LA MWALIKWA'
   const guestType = guest ? (guest.invite_type || 'single').toUpperCase() : 'GUEST PASS'
@@ -86,15 +99,15 @@ async function createECardPng(card, guest = null) {
     '<path d="M1030 20 C1125 90 1165 160 1015 240 M45 760 C155 810 205 895 340 980" fill="none" stroke="#d9b66b" stroke-width="3" opacity=".5"/>'+
     '<g transform="translate(820 12) scale(1.12)" stroke-linecap="round" stroke-linejoin="round"><path d="M12 205 C65 155 90 95 190 20" fill="none" stroke="#79503a" stroke-width="5"/><path d="M68 150 C28 151 14 125 22 96 C55 101 76 122 68 150Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><path d="M116 105 C80 99 72 70 88 45 C118 56 132 80 116 105Z" fill="#d0bd91" stroke="#79503a" stroke-width="2"/><path d="M153 67 C127 51 132 23 153 8 C177 29 178 51 153 67Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><g transform="translate(192 105)" fill="#e99a69" stroke="#9a5632" stroke-width="2"><ellipse cy="-27" rx="15" ry="31"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(45)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(90)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(135)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(180)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(225)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(270)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g><g transform="translate(92 45) scale(.68)" fill="#f2c49a" stroke="#9a5632" stroke-width="2"><ellipse cy="-24" rx="13" ry="27"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(45)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(90)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(135)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(180)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(225)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(270)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(315)"/><circle r="12" fill="#a85a31"/></g></g>'+
     '<g transform="translate(38 805) rotate(180 125 100) scale(.9)" stroke-linecap="round" stroke-linejoin="round"><path d="M12 205 C65 155 90 95 190 20" fill="none" stroke="#79503a" stroke-width="5"/><path d="M68 150 C28 151 14 125 22 96 C55 101 76 122 68 150Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><path d="M116 105 C80 99 72 70 88 45 C118 56 132 80 116 105Z" fill="#d0bd91" stroke="#79503a" stroke-width="2"/><g transform="translate(192 105)" fill="#e99a69" stroke="#9a5632" stroke-width="2"><ellipse cy="-27" rx="15" ry="31"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(45)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(90)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(135)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(180)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(225)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(270)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g></g>'+
-    '<g><text x="180" y="125" text-anchor="middle" font-family="Georgia" font-size="42" font-weight="bold" fill="#9b6814">ForteEvents</text><text x="180" y="157" text-anchor="middle" font-family="Georgia" font-size="16" font-style="italic" fill="#81521b">Make your event extraordinary</text></g>'+
-    '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
+    '<image x="58" y="48" width="245" height="132" preserveAspectRatio="xMidYMid meet" href="'+logoDataUrl+'" xlink:href="'+logoDataUrl+'"/>'+
+    '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" font-weight="bold" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
-    '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="48" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
-    '<text x="650" y="378" text-anchor="middle" font-family="Georgia" font-size="20" fill="#21170f">'+esc(invitationParts.intro)+'</text>'+
+    '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="48" font-weight="bold" font-style="italic" letter-spacing="1.2" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
+    '<text x="650" y="378" text-anchor="middle" font-family="Georgia" font-size="21" font-style="italic" fill="#21170f">'+esc(invitationParts.intro)+'</text>'+
     '<text x="650" y="410" text-anchor="middle" font-family="Georgia" font-size="14" fill="#79503a">'+esc(invitationParts.titles)+'</text>'+
-    '<text x="650" y="456" text-anchor="middle" font-family="Georgia" font-size="31" font-weight="bold" fill="#9d5633">'+esc("— "+invitationParts.recipient+" —")+'</text>'+
+    '<text x="650" y="456" text-anchor="middle" font-family="Georgia" font-size="33" font-weight="bold" font-style="italic" fill="#9d5633">'+esc("— "+invitationParts.recipient+" —")+'</text>'+
     '<text x="650" y="496" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+esc(invitationParts.eventLine)+'</text>'+
-    (invitationParts.coupleName?'<text x="650" y="542" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#754a34">'+esc("— "+invitationParts.coupleName+" —")+'</text>':'')+
+    (invitationParts.coupleName?'<text x="650" y="542" text-anchor="middle" font-family="Georgia" font-size="36" font-weight="bold" font-style="italic" letter-spacing="1" fill="#754a34">'+esc("— "+invitationParts.coupleName+" —")+'</text>':'')+
     '<text x="650" y="'+(invitationParts.coupleName?585:550)+'" text-anchor="middle" font-family="Georgia" font-size="27" fill="#21170f">'+esc(date)+'</text>'+
     detailSvg+
     familyMessageSvg+
@@ -2022,7 +2035,7 @@ useEffect(() => {
             <>
               {(() => { const d=defaultECardDesign; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template}`}>
                 <div className="ecard-card-inner">
-                  <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
+                  <div className="ecard-card-brand"><img src="/forteevents-logo.png" alt="ForteEvents" /></div>
                   <ECardFloralOrnament className="ecard-public-floral-top" />
                   <p className="ecard-card-kicker">{publicECard.occasion || 'MWALIKO'}</p><h2>{publicECard.title}</h2>
                   <div className="ecard-card-divider"><span>✦</span></div>
