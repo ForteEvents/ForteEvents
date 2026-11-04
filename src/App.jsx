@@ -26,6 +26,17 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
 }
 
 
+function buildECardInvitationSentence(card, recipientName = '[JINA LA MWALIKWA]') {
+  const occasion = String(card?.occasion || '').toLowerCase()
+  const recipient = 'Bw&Bi. Mhe. Pro. Dkt. Bw./ Bi. ' + (recipientName || '[JINA LA MWALIKWA]')
+  if (occasion.includes('send')) return 'Wanayo furaha kukualika ' + recipient + ' kwenye send-off ya binti yao ' + (card?.title || '[JINA LA MHUSIKA]') + '.'
+  if (occasion.includes('harusi')) {
+    const couple = [card?.bride_name, card?.groom_name].filter(Boolean).join(' na ') || card?.title || '[MAJINA YA WAHUSIKA]'
+    return 'Wanayo furaha kukualika ' + recipient + ' kwenye harusi ya vijana wao wapendwa ' + couple + '.'
+  }
+  return 'Wanayo furaha kukualika ' + recipient + ' kwenye ' + String(card?.occasion || 'tukio').toLowerCase() + ' ya ' + (card?.title || '[JINA LA TUKIO]') + '.'
+}
+
 async function createECardPng(card, guest = null) {
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
   const invitationUrl = guest
@@ -57,10 +68,8 @@ async function createECardPng(card, guest = null) {
     '<text x="650" y="135" text-anchor="middle" font-family="Georgia" font-size="80" font-style="italic" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="33" letter-spacing="7" fill="#23190f">INVITATION</text>'+
     '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
     '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text><text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="40" font-weight="bold" fill="#3b2818">'+esc(card.host_names || 'JINA LA FAMILIA')+'</text>'+
-    '<text x="650" y="390" text-anchor="middle" font-family="Georgia" font-size="28" font-style="italic" fill="#21170f">Wanayo furaha kukualika</text><text x="650" y="430" text-anchor="middle" font-family="Georgia" font-size="22" fill="#21170f">Mheshimiwa Profesa Daktari Bwana na Bibi, Bwana au Bi.</text>'+
-    '<text x="650" y="472" text-anchor="middle" font-family="Georgia" font-size="25" font-weight="bold" fill="#9a6710">'+esc(guestName)+'</text>'+
-    '<rect x="300" y="505" width="700" height="92" rx="18" fill="url(#gold)" stroke="#bd861b" stroke-width="3"/><text x="650" y="565" text-anchor="middle" font-family="Georgia" font-size="38" font-weight="bold" fill="#211707">'+esc(card.title || 'JINA LA TUKIO')+'</text>'+
-    '<text x="650" y="630" text-anchor="middle" font-family="Georgia" font-size="28" fill="#a36b08">'+esc(names || 'Majina ya wahusika')+'</text><text x="650" y="680" text-anchor="middle" font-family="Georgia" font-size="25" fill="#21170f">'+esc(date)+'</text>'+
+    '<text x="650" y="405" text-anchor="middle" font-family="Georgia" font-size="25" fill="#21170f">'+esc(buildECardInvitationSentence(card, guestName))+'</text>'+
+    '<text x="650" y="485" text-anchor="middle" font-family="Georgia" font-size="25" fill="#21170f">'+esc(date)+'</text>'+
     detailSvg+
     '<text x="650" y="930" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#9b6814">KARIBU SANA</text>'+
     '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
@@ -1992,10 +2001,8 @@ useEffect(() => {
                   <h2>{publicECard.title}</h2>
                   <div className="ecard-card-divider"><span>✦</span></div>
                   {publicECard.image_url && <img className="ecard-card-photo" src={publicECard.image_url} alt="Picha ya tukio"/>}
-                  <p className="ecard-card-invite">Tunayo furaha kukukaribisha</p>
-                  {publicECard.host_names && <h3>{publicECard.host_names}</h3>}
-                  {(publicECard.bride_name || publicECard.groom_name) && <p className="ecard-card-message">{[publicECard.bride_name, publicECard.groom_name].filter(Boolean).join(' & ')}</p>}
-                  {publicECard.message && <p className="ecard-card-message">{publicECard.message}</p>}
+                  <p className="ecard-card-invite">Familia ya {publicECard.host_names || 'familia zetu'}</p>
+                  <p className="ecard-card-message">{buildECardInvitationSentence(publicECard, publicECard.guest?.guest_name || '[JINA LA MWALIKWA]')}</p>
                   <div className="ecard-card-details">
                     {publicECard.event_date && <span><b>TAREHE</b>{publicECard.event_date}</span>}
                     {publicECard.event_time && <span><b>MUDA</b>{publicECard.event_time}</span>}
@@ -2007,7 +2014,7 @@ useEffect(() => {
                     {(publicECard.rsvp_deadline || publicECard.rsvp_contact_name || publicECard.rsvp_contact_phone || publicECard.rsvp_contact_name_2 || publicECard.rsvp_contact_phone_2) && <span><b>RSVP</b>{[publicECard.rsvp_deadline ? 'Mwisho: ' + publicECard.rsvp_deadline : '', [publicECard.rsvp_contact_name, publicECard.rsvp_contact_phone].filter(Boolean).join(' '), [publicECard.rsvp_contact_name_2, publicECard.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
                   </div>
                   {publicECard.guest && <><p style={{fontWeight:700,fontSize:'22px'}}>Mgeni: {publicECard.guest.guest_name}</p><p>{publicECard.guest.invite_type.toUpperCase()} — {publicECard.guest.guest_count} {publicECard.guest.guest_count===1?'mtu':'watu'}</p><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px',margin:'16px auto'}} /></>}
-                  <p className="ecard-card-welcome">KARIBU SANA</p>
+                  <p className="ecard-card-welcome">WAKARIBISHWA SANA · KARIBU KUSHEREHEKEA NASI</p>
                   {publicECard.location_url && <div style={{marginTop:'18px'}}><a className="primary-button" href={publicECard.location_url} target="_blank" rel="noreferrer">Fungua Mahali pa Tukio kwenye Google Maps</a></div>}
                   <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
                   <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
@@ -3041,12 +3048,9 @@ return (
                 <div className="ecard-family-copy">
                   <span>Familia ya</span>
                   <strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong>
-                  <p>Wanayo furaha kukualika</p>
-                  <div className="ecard-honorific-fixed">Mheshimiwa Profesa Daktari Bwana na Bibi, Bwana au Bi.</div>
-                  <div className="ecard-guest-placeholder">{guestName.trim() || "[JINA LA MWALIKWA]"}</div>
+                  <p className="ecard-invitation-sentence">{buildECardInvitationSentence(eCardForm, guestName.trim() || '[JINA LA MWALIKWA]')}</p>
                 </div>
-                <div className="ecard-event-ribbon">{eCardForm.title || 'JINA LA TUKIO'}</div>
-                <div className="ecard-couple-names">{[eCardForm.bride_name,eCardForm.groom_name].filter(Boolean).join(' & ') || 'MAJINA YA WAHUSIKA'}</div>
+                {eCardForm.occasion?.toLowerCase().includes('harusi') && <div className="ecard-couple-names">{[eCardForm.bride_name,eCardForm.groom_name].filter(Boolean).join(' na ') || 'MAJINA YA WAHUSIKA'}</div>}
                 <div className="ecard-date-line">{eCardForm.event_date ? new Date(eCardForm.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
                 <div className="ecard-detail-grid">
                   {eCardForm.event_time && <div><b>MUDA</b><span>{eCardForm.event_time}</span></div>}
@@ -3063,10 +3067,10 @@ return (
                 <div className="ecard-pass-florals">🌹 ❀ 🌹</div>
                 <div className="ecard-pass-ribbon">YOUR GUEST PASS</div>
                 <div className="ecard-pass-name">{guestName.trim() || "JINA LA MWALIKWA"}</div>
-                <div className="ecard-pass-type">{guestType.toUpperCase()} / GUEST PASS</div>
+                <div className="ecard-pass-type">{guestType === "single" ? "SINGLE · MTU 1" : "DOUBLE · WATU 2"}</div>
                 <div className="ecard-pass-qr"><GuestQr value={window.location.origin + '/?ecard-preview=forteevents'} /></div>
                 <div className="ecard-pass-checkin">✓ &nbsp; Scan at Check-in</div>
-                <p>Thank you for being part<br/>of our special day!</p>
+                <p>WAKARIBISHWA SANA<br/>KARIBU KUSHEREHEKEA NASI</p>
               </aside>
             </div>
             <form onSubmit={saveECard}>
@@ -3185,7 +3189,7 @@ return (
               {eCards.map(card => <option key={card.id} value={card.id}>{card.title}</option>)}
             </select>
             <form onSubmit={addECardGuest}>
-              <label>Jina la mwalikwa (weka cheo pamoja na jina, mfano Mheshimiwa Profesa Daktari ...)</label>
+              <label>Jina la mwalikwa (andika jina pekee; cheo rasmi huongezwa moja kwa moja)</label>
               <input value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Jina la mgeni" required />
               <label>Aina ya kadi</label>
               <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE</option><option value="double">DOUBLE</option></select>
@@ -3198,7 +3202,7 @@ return (
                 <div className="ecard-guest-card">
                   <div className="ecard-brand-mark">ForteEvents <small>Making your event extraordinary</small></div>
                   <h2>Mwaliko wa {card?.occasion || 'Tukio'}</h2>
-                  <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}<br/>wanafuraha kukualika</div>
+                  <div className="ecard-guest-intro">Familia ya {card?.host_names || 'familia zetu'}<br/>{buildECardInvitationSentence(card, g.guest_name)}</div>
                   <div className="ecard-gold-ribbon">{card?.title || 'Harusi'}</div>
                   <div className="ecard-guest-name">{g.guest_name}</div>
                   {card?.event_date && <div className="ecard-guest-date">{card.event_date}</div>}
