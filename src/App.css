@@ -681,3 +681,17 @@ button[type="submit"] {
   .ecard-guest-card .ecard-floral-ornament{display:block!important;visibility:visible!important;opacity:1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .ecard-card-inner,.ecard-professional-preview,.ecard-main-panel{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+
+/* Matching elegant event-detail tiles across preview, public card and print */
+.ecard-detail-flow{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px!important;max-width:760px!important;align-items:stretch!important;margin:16px auto!important}
+.ecard-detail-line{min-width:0;min-height:54px;display:flex!important;flex-direction:column;align-items:flex-start!important;justify-content:center!important;gap:4px!important;padding:9px 13px!important;border:1px solid rgba(184,139,55,.34)!important;border-left:3px solid #bd8b2d!important;border-radius:9px;background:linear-gradient(135deg,rgba(255,253,247,.96),rgba(244,232,208,.72));box-shadow:0 3px 10px rgba(86,57,25,.055);text-align:left!important}
+.ecard-detail-line b{font:700 9px/1.2 Arial,sans-serif!important;letter-spacing:.16em!important;color:#9a6a20!important}
+.ecard-detail-line>span{justify-content:flex-start!important;text-align:left!important;font:14px/1.35 Georgia,serif!important;color:#493321!important}
+.ecard-dress-swatch-item i{width:15px!important;height:15px!important;border:1px solid rgba(67,47,25,.35)!important;box-shadow:0 0 0 2px #fff inset!important}
+.ecard-card-inner .ecard-detail-flow{max-width:760px!important;gap:9px 11px!important;margin:18px auto!important}
+.ecard-pass-type{background:#24190f!important;color:#fff!important;border:2px solid #d6a33d!important;text-shadow:none!important}
+.ecard-public-floral-top{width:190px!important;max-width:28%!important}
+.ecard-public-floral-bottom{width:175px!important}
+@media(max-width:700px){.ecard-detail-flow{grid-template-columns:1fr!important;gap:7px!important}.ecard-detail-line{min-height:46px;padding:8px 11px!important}.ecard-public-floral-top{width:110px!important}}
+@media print{.ecard-detail-line{background:#fffaf0!important;border:1px solid #bd8b2d!important;border-left:3px solid #bd8b2d!important;box-shadow:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ecard-floral-ornament{display:block!important;visibility:visible!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
