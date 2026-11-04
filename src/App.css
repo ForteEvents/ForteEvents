@@ -810,3 +810,22 @@ button[type="submit"] {
 .ecard-brand-lockup img{display:block!important;width:100%!important;height:auto!important;max-height:86px!important;object-fit:contain!important;object-position:left top!important;filter:drop-shadow(0 2px 2px rgba(68,41,27,.12))!important}
 .ecard-main-panel{position:relative!important}
 @media(max-width:700px){.ecard-brand-lockup{top:10px!important;left:10px!important;width:clamp(100px,28vw,138px)!important;max-width:34%!important}.ecard-brand-lockup img{max-height:66px!important}}
+
+/* High-contrast brand plaque: keeps the official logo readable on the warm floral card */
+.ecard-card-brand,
+.ecard-brand-lockup{
+  box-sizing:border-box!important;
+  padding:9px 11px!important;
+  background:linear-gradient(155deg,#3b281d 0%,#21150f 100%)!important;
+  border:1.5px solid #c99a42!important;
+  border-radius:13px!important;
+  box-shadow:0 4px 12px rgba(35,20,12,.24),inset 0 0 0 1px rgba(255,226,164,.16)!important;
+}
+.ecard-card-brand img,
+.ecard-brand-lockup img{
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.22))!important;
+}
+@media(max-width:700px){
+  .ecard-card-brand,.ecard-brand-lockup{padding:7px 8px!important;border-radius:10px!important}
+}
+
