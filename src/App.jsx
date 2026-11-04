@@ -904,7 +904,7 @@ function App() {
     const loadPublicCard = async () => {
       setPublicECardLoading(true)
       const { data, error } = await supabase.from('e_cards')
-        .select('title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme, design')
+        .select('id, title, occasion, host_names, event_date, event_time, venue, location_url, message, image_url, theme, design')
         .eq('slug', slug).eq('is_published', true).maybeSingle()
       let guest = null
       if (!error && data && guestToken) {
