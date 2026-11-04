@@ -3017,11 +3017,41 @@ return (
           </div>
           <div className="card">
             <h2>Muundo rasmi wa ForteEvents</h2>
-            <p>Muundo mmoja wa dhahabu na nyeupe umetayarishwa tayari. Jaza taarifa za tukio lako hapa chini.</p>
-            <p>Muundo rasmi wa ForteEvents ni wa dhahabu na nyeupe. Mpangilio, fremu na mapambo vimefungwa; jaza taarifa za tukio lako hapa chini.</p>
+            <p>Kadi ya dhahabu na nyeupe imeandaliwa tayari. Mteja anahariri taarifa zake kwenye muundo huu; fremu, mpangilio na mapambo hubaki vilevile.</p>
           </div>
           <div className="card">
             <h2>{editingECardId ? 'Hariri E-card' : 'Tengeneza E-card mpya'}</h2>
+            <div className="ecard-sample-first-intro">
+              <h2>Kadi ya mfano — hariri taarifa zake</h2>
+              <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
+            </div>
+            <div className={`ecard-live-preview ecard-card-art ecard-card-${eCardDesign.template || 'classic'}`}>
+              <div className="ecard-card-inner">
+                <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
+                <div className="ecard-card-flower ecard-card-flower-top">✿</div>
+                <p className="ecard-card-kicker">{eCardForm.occasion || 'MWALIKO'}</p>
+                <h2>{eCardForm.title || 'Harusi ya John na Mary'}</h2>
+                <div className="ecard-card-divider"><span>✦</span></div>
+                {eCardForm.image_url && <img className="ecard-card-photo" src={eCardForm.image_url} alt="Picha ya tukio"/>}
+                <p className="ecard-card-invite">Tunayo furaha kukukaribisha</p>
+                <h3>{eCardForm.host_names || 'Familia ya John & Mary'}</h3>
+                <p className="ecard-card-message">{[eCardForm.bride_name, eCardForm.groom_name].filter(Boolean).join(' & ') || 'John & Mary'}</p>
+                <p className="ecard-card-message">{eCardForm.message || 'Kwa furaha tunakualika uwe sehemu ya siku yetu ya pekee.'}</p>
+                <div className="ecard-card-details">
+                  <span><b>TAREHE</b>{eCardForm.event_date || '14 Novemba 2026'}</span>
+                  <span><b>MUDA</b>{eCardForm.event_time || '10:00 jioni'}</span>
+                  <span><b>MAHALI</b>{eCardForm.venue || 'Ukumbi wa Mfano, Dodoma'}</span>
+                  {(eCardForm.ceremony_time || eCardForm.ceremony_venue) && <span><b>IBADA</b>{[eCardForm.ceremony_time, eCardForm.ceremony_venue].filter(Boolean).join(' — ')}</span>}
+                  {(eCardForm.reception_time || eCardForm.reception_venue) && <span><b>RECEPTION</b>{[eCardForm.reception_time, eCardForm.reception_venue].filter(Boolean).join(' — ')}</span>}
+                  {eCardForm.food_note && <span><b>CHAKULA</b>{eCardForm.food_note}</span>}
+                  {(eCardForm.dress_code || eCardForm.dress_colors?.length) && <span><b>DRESS CODE</b>{[eCardForm.dress_code, ...(eCardForm.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
+                  {(eCardForm.rsvp_deadline || eCardForm.rsvp_contact_name || eCardForm.rsvp_contact_phone || eCardForm.rsvp_contact_name_2 || eCardForm.rsvp_contact_phone_2) && <span><b>RSVP</b>{[eCardForm.rsvp_deadline ? 'Mwisho: ' + eCardForm.rsvp_deadline : '', [eCardForm.rsvp_contact_name, eCardForm.rsvp_contact_phone].filter(Boolean).join(' '), [eCardForm.rsvp_contact_name_2, eCardForm.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
+                </div>
+                <p className="ecard-card-welcome">KARIBU SANA</p>
+                <div className="ecard-card-footer">ForteEvents • Making your event extraordinary</div>
+                <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
+              </div>
+            </div>
             <form onSubmit={saveECard}>
               <label>Jina la tukio</label>
               <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
@@ -3098,33 +3128,7 @@ return (
               <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
               {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
             </form>
-            <div className={`ecard-live-preview ecard-card-art ecard-card-${eCardDesign.template || 'classic'}`}>
-              <div className="ecard-card-inner">
-                <div className="ecard-card-brand">FORTEEVENTS <span>MAKING YOUR EVENT EXTRAORDINARY</span></div>
-                <div className="ecard-card-flower ecard-card-flower-top">✿</div>
-                <p className="ecard-card-kicker">{eCardForm.occasion || 'MWALIKO'}</p>
-                <h2>{eCardForm.title || 'JINA LA TUKIO'}</h2>
-                <div className="ecard-card-divider"><span>✦</span></div>
-                {eCardForm.image_url && <img className="ecard-card-photo" src={eCardForm.image_url} alt="Picha ya tukio"/>}
-                <p className="ecard-card-invite">Tunayo furaha kukukaribisha</p>
-                {eCardForm.host_names && <h3>{eCardForm.host_names}</h3>}
-                {(eCardForm.bride_name || eCardForm.groom_name) && <p className="ecard-card-message">{[eCardForm.bride_name, eCardForm.groom_name].filter(Boolean).join(' & ')}</p>}
-                {eCardForm.message && <p className="ecard-card-message">{eCardForm.message}</p>}
-                <div className="ecard-card-details">
-                  {eCardForm.event_date && <span><b>TAREHE</b>{eCardForm.event_date}</span>}
-                  {eCardForm.event_time && <span><b>MUDA</b>{eCardForm.event_time}</span>}
-                  {eCardForm.venue && <span><b>MAHALI</b>{eCardForm.venue}</span>}
-                  {(eCardForm.ceremony_time || eCardForm.ceremony_venue) && <span><b>IBADA</b>{[eCardForm.ceremony_time, eCardForm.ceremony_venue].filter(Boolean).join(' — ')}</span>}
-                  {(eCardForm.reception_time || eCardForm.reception_venue) && <span><b>RECEPTION</b>{[eCardForm.reception_time, eCardForm.reception_venue].filter(Boolean).join(' — ')}</span>}
-                  {eCardForm.food_note && <span><b>CHAKULA</b>{eCardForm.food_note}</span>}
-                  {(eCardForm.dress_code || eCardForm.dress_colors?.length) && <span><b>DRESS CODE</b>{[eCardForm.dress_code, ...(eCardForm.dress_colors || [])].filter(Boolean).join(' • ')}</span>}
-                  {(eCardForm.rsvp_deadline || eCardForm.rsvp_contact_name || eCardForm.rsvp_contact_phone || eCardForm.rsvp_contact_name_2 || eCardForm.rsvp_contact_phone_2) && <span><b>RSVP</b>{[eCardForm.rsvp_deadline ? 'Mwisho: ' + eCardForm.rsvp_deadline : '', [eCardForm.rsvp_contact_name, eCardForm.rsvp_contact_phone].filter(Boolean).join(' '), [eCardForm.rsvp_contact_name_2, eCardForm.rsvp_contact_phone_2].filter(Boolean).join(' ')].filter(Boolean).join(' | ')}</span>}
-                </div>
-                <p className="ecard-card-welcome">KARIBU SANA</p>
-                <div className="ecard-card-footer">ForteEvents • Making your event extraordinary</div>
-                <div className="ecard-card-flower ecard-card-flower-bottom">❀</div>
-              </div>
-            </div>
+
 {eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
           </div>
           <div className="card">
