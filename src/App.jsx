@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import QRCode from 'qrcode'
+import html2canvas from 'html2canvas'
+import { createRoot } from 'react-dom/client'
 import { supabase } from './supabaseClient'
 import './App.css'
 
@@ -60,90 +62,68 @@ function ECardFamilyMessage({message}) {
 }
 
 
+function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false}) {
+  const templateId=card?.design?.templateId || card?.template_id || 'forte-white-gold'
+  const template=BUILT_IN_ECARD_TEMPLATES.find(item=>item.id===templateId)
+  const style=template?.style || 'white-gold'
+  const guestType=String(guest?.invite_type || 'single').toLowerCase()
+  const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
+  return <div className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
+    <div className="ecard-main-panel">
+      <div className="ecard-main-heading">
+        <div className="ecard-document-title">KADI YA MWALIKO</div>
+        <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
+        <div className="ecard-invitation-label">INVITATION</div>
+      </div>
+      <ECardFloralOrnament className="ecard-floral-top"/>
+      <div className="ecard-family-copy"><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
+      <ECardInvitationCopy card={card} recipientName={displayName}/>
+      {card?.image_url && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
+      <div className="ecard-date-line">{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
+      <ECardDetails card={card} showDate={false}/>
+      {card?.location_url && <div className="ecard-map-link-section"><div className="ecard-map-link-heading">RAMANI YA UKUMBI</div><a className="ecard-map-link-url" href={card.location_url} target="_blank" rel="noopener noreferrer">{card.location_url}</a></div>}
+      <ECardFamilyMessage message={card?.message}/>
+      <ECardFloralOrnament className="ecard-floral-bottom"/>
+    </div>
+    <aside className="ecard-pass-panel">
+      <ECardFloralOrnament className="ecard-pass-floral-art"/>
+      <div className="ecard-pass-ribbon">YOUR GUEST PASS</div>
+      <div className="ecard-pass-name">{displayName}</div>
+      <div className="ecard-pass-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div>
+      <div className="ecard-pass-qr"><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
+      <div className="ecard-pass-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
+      <div className="ecard-pass-checkin">✓ &nbsp; Scan at Check-in</div>
+    </aside>
+  </div>
+}
+
 async function createECardPng(card, guest = null) {
-  const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
-  const invitationUrl = guest
-    ? window.location.origin + '/?card=' + encodeURIComponent(card.slug) + '&guest=' + encodeURIComponent(guest.token)
-    : window.location.origin + '/?card=' + encodeURIComponent(card.slug || '')
-  const qrImage = await QRCode.toDataURL(invitationUrl, { errorCorrectionLevel: 'H', margin: 1, width: 260, color: { dark: '#000000', light: '#FFFFFF' } })
-  let logoDataUrl = ''
+  const invitationUrl=guest
+    ? window.location.origin+'/?card='+encodeURIComponent(card.slug)+'&guest='+encodeURIComponent(guest.token)
+    : window.location.origin+'/?card='+encodeURIComponent(card.slug || '')
+  const host=document.createElement('div')
+  host.className='ecard-export-host'
+  document.body.appendChild(host)
+  const root=createRoot(host)
   try {
-    const logoResponse = await fetch('/forteevents-logo.png')
-    if (logoResponse.ok) {
-      const logoBlob = await logoResponse.blob()
-      logoDataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result || ''))
-        reader.onerror = reject
-        reader.readAsDataURL(logoBlob)
-      })
-    }
-  } catch (error) { console.warn('ForteEvents logo haikuweza kupakiwa kwenye kadi:', error) }
-  const date = card.event_date ? new Date(card.event_date + 'T00:00:00').toLocaleDateString('sw-TZ', {day:'numeric',month:'long',year:'numeric'}) : 'Tarehe ya tukio'
-  const guestName = guest?.guest_name || 'JINA LA MWALIKWA'
-  const guestType = guest ? (guest.invite_type || 'single').toUpperCase() : 'GUEST PASS'
-  const invitationParts=buildECardInvitationParts(card,guestName)
-  const invitationLines=[invitationParts.intro,invitationParts.titles,'— '+invitationParts.recipient+' —',invitationParts.eventLine,...(invitationParts.coupleName?['— '+invitationParts.coupleName+' —']:[])]
-  const details = buildECardDetailItems(card).filter(([label]) => label !== 'TAREHE')
-  const wrapSvg = (value, max = 34) => {
-    const words = String(value ?? '').split(/\s+/)
-    const lines = []
-    let line = ''
-    for (const word of words) {
-      if (line && (line + ' ' + word).length > max) { lines.push(line); line = word }
-      else line = line ? line + ' ' + word : word
-    }
-    if (line) lines.push(line)
-    return lines.slice(0, 2)
+    root.render(<ECardArtwork card={card} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={invitationUrl} exportMode/>)
+    if(document.fonts?.ready) await document.fonts.ready
+    await new Promise(resolve=>{
+      let attempts=0
+      const check=()=>{
+        if(host.querySelector('.ecard-pass-qr img') || attempts++>50) resolve()
+        else window.setTimeout(check,50)
+      }
+      check()
+    })
+    const artwork=host.querySelector('.ecard-professional-preview')
+    if(!artwork) throw new Error('Muundo wa kadi haujaandaliwa.')
+    const canvas=await html2canvas(artwork,{backgroundColor:null,scale:2,useCORS:true,allowTaint:false,logging:false,width:1120,windowWidth:1120})
+    return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG haikuundwa.')),'image/png'))
+  } finally {
+    root.unmount()
+    host.remove()
   }
-  const detailSvg = details.map(([label,value],i) => {
-    const x = i % 2 === 0 ? 105 : 585
-    const y = 600 + Math.floor(i / 2) * 66
-    const isContact = label.startsWith('MAWASILIANO')
-    const lines = wrapSvg(value, 34)
-    if (isContact) return '<g><text x="'+(x+5)+'" y="'+(y+18)+'" font-family="Arial" font-size="13" font-weight="bold" letter-spacing="1.4" fill="#9a5935">'+esc(label)+'</text><text x="'+(x+5)+'" y="'+(y+39)+'" font-family="Georgia" font-size="20" fill="#493321">'+lines.map((line,j)=>'<tspan x="'+(x+5)+'" dy="'+(j?19:0)+'">'+esc(line)+'</tspan>').join('')+'</text><path d="M'+x+' '+(y+48)+' h410" stroke="#d9c5a6" stroke-width="1"/></g>'
-    return '<g><rect x="'+x+'" y="'+y+'" width="440" height="48" rx="10" fill="#fffaf0" fill-opacity=".94" stroke="#d8bc7d" stroke-width="1.3"/><path d="M'+(x+13)+' '+(y+8)+' v32" stroke="#bd8b2d" stroke-width="3" stroke-linecap="round"/><text x="'+(x+27)+'" y="'+(y+18)+'" font-family="Arial" font-size="13" font-weight="bold" letter-spacing="1.4" fill="#a16c22">'+esc(label)+'</text><text x="'+(x+27)+'" y="'+(y+38)+'" font-family="Georgia" font-size="20" fill="#493321">'+lines.map((line,j)=>'<tspan x="'+(x+27)+'" dy="'+(j?17:0)+'">'+esc(line)+'</tspan>').join('')+'</text></g>'
-  }).join('')
-  const familyMessage = String(card?.message||'').trim() || DEFAULT_ECARD_MESSAGE
-  const familyLines = wrapSvg(familyMessage, 58)
-  const familyMessageSvg = '<text x="650" y="925" text-anchor="middle" font-family="Georgia" font-size="22" font-style="italic" fill="#59452a">'+familyLines.map((line,i)=>'<tspan x="650" dy="'+(i?31:0)+'">'+esc(line)+'</tspan>').join('')+'</text>'
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1536" height="1024" viewBox="0 0 1536 1024">'+
-    '<defs><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#a96b09"/><stop offset=".48" stop-color="#ffe18a"/><stop offset="1" stop-color="#b7790c"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#f8efdf"/></linearGradient><linearGradient id="logoBg" x2="0" y2="1"><stop stop-color="#352319"/><stop offset="1" stop-color="#17100c"/></linearGradient></defs>'+
-    '<rect width="1536" height="1024" fill="url(#paper)"/><rect x="20" y="20" width="1496" height="984" rx="8" fill="none" stroke="url(#gold)" stroke-width="8"/><rect x="34" y="34" width="1468" height="956" fill="none" stroke="#d6a33d" stroke-width="2"/>'+
-    '<path d="M1030 20 C1125 90 1165 160 1015 240 M45 760 C155 810 205 895 340 980" fill="none" stroke="#d9b66b" stroke-width="3" opacity=".5"/>'+
-    '<g transform="translate(820 12) scale(1.12)" stroke-linecap="round" stroke-linejoin="round"><path d="M12 205 C65 155 90 95 190 20" fill="none" stroke="#79503a" stroke-width="5"/><path d="M68 150 C28 151 14 125 22 96 C55 101 76 122 68 150Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><path d="M116 105 C80 99 72 70 88 45 C118 56 132 80 116 105Z" fill="#d0bd91" stroke="#79503a" stroke-width="2"/><path d="M153 67 C127 51 132 23 153 8 C177 29 178 51 153 67Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><g transform="translate(192 105)" fill="#e99a69" stroke="#9a5632" stroke-width="2"><ellipse cy="-27" rx="15" ry="31"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(45)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(90)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(135)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(180)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(225)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(270)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g><g transform="translate(92 45) scale(.68)" fill="#f2c49a" stroke="#9a5632" stroke-width="2"><ellipse cy="-24" rx="13" ry="27"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(45)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(90)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(135)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(180)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(225)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(270)"/><ellipse cy="-24" rx="13" ry="27" transform="rotate(315)"/><circle r="12" fill="#a85a31"/></g></g>'+
-    '<g transform="translate(38 805) rotate(180 125 100) scale(.9)" stroke-linecap="round" stroke-linejoin="round"><path d="M12 205 C65 155 90 95 190 20" fill="none" stroke="#79503a" stroke-width="5"/><path d="M68 150 C28 151 14 125 22 96 C55 101 76 122 68 150Z" fill="#a9a77d" stroke="#79503a" stroke-width="2"/><path d="M116 105 C80 99 72 70 88 45 C118 56 132 80 116 105Z" fill="#d0bd91" stroke="#79503a" stroke-width="2"/><g transform="translate(192 105)" fill="#e99a69" stroke="#9a5632" stroke-width="2"><ellipse cy="-27" rx="15" ry="31"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(45)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(90)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(135)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(180)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(225)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(270)"/><ellipse cy="-27" rx="15" ry="31" transform="rotate(315)"/><circle r="15" fill="#a85a31"/><circle r="6" fill="#f3d29a" stroke="none"/></g></g>'+
-    '<rect x="43" y="37" width="275" height="154" rx="18" fill="url(#logoBg)" stroke="#c99a42" stroke-width="3"/><rect x="50" y="44" width="261" height="140" rx="12" fill="none" stroke="#f0d18a" stroke-opacity=".42" stroke-width="1.5"/><image x="58" y="48" width="245" height="132" preserveAspectRatio="xMidYMid meet" href="'+logoDataUrl+'" xlink:href="'+logoDataUrl+'"/>'+
-    '<text x="650" y="125" text-anchor="middle" font-family="Georgia" font-size="30" font-weight="bold" letter-spacing="4" fill="#8a5a12">KADI YA MWALIKO</text><text x="650" y="190" text-anchor="middle" font-family="Georgia" font-size="68" font-style="italic" font-weight="bold" fill="#b77c16">'+esc((card.occasion || 'MWALIKO').toUpperCase())+'</text><text x="650" y="235" text-anchor="middle" font-family="Georgia" font-size="25" letter-spacing="6" fill="#23190f">INVITATION</text>'+
-    '<path d="M390 218 H920" stroke="url(#gold)" stroke-width="3"/><text x="655" y="210" text-anchor="middle" font-size="26" fill="#b47a18">♥</text>'+
-    '<text x="650" y="285" text-anchor="middle" font-family="Georgia" font-size="28" fill="#21170f">Familia ya</text>'+'<text x="650" y="335" text-anchor="middle" font-family="Georgia" font-size="'+(String(card.host_names||'JINA LA FAMILIA').length>38?34:String(card.host_names||'JINA LA FAMILIA').length>25?40:48)+'" font-weight="bold" font-style="italic" letter-spacing="1.2" fill="#3b2818">'+wrapSvg(card.host_names || 'JINA LA FAMILIA',25).map((line,i)=>'<tspan x="650" dy="'+(i?42:0)+'">'+esc(line)+'</tspan>').join('')+'</text>'+
-    '<text x="650" y="378" text-anchor="middle" font-family="Georgia" font-size="21" font-style="italic" fill="#21170f">'+esc(invitationParts.intro)+'</text>'+
-    '<text x="650" y="410" text-anchor="middle" font-family="Georgia" font-size="14" fill="#79503a">'+esc(invitationParts.titles)+'</text>'+
-    '<text x="650" y="456" text-anchor="middle" font-family="Georgia" font-size="33" font-weight="bold" font-style="italic" fill="#9d5633">'+esc("— "+invitationParts.recipient+" —")+'</text>'+
-    '<text x="650" y="496" text-anchor="middle" font-family="Georgia" font-size="19" fill="#21170f">'+esc(invitationParts.eventLine)+'</text>'+
-    (invitationParts.coupleName?'<text x="650" y="542" text-anchor="middle" font-family="Georgia" font-size="36" font-weight="bold" font-style="italic" letter-spacing="1" fill="#754a34">'+esc("— "+invitationParts.coupleName+" —")+'</text>':'')+
-    '<text x="650" y="'+(invitationParts.coupleName?585:550)+'" text-anchor="middle" font-family="Georgia" font-size="27" fill="#21170f">'+esc(date)+'</text>'+
-    detailSvg+
-    familyMessageSvg+
-    '<rect x="1080" y="205" width="360" height="740" rx="48" fill="#fffdf8" stroke="url(#gold)" stroke-width="7"/><path d="M1110 250 H1410" stroke="#d2a33e" stroke-width="2"/>'+
-    '<rect x="1090" y="245" width="340" height="66" rx="8" fill="url(#gold)"/><text x="1260" y="289" text-anchor="middle" font-family="Georgia" font-size="29" font-weight="bold" fill="#24190b">YOUR GUEST PASS</text>'+
-    '<text x="1260" y="380" text-anchor="middle" font-family="Georgia" font-size="34" font-weight="bold" fill="#20170f">'+esc(guestName)+'</text><path d="M1120 405 H1400" stroke="#d5ad58" stroke-width="2"/>'+
-    '<rect x="1120" y="430" width="280" height="54" rx="24" fill="#24190f" stroke="#d6a33d" stroke-width="3"/><text x="1260" y="466" text-anchor="middle" font-family="Arial" font-size="25" font-weight="bold" fill="#fff">'+esc(guestType === "SINGLE" ? "SINGLE · MTU 1" : guestType === "DOUBLE" ? "DOUBLE · WATU 2" : guestType)+'</text>'+
-    '<rect x="1115" y="510" width="290" height="290" rx="16" fill="#fff" stroke="#c18a1c" stroke-width="4"/><image x="1130" y="525" width="260" height="260" href="'+qrImage+'" xlink:href="'+qrImage+'"/>'+
-    '<rect x="1120" y="820" width="280" height="54" rx="22" fill="#b77a0d"/><text x="1260" y="855" text-anchor="middle" font-family="Arial" font-size="22" fill="#fff">✓  Scan at Check-in</text>'+
-    '<text x="1260" y="895" text-anchor="middle" font-family="Georgia" font-size="14" font-weight="bold" fill="#9a5935">SCAN: KADI KAMILI + RAMANI</text><text x="1260" y="925" text-anchor="middle" font-family="Georgia" font-size="14" font-style="italic" fill="#59402f">ForteEvents · Make your event extraordinary</text></svg>'
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-  const objectUrl = URL.createObjectURL(blob)
-  try {
-    const image = new Image()
-    image.src = objectUrl
-    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject })
-    const canvas = document.createElement('canvas')
-    canvas.width = 1536; canvas.height = 1024
-    const context = canvas.getContext('2d')
-    context.drawImage(image, 0, 0)
-    return await new Promise((resolve, reject) => canvas.toBlob(file => file ? resolve(file) : reject(new Error('PNG haikuundwa.')), 'image/png'))
-  } finally { URL.revokeObjectURL(objectUrl) }
 }
 
 async function shareECard(card, mode, setMessage) {
@@ -2051,24 +2031,7 @@ useEffect(() => {
             <><h2>ForteEvents</h2><p>Mwaliko huu haupatikani au bado haujachapishwa.</p></>
           ) : (
             <>
-              {(() => { const d=defaultECardDesign; return <div className={`ecard-live-preview ecard-card-art ecard-card-${d.template}`}>
-                <div className="ecard-card-inner">
-                  <ECardFloralOrnament className="ecard-public-floral-top" />
-                  <p className="ecard-card-kicker">{publicECard.occasion || 'MWALIKO'}</p><h2>{publicECard.title}</h2>
-                  <div className="ecard-card-divider"><span>✦</span></div>
-                  {publicECard.image_url && <img className="ecard-card-photo" src={publicECard.image_url} alt="Picha ya tukio"/>}
-                  <p className="ecard-card-invite">Familia ya {publicECard.host_names || 'familia zetu'}</p>
-                  <ECardInvitationCopy card={publicECard} recipientName={publicECard.guest?.guest_name || '[JINA LA MWALIKWA]'} />
-                  <ECardDetails card={publicECard} className="ecard-public-details" />
-                  <ECardFamilyMessage message={publicECard.message} />
-                  {publicECard.guest && <><p className="ecard-public-guest-name">Mgeni: {publicECard.guest.guest_name}</p><p className="ecard-public-guest-type">{publicECard.guest.invite_type.toUpperCase()}</p><div className="ecard-public-qr-wrap"><GuestQr value={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + '&guest=' + encodeURIComponent(publicECard.guest.token)} style={{display:'block',width:'190px',height:'190px'}} /></div></>}
-                   <div className="ecard-public-brand-under-qr"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
-                  
-                  {publicECard.location_url && <section className="ecard-map-link-section"><div className="ecard-map-link-heading">RAMANI YA UKUMBI</div><a className="ecard-map-link-url" href={publicECard.location_url} target="_blank" rel="noopener noreferrer">{publicECard.location_url}</a><a className="ecard-map-open-link" href={publicECard.location_url} target="_blank" rel="noopener noreferrer">Fungua ramani moja kwa moja <span aria-hidden="true">↗</span></a></section>}
-                  <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
-                  <ECardFloralOrnament className="ecard-public-floral-bottom" />
-                </div>
-              </div> })()}
+              <ECardArtwork card={publicECard} guest={publicECard.guest || null} recipientName={publicECard.guest?.guest_name || '[JINA LA MWALIKWA]'} qrUrl={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + (publicECard.guest?.token ? '&guest=' + encodeURIComponent(publicECard.guest.token) : '')}/>
             </>
           )}
         </div>
@@ -3096,33 +3059,7 @@ return (
               <h2>Kadi ya mfano — hariri taarifa zake</h2>
               <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
             </div>
-            <div className={"ecard-professional-preview ecard-style-"+(selectedECardTemplate?.style || selectedECardTemplate?.design?.style || 'white-gold')} aria-label="Muonekano wa kadi ya mwaliko">
-              <div className="ecard-main-panel">
-                
-                <div className="ecard-main-heading">
-                  <div className="ecard-document-title">KADI YA MWALIKO</div>
-                  <div className="ecard-script-title">{eCardForm.occasion || 'MWALIKO'}</div>
-                  <div className="ecard-invitation-label">INVITATION</div>
-                </div>
-                <ECardFloralOrnament className="ecard-floral-top" />
-                <div className="ecard-family-copy"><span>Familia ya</span><strong>{eCardForm.host_names || 'JINA LA FAMILIA'}</strong></div>
-                <ECardInvitationCopy card={eCardForm} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} />
-                <div className="ecard-date-line">{eCardForm.event_date ? new Date(eCardForm.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
-                <ECardDetails card={eCardForm} showDate={false} />
-                {eCardForm.location_url && <div className="ecard-map-link-section ecard-preview-map"><div className="ecard-map-link-heading">RAMANI YA UKUMBI</div><a className="ecard-map-link-url" href={eCardForm.location_url} target="_blank" rel="noopener noreferrer">{eCardForm.location_url}</a></div>}
-                <ECardFamilyMessage message={eCardForm.message} />
-                <ECardFloralOrnament className="ecard-floral-bottom" />
-              </div>
-              <aside className="ecard-pass-panel">
-                <ECardFloralOrnament className="ecard-pass-floral-art" />
-                <div className="ecard-pass-ribbon">YOUR GUEST PASS</div>
-                <div className="ecard-pass-name">{guestName.trim() || "JINA LA MWALIKWA"}</div>
-                <div className="ecard-pass-type">{guestType === "single" ? "SINGLE · MTU 1" : "DOUBLE · WATU 2"}</div>
-                <div className="ecard-pass-qr"><GuestQr value={window.location.origin + '/?ecard-preview=forteevents'} /></div>
-                <div className="ecard-pass-brand"><img src="/forteevents-logo.png" alt="ForteEvents" /></div>
-                <div className="ecard-pass-checkin">✓ &nbsp; Scan at Check-in</div>
-              </aside>
-            </div>
+            <ECardArtwork card={{...eCardForm,design:{templateId:selectedTemplateId}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
             <form onSubmit={saveECard}>
               <label>Jina la tukio</label>
               <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />

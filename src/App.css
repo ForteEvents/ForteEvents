@@ -948,3 +948,14 @@ button[type="submit"] {
  .ecard-pass-brand{width:140px}
 }
 @media(max-width:380px){.ecard-choice-grid{grid-template-columns:1fr 1fr}.ecard-choice-art,.ecard-choice-uploaded{height:125px}.ecard-choice-script{font-size:22px}}
+
+
+/* Shared E-card renderer: editor, public guest link and downloaded image */
+.ecard-export-host{position:fixed;left:-12000px;top:0;width:1120px;z-index:-1;pointer-events:none;background:#fff}
+.ecard-professional-preview.ecard-export-mode{width:1120px!important;max-width:none!important;min-height:720px!important;aspect-ratio:auto!important;grid-template-columns:minmax(0,2.1fr) minmax(245px,.92fr)!important;padding:18px!important;gap:14px!important;margin:0!important;overflow:hidden!important}
+.ecard-export-mode .ecard-main-panel{padding:22px 30px 20px!important}
+.ecard-export-mode .ecard-pass-panel{min-height:0!important}
+.ecard-export-mode .ecard-pass-qr{width:160px!important}
+.ecard-export-mode .ecard-family-copy>strong,.ecard-export-mode .ecard-invitation-recipient,.ecard-export-mode .ecard-invitation-couple{overflow-wrap:anywhere!important;white-space:normal!important}
+.ecard-professional-preview.ecard-style-white-gold .ecard-main-panel{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,247,243,.94))!important;border:1px solid #d8c69e!important}
+.ecard-professional-preview.ecard-style-cream-blue .ecard-main-panel{background:linear-gradient(145deg,#f8f0df,#eee0c3)!important;border:1px solid #b38a53!important}
