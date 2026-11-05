@@ -881,3 +881,70 @@ button[type="submit"] {
   .ecard-invitation-recipient{font-size:clamp(15px,4.2vw,21px)!important;padding-inline:8px!important}
   .ecard-invitation-couple{font-size:clamp(16px,4.3vw,22px)!important;padding-inline:8px!important}
 }
+
+
+/* ForteEvents template library — two distinct sample-inspired visual directions */
+.ecard-template-picker{margin-bottom:22px!important}
+.ecard-picker-heading h2{margin-bottom:6px!important}
+.ecard-picker-heading p{margin-top:0!important;color:#6c5b43;line-height:1.55}
+.ecard-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:16px}
+.ecard-choice-card{display:flex;flex-direction:column;gap:8px;min-width:0;padding:10px;text-align:left;border:1px solid #dfd2b9;border-radius:13px;background:#fffdf8;color:#35271c;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
+.ecard-choice-card:hover{transform:translateY(-2px);border-color:#b58a3a}
+.ecard-choice-card.selected{border:2px solid #a77b24;box-shadow:0 0 0 3px rgba(199,154,53,.16)}
+.ecard-choice-card>strong{font-family:Georgia,serif;font-size:17px}
+.ecard-choice-card>small{font-size:12px;line-height:1.45;color:#756650}
+.ecard-choice-card>em{font-size:11px;color:#876018;font-style:normal;font-weight:800}
+.ecard-choice-art,.ecard-choice-uploaded{width:100%;height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;object-fit:cover;border:5px double #c2a15d;border-radius:7px}
+.ecard-choice-art{background:radial-gradient(ellipse at center,#fff 0%,#fffdf8 68%,#f2e8d5 100%);color:#9a742d}
+.ecard-choice-art-cream-blue{background:radial-gradient(ellipse at center,#f7efd9 0%,#e9d9b9 100%);border-color:#9a7544;color:#173d61}
+.ecard-choice-script{font:italic 27px/1.1 Georgia,serif;margin-bottom:8px;text-shadow:0 1px #fff}
+.ecard-choice-art b{font:700 13px/1.3 Arial,sans-serif;letter-spacing:.08em;text-align:center;padding:0 12px}
+.ecard-choice-art small{font:10px Arial,sans-serif;letter-spacing:.12em;margin-top:8px}
+.ecard-choice-flower{position:absolute;width:65px;height:65px;border-radius:50%;background:radial-gradient(circle,#c6a25d 0 10%,transparent 12%),repeating-conic-gradient(from 0deg,#fff 0 10deg,#e8e5df 11deg 21deg,transparent 22deg 30deg);filter:drop-shadow(0 3px 3px rgba(68,48,22,.16))}
+.ecard-choice-art-cream-blue .ecard-choice-flower{background:radial-gradient(circle,#d6a34b 0 10%,transparent 12%),repeating-conic-gradient(#e77d3d 0 12deg,#f4b26e 13deg 23deg,transparent 24deg 30deg)}
+.ecard-choice-flower.flower-one{top:-12px;left:-12px}
+.ecard-choice-flower.flower-two{right:-13px;bottom:-14px;width:78px;height:78px}
+.ecard-color-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin:8px 0 12px}
+.ecard-color-choice{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid #e0d5c2;border-radius:9px;background:#fffdf8;color:#493b2a;text-align:left;font-size:12px;cursor:pointer}
+.ecard-color-choice.active{border:2px solid #9a742d;background:#fbf3df;box-shadow:0 0 0 2px rgba(199,154,53,.12)}
+.ecard-color-choice i{width:22px;height:22px;flex:0 0 22px;border:1px solid #9c927f;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+.ecard-color-choice span{overflow-wrap:anywhere}
+.ecard-style-white-gold{background:linear-gradient(135deg,#fff 0%,#fbfaf7 52%,#e8e8e4 100%)!important;border:5px double #c5a15d!important;box-shadow:0 16px 38px rgba(55,45,28,.16),inset 0 0 0 4px #fff!important}
+.ecard-style-white-gold .ecard-main-panel{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,247,243,.94))!important;border:1px solid #d8c69e!important}
+.ecard-style-white-gold .ecard-script-title,.ecard-style-white-gold .ecard-card-invite{color:#9a7938!important}
+.ecard-style-white-gold .ecard-family-copy>strong,.ecard-style-white-gold .ecard-invitation-couple{color:#647b91!important}
+.ecard-style-white-gold .ecard-pass-panel{background:#fff!important;border-color:#c6a45f!important}
+.ecard-style-cream-blue{background:linear-gradient(135deg,#d8c39c 0%,#f7eedc 40%,#d8c39c 100%)!important;border:6px double #8a633b!important;box-shadow:0 16px 38px rgba(58,37,21,.2),inset 0 0 0 4px rgba(255,255,255,.7)!important}
+.ecard-style-cream-blue .ecard-main-panel{background:linear-gradient(145deg,#f8f0df,#eee0c3)!important;border:1px solid #b38a53!important}
+.ecard-style-cream-blue .ecard-script-title,.ecard-style-cream-blue .ecard-card-invite{color:#173d61!important}
+.ecard-style-cream-blue .ecard-family-copy>strong,.ecard-style-cream-blue .ecard-invitation-couple{color:#173d61!important}
+.ecard-style-cream-blue .ecard-pass-panel{background:#f8f0df!important;border-color:#173d61!important}
+.ecard-style-cream-blue .ecard-pass-ribbon,.ecard-style-cream-blue .ecard-pass-type{background:#173d61!important;color:#fff!important;border-color:#d4a25c!important}
+.ecard-main-panel{min-width:0!important}
+.ecard-family-copy,.ecard-family-copy>strong,.ecard-invitation-copy,.ecard-invitation-copy p,.ecard-invitation-titles,.ecard-invitation-recipient,.ecard-invitation-couple,.ecard-detail-line,.ecard-detail-line>span,.ecard-family-message{min-width:0!important;max-width:100%!important;box-sizing:border-box!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;text-wrap:pretty}
+.ecard-family-copy>strong{width:100%!important;padding:0 12px!important;font-size:clamp(17px,2.4vw,30px)!important;line-height:1.22!important}
+.ecard-invitation-copy{padding:0 clamp(8px,2vw,20px)!important;line-height:1.42!important}
+.ecard-invitation-titles{font-size:clamp(12px,1.35vw,16px)!important;font-weight:500!important;letter-spacing:.02em!important}
+.ecard-invitation-recipient{display:block!important;width:100%!important;margin:5px auto!important;padding:3px 8px!important;font-size:clamp(17px,2vw,24px)!important;line-height:1.25!important}
+.ecard-invitation-couple{display:block!important;width:100%!important;padding:3px 8px!important;font-size:clamp(18px,2.35vw,29px)!important;line-height:1.2!important}
+.ecard-pass-brand{width:clamp(105px,68%,160px);margin:5px auto 2px;padding:5px 8px;background:#fff;border:1px solid #d5bd87;border-radius:8px}
+.ecard-pass-brand img,.ecard-public-brand-under-qr img,.ecard-print-brand-under-qr{display:block;width:100%;height:auto;max-height:52px;object-fit:contain}
+.ecard-public-brand-under-qr{width:150px;max-width:45%;margin:10px auto 0;padding:5px 8px;background:#fff;border:1px solid #d5bd87;border-radius:8px}
+.ecard-public-guest-name{font-size:clamp(17px,2vw,22px);font-weight:700;overflow-wrap:anywhere}
+.ecard-public-guest-type{display:inline-block;padding:5px 18px;background:#24190f;color:#fff;border:1px solid #c99a42;border-radius:4px;font-weight:800;letter-spacing:.12em}
+.ecard-print-brand-under-qr{width:112px;margin:8px auto 2px;padding:4px;background:#fff;border:1px solid #d5bd87;border-radius:5px}
+.ecard-qr-wrap>strong{display:block;padding:3px 10px;font-size:19px;letter-spacing:.1em}
+.ecard-qr-wrap>small{display:block;margin-top:5px;font-size:10px;letter-spacing:.08em}
+.ecard-dress-swatch-item i{width:18px!important;height:18px!important;flex:0 0 18px!important;border-radius:50%!important;border:1px solid #9c927f!important;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)!important}
+@media(max-width:700px){
+ .ecard-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .ecard-choice-art,.ecard-choice-uploaded{height:145px}
+ .ecard-choice-card{padding:7px}
+ .ecard-choice-card>strong{font-size:14px}
+ .ecard-color-picker{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ecard-style-white-gold,.ecard-style-cream-blue{padding:8px!important}
+ .ecard-invitation-recipient{font-size:clamp(16px,4.4vw,22px)!important}
+ .ecard-invitation-couple{font-size:clamp(17px,4.8vw,24px)!important}
+ .ecard-pass-brand{width:140px}
+}
+@media(max-width:380px){.ecard-choice-grid{grid-template-columns:1fr 1fr}.ecard-choice-art,.ecard-choice-uploaded{height:125px}.ecard-choice-script{font-size:22px}}
