@@ -1166,3 +1166,65 @@ button[type="submit"] {
   box-sizing:border-box!important;
 }
 .ecard-export-host{width:760px!important;min-width:760px!important}
+
+
+/* ForteEvents invitation card: standard 5 x 7 inch portrait proportion. */
+.ecard-professional-preview{
+  display:block!important;
+  width:min(100%,760px)!important;
+  max-width:760px!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:5 / 7!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+  margin:16px auto!important;
+}
+.ecard-professional-preview>.ecard-main-panel{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+.ecard-professional-preview.ecard-export-mode{
+  display:block!important;
+  width:760px!important;
+  min-width:760px!important;
+  max-width:760px!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:5 / 7!important;
+  overflow:hidden!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+.ecard-export-mode>.ecard-main-panel{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+.ecard-export-host{
+  width:760px!important;
+  min-width:760px!important;
+}
+@media(max-width:700px){
+  .ecard-professional-preview{
+    width:100%!important;
+    max-width:100%!important;
+    min-height:0!important;
+    aspect-ratio:5 / 7!important;
+    padding:8px!important;
+    overflow:hidden!important;
+  }
+  .ecard-professional-preview>.ecard-main-panel{
+    height:100%!important;
+    min-height:0!important;
+    padding:18px 12px 14px!important;
+    overflow:hidden!important;
+  }
+}
