@@ -1020,3 +1020,40 @@ button[type="submit"] {
  .ecard-detail-line b{font-size:10px!important}
  .ecard-detail-line>span{font-size:14px!important}
 }
+
+
+/* ForteEvents — three fixed floral invitation artworks, with editable text layered above */
+.ecard-style-ivory-gold{
+ background:linear-gradient(145deg,#fffefa 0%,#f5eddd 52%,#fffdf7 100%)!important;
+ border:7px double #c6a35f!important;box-shadow:0 15px 38px rgba(74,52,23,.18),inset 0 0 0 3px #fff!important
+}
+.ecard-style-ivory-gold .ecard-main-panel{background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(251,247,237,.97))!important;border:1px solid #dfc994!important;box-shadow:inset 0 0 0 5px rgba(198,163,95,.12)!important}
+.ecard-style-ivory-gold .ecard-script-title,.ecard-style-ivory-gold .ecard-invitation-couple{color:#9b7938!important}
+.ecard-style-ivory-gold .ecard-family-copy>strong{color:#354b61!important}
+.ecard-style-blush-rose{
+ background:linear-gradient(145deg,#f8e4e5 0%,#fff5ef 48%,#f2d7db 100%)!important;
+ border:7px double #bd8b78!important;box-shadow:0 15px 38px rgba(103,47,56,.17),inset 0 0 0 3px #fff7f1!important
+}
+.ecard-style-blush-rose .ecard-main-panel{background:linear-gradient(160deg,rgba(255,249,246,.98),rgba(250,231,231,.97))!important;border:1px solid #d7a9a8!important;box-shadow:inset 0 0 0 5px rgba(177,104,112,.09)!important}
+.ecard-style-blush-rose .ecard-script-title,.ecard-style-blush-rose .ecard-invitation-couple{color:#85394e!important}
+.ecard-style-blush-rose .ecard-family-copy>strong{color:#6f3b47!important}
+.ecard-style-blue-rose{
+ background:linear-gradient(145deg,#fff 0%,#eaf0f6 54%,#fffdf7 100%)!important;
+ border:7px double #b99a58!important;box-shadow:0 15px 38px rgba(31,54,79,.17),inset 0 0 0 3px #fff!important
+}
+.ecard-style-blue-rose .ecard-main-panel{background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(239,244,248,.97))!important;border:1px solid #b8c5d0!important;box-shadow:inset 0 0 0 5px rgba(51,83,111,.08)!important}
+.ecard-style-blue-rose .ecard-script-title,.ecard-style-blue-rose .ecard-invitation-couple{color:#1d4165!important}
+.ecard-style-blue-rose .ecard-family-copy>strong{color:#243f5a!important}
+.ecard-floral-ornament{pointer-events:none;filter:drop-shadow(0 2px 2px rgba(72,48,25,.12))}
+.ecard-floral-ornament.ecard-floral-blush-rose{filter:drop-shadow(0 2px 2px rgba(112,48,65,.14))}
+.ecard-floral-ornament.ecard-floral-blue-rose{filter:drop-shadow(0 2px 2px rgba(33,57,82,.14))}
+.ecard-choice-art{isolation:isolate}
+.ecard-choice-art-ivory-gold{background:linear-gradient(145deg,#fffefa,#f2e8d5)!important;border-color:#c6a35f!important;color:#9b7938!important}
+.ecard-choice-art-blush-rose{background:linear-gradient(145deg,#fff1ef,#f1d7dc)!important;border-color:#bd8b78!important;color:#85394e!important}
+.ecard-choice-art-blue-rose{background:linear-gradient(145deg,#fff,#dce7f0)!important;border-color:#b99a58!important;color:#1d4165!important}
+.ecard-choice-floral-art{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important;opacity:.96!important;z-index:0!important}
+.ecard-choice-art>.ecard-choice-script,.ecard-choice-art>b,.ecard-choice-art>small{position:relative!important;z-index:1!important;text-shadow:0 1px 5px rgba(255,255,255,.95)!important}
+.ecard-choice-art>.ecard-choice-script{margin-top:26px!important;font-size:clamp(19px,2.4vw,27px)!important}
+.ecard-choice-art>b{max-width:86%!important;padding:5px 8px!important;background:rgba(255,255,255,.72)!important;border-radius:5px!important}
+.ecard-choice-art>small{padding:3px 6px!important;background:rgba(255,255,255,.72)!important;border-radius:4px!important}
+@media(max-width:700px){.ecard-choice-art>.ecard-choice-script{margin-top:18px!important;font-size:19px!important}.ecard-choice-floral-art{opacity:.9!important}}
