@@ -95,10 +95,8 @@ function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c6
 
 function ECardFamilyMessage({message}) {
   const value = String(message || '').trim() || DEFAULT_ECARD_MESSAGE
-  const sentences = value.split(/(?<=[.!?])\s+/).map(part => part.trim()).filter(Boolean)
-  return <div className="ecard-family-message">{sentences.map((sentence,index)=><p key={index}>{sentence}</p>)}</div>
+  return <div className="ecard-family-message">{value}</div>
 }
-
 
 function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false}) {
   const savedTemplateId=card?.design?.templateId || card?.template_id || 'forte-ivory-gold-rose'
