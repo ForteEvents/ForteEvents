@@ -965,6 +965,21 @@ function App() {
     setGuestBusy(false)
   }
 
+  const deleteECardGuest = async (guest) => {
+    if (!guest?.id || !guestCardId) return
+    if (!window.confirm('Una uhakika unataka kufuta mwaliko wa ' + guest.guest_name + '? Kadi ya tukio yenyewe haitafutwa.')) return
+    setGuestBusy(true)
+    const { error } = await supabase.from('e_card_guests')
+      .delete().eq('id', guest.id).eq('card_id', guestCardId)
+    if (error) {
+      setECardMessage('Imeshindikana kufuta mwaliko wa mgeni: ' + error.message)
+    } else {
+      setECardMessage('Mwaliko wa ' + guest.guest_name + ' umefutwa.')
+      await loadECardGuests(guestCardId)
+    }
+    setGuestBusy(false)
+  }
+
   const checkInECardGuest = async (rawToken) => {
     const token = String(rawToken || '').trim()
     if (!token) { setScanResult('Weka au scan QR token kwanza.'); return }
@@ -3269,7 +3284,7 @@ return (
                   <ECardFamilyMessage message={card?.message} />
                   <div className="ecard-guest-bottom"><div><small>ForteEvents · Make your event extraordinary</small></div><div className="ecard-qr-wrap"><strong>{g.invite_type.toUpperCase()}</strong><GuestQr value={guestUrl} /><img className="ecard-print-brand-under-qr" src="/forteevents-logo.png" alt="ForteEvents"/><small>{g.guest_count || (g.invite_type === 'double' ? 2 : 1)} {g.guest_count===1?'MTU':'WATU'}</small></div></div>
                 </div>
-                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const file=new File([png],'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'});const text='Karibu kwenye '+(card?.title||'sherehe yetu')+'. Fungua mwaliko wako: '+guestUrl;if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],text,title:card?.title||'Mwaliko wa ForteEvents'})}else{const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download=file.name;a.click();URL.revokeObjectURL(href);window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setECardMessage('Picha imepakuliwa. Ambatisha picha hiyo kwenye WhatsApp iliyofunguliwa.')}}catch(error){setECardMessage('Imeshindikana kushiriki: '+error.message)}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button></div>
+                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const file=new File([png],'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'});const text='Karibu kwenye '+(card?.title||'sherehe yetu')+'. Fungua mwaliko wako: '+guestUrl;if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({files:[file],text,title:card?.title||'Mwaliko wa ForteEvents'})}else{const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download=file.name;a.click();URL.revokeObjectURL(href);window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setECardMessage('Picha imepakuliwa. Ambatisha picha hiyo kwenye WhatsApp iliyofunguliwa.')}}catch(error){setECardMessage('Imeshindikana kushiriki: '+error.message)}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
               </div>
             })}
           </div>
