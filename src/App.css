@@ -1228,3 +1228,134 @@ button[type="submit"] {
     overflow:hidden!important;
   }
 }
+
+
+/* Fit all invitation details inside the fixed 5:7 canvas without clipping. */
+.ecard-professional-preview{
+  height:auto!important;
+  aspect-ratio:5 / 7!important;
+  overflow:hidden!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+}
+.ecard-professional-preview>.ecard-main-panel{
+  height:100%!important;
+  min-height:0!important;
+  padding:12px 18px 8px!important;
+  gap:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+.ecard-main-heading{margin:0 auto 5px!important;padding:2px 18px 5px!important}
+.ecard-document-title{font-size:12px!important;margin:0 auto 3px!important}
+.ecard-script-title{font-size:clamp(27px,4vw,42px)!important;line-height:1!important}
+.ecard-invitation-label{font-size:11px!important;margin-top:2px!important;letter-spacing:.25em!important}
+.ecard-family-copy{margin:4px auto 5px!important;line-height:1.15!important}
+.ecard-family-copy>span{font-size:11px!important}
+.ecard-family-copy>strong{font-size:clamp(16px,2vw,22px)!important;line-height:1.12!important}
+.ecard-invitation-copy{margin:3px auto 5px!important;line-height:1.18!important}
+.ecard-invitation-copy p{font-size:clamp(11px,1.35vw,14px)!important;line-height:1.2!important;margin:2px auto!important}
+.ecard-invitation-titles{font-size:12px!important;margin:2px auto!important}
+.ecard-invitation-recipient,.ecard-invitation-couple{font-size:clamp(15px,1.8vw,20px)!important;line-height:1.15!important;padding:2px 8px!important;margin:2px auto!important}
+.ecard-date-line{
+  width:100%!important;
+  margin:5px auto 3px!important;
+  padding:4px 0!important;
+  border-top:1px solid rgba(174,132,54,.45)!important;
+  border-bottom:1px solid rgba(174,132,54,.45)!important;
+  font-size:12px!important;
+  line-height:1.2!important;
+  text-align:center!important;
+}
+.ecard-detail-flow{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:start!important;
+  gap:4px 10px!important;
+  width:100%!important;
+  margin:5px auto!important;
+  padding:5px 2px!important;
+  border-top:0!important;
+  border-bottom:0!important;
+  box-sizing:border-box!important;
+}
+.ecard-detail-line{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  width:100%!important;
+  min-height:0!important;
+  padding:3px 2px!important;
+  gap:2px!important;
+  text-align:center!important;
+  line-height:1.15!important;
+}
+.ecard-detail-line b{font-size:9px!important;letter-spacing:.08em!important}
+.ecard-detail-line>span{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:center!important;
+  max-width:100%!important;
+  font-size:11px!important;
+  line-height:1.2!important;
+  overflow-wrap:anywhere!important;
+}
+.ecard-map-link-section{
+  width:100%!important;
+  margin:4px auto!important;
+  padding:4px 5px!important;
+  border-top:1px solid rgba(151,91,55,.28)!important;
+  border-bottom:1px solid rgba(151,91,55,.28)!important;
+}
+.ecard-map-link-heading{font-size:9px!important;margin:0 auto 2px!important}
+.ecard-map-venue-name{font-size:11px!important;margin:2px auto!important}
+.ecard-map-open-link{font-size:9px!important;padding:4px 9px!important;margin:2px auto!important}
+.ecard-family-message{
+  width:100%!important;
+  max-width:100%!important;
+  margin:4px auto!important;
+  padding:4px 8px!important;
+  font-size:10px!important;
+  line-height:1.25!important;
+}
+.ecard-family-message p{margin:1px auto!important}
+.ecard-card-qr-section{
+  flex:0 0 auto!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:4px auto 0!important;
+  padding:4px 4px 2px!important;
+  border-top:1px solid rgba(174,132,54,.35)!important;
+}
+.ecard-card-qr-type{font-size:10px!important;margin:0 auto 3px!important}
+.ecard-card-qr{width:76px!important;height:76px!important;padding:3px!important}
+.ecard-card-qr-caption{font-size:8px!important;margin:2px auto!important}
+.ecard-card-brand{
+  width:48px!important;height:48px!important;min-width:48px!important;
+  margin:3px auto 0!important;padding:5px!important;
+}
+.ecard-floral-top{width:100px!important;max-width:22%!important;right:0!important;top:0!important}
+.ecard-floral-bottom{width:68px!important;max-width:18%!important;margin:2px auto 0!important}
+.ecard-card-footer{font-size:8px!important;margin:2px auto 0!important;line-height:1.1!important}
+.ecard-professional-preview.ecard-export-mode{
+  width:760px!important;min-width:760px!important;max-width:760px!important;
+  height:1064px!important;min-height:1064px!important;aspect-ratio:5 / 7!important;
+  padding:10px!important;overflow:hidden!important;
+}
+.ecard-export-mode>.ecard-main-panel{
+  width:100%!important;height:100%!important;min-height:0!important;
+  padding:12px 18px 8px!important;overflow:hidden!important;
+}
+@media(max-width:700px){
+  .ecard-professional-preview{aspect-ratio:5 / 7!important;padding:7px!important}
+  .ecard-professional-preview>.ecard-main-panel{padding:10px 12px 7px!important}
+  .ecard-detail-flow{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px 6px!important}
+  .ecard-detail-line>span{font-size:10px!important}
+  .ecard-card-qr{width:70px!important;height:70px!important}
+}
