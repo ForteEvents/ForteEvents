@@ -136,7 +136,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         <div className="ecard-card-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
       </section>
       <ECardFloralOrnament className="ecard-floral-bottom" variant={style}/>
-      <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
+      <div className="ecard-card-footer">ForteEvents · Make your event extraordinary</div>
     </div>
   </article>
 }
