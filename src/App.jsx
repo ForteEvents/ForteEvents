@@ -101,7 +101,8 @@ function ECardFamilyMessage({message}) {
 
 
 function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false}) {
-  const templateId=card?.design?.templateId || card?.template_id || 'forte-white-gold'
+  const savedTemplateId=card?.design?.templateId || card?.template_id || 'forte-ivory-gold-rose'
+  const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
   const template=BUILT_IN_ECARD_TEMPLATES.find(item=>item.id===templateId)
   const style=template?.style || 'white-gold'
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
@@ -552,7 +553,7 @@ function App() {
   const scanVideoRef = useRef(null)
   const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
   const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
-  const [selectedTemplateId, setSelectedTemplateId] = useState('forte-white-gold')
+  const [selectedTemplateId, setSelectedTemplateId] = useState('forte-ivory-gold-rose')
   const selectedECardTemplate = [...BUILT_IN_ECARD_TEMPLATES, ...ecardTemplates].find(item => item.id === selectedTemplateId) || BUILT_IN_ECARD_TEMPLATES[0]
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
@@ -855,7 +856,7 @@ function App() {
       location_url: '', message: DEFAULT_ECARD_MESSAGE, image_url: '', theme: 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setSelectedTemplateId('forte-white-gold')
+    setSelectedTemplateId('forte-ivory-gold-rose')
   }
 
   const saveECard = async (e) => {
@@ -916,7 +917,7 @@ function App() {
       message: card.message || DEFAULT_ECARD_MESSAGE, image_url: card.image_url || '', theme: card.theme || 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setSelectedTemplateId(card.design?.templateId || 'forte-white-gold')
+    setSelectedTemplateId(card.design?.templateId==='forte-white-gold'?'forte-ivory-gold-rose':card.design?.templateId==='forte-cream-blue'?'forte-blue-rose':card.design?.templateId || 'forte-ivory-gold-rose')
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
   }
