@@ -125,8 +125,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       <ECardDetails card={card} showDate={false}/>
       {card?.location_url && <div className="ecard-map-link-section">
         <div className="ecard-map-link-heading">MAHALI PA TUKIO</div>
-        <div className="ecard-map-venue-name">{card?.venue || 'Angalia eneo la tukio kwenye ramani'}</div>
-        <a className="ecard-map-open-link" href={card.location_url} target="_blank" rel="noopener noreferrer" aria-label="Fungua ramani ya ukumbi">⌖ &nbsp; FUNGUA RAMANI YA UKUMBI ↗</a>
+        <div className="ecard-map-venue-name">{card?.venue || 'Taarifa za ukumbi'}</div>
       </div>}
       <ECardFamilyMessage message={card?.message}/>
       <section className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
