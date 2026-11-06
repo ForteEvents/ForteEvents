@@ -1082,10 +1082,6 @@ button[type="submit"] {
 .danger-button:hover{background:#8d2020;color:#fff;border-color:#8d2020}
 .danger-button:focus-visible{outline:3px solid rgba(169,50,50,.22);outline-offset:2px}
 
-/* The logo sits on its own white medallion so the gold artwork and lettering stay clear. */
-.sidebar-logo .auth-logo{width:126px;height:126px;max-width:100%;margin:0 auto 18px;padding:9px;display:flex;align-items:center;justify-content:center;border:3px solid #c99a2e;border-radius:50%;background:#fff;box-shadow:0 5px 16px rgba(80,56,17,.16)}
-.sidebar-logo .auth-logo img{display:block;width:100%;height:100%;max-width:none;object-fit:contain;border-radius:50%}
-
 /* Keep the botanical ornaments above the card surface in editor, public preview and PNG export. */
 .ecard-main-panel{position:relative!important;overflow:visible!important}
 .ecard-floral-ornament{display:block!important;visibility:visible!important;opacity:1!important;z-index:4!important;pointer-events:none!important}
@@ -1093,7 +1089,50 @@ button[type="submit"] {
 .ecard-floral-bottom{position:relative!important;align-self:flex-end!important;width:clamp(125px,19vw,175px)!important;max-width:38%!important;height:auto!important;margin:8px 0 0 auto!important;opacity:1!important;transform:rotate(178deg)!important;z-index:4!important}
 .ecard-professional-preview .ecard-main-panel{isolation:isolate}
 @media(max-width:700px){
- .sidebar-logo .auth-logo{width:112px;height:112px}
  .ecard-floral-top{width:clamp(118px,34vw,155px)!important;max-width:36%!important}
  .ecard-floral-bottom{width:clamp(112px,31vw,145px)!important;max-width:38%!important}
+}
+
+
+/* The dashboard logo intentionally retains its original appearance. Only the invitation card gets the round gold logo medallion. */
+.ecard-card-brand{
+ position:relative!important;inset:auto!important;z-index:5!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:82px!important;height:82px!important;min-width:82px!important;max-width:none!important;
+ margin:9px auto 0!important;padding:9px!important;box-sizing:border-box!important;
+ background:#fff!important;border:2px solid #c99a42!important;border-radius:50%!important;
+ box-shadow:0 3px 10px rgba(65,45,18,.16),inset 0 0 0 2px rgba(201,154,66,.12)!important;
+ line-height:1!important;overflow:hidden!important
+}
+.ecard-card-brand img{
+ display:block!important;width:100%!important;height:100%!important;max-height:none!important;
+ object-fit:contain!important;object-position:center!important;filter:none!important
+}
+
+/* The template tiles now show the same full card renderer as the editor preview. */
+.ecard-choice-card-live{cursor:pointer}
+.ecard-choice-card-live:focus-visible{outline:3px solid rgba(190,145,48,.38);outline-offset:3px}
+.ecard-choice-preview-window{
+ position:relative!important;width:100%!important;height:190px!important;overflow:hidden!important;
+ border:5px double #c2a15d!important;border-radius:7px!important;background:#fff!important;
+}
+.ecard-choice-preview-window>.ecard-professional-preview{
+ position:absolute!important;top:0!important;left:50%!important;
+ width:760px!important;max-width:none!important;margin:0!important;
+ transform:translateX(-50%) scale(.235)!important;transform-origin:top center!important;
+ pointer-events:none!important;
+}
+.ecard-choice-preview-window .ecard-main-panel{overflow:visible!important}
+.ecard-choice-preview-window .ecard-floral-top{
+ display:block!important;visibility:visible!important;opacity:1!important;
+ width:180px!important;max-width:30%!important;right:5px!important;top:4px!important;z-index:8!important
+}
+.ecard-choice-preview-window .ecard-floral-bottom{
+ display:block!important;visibility:visible!important;opacity:1!important;width:150px!important;
+ max-width:28%!important;z-index:8!important
+}
+@media(max-width:700px){
+ .ecard-choice-preview-window{height:145px!important}
+ .ecard-choice-preview-window>.ecard-professional-preview{transform:translateX(-50%) scale(.18)!important}
+ .ecard-choice-preview-window .ecard-floral-top{width:165px!important}
 }

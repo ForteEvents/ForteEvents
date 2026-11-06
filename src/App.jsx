@@ -3101,10 +3101,26 @@ return (
             {ecardTemplatesLoading ? <p>Inapakia sampuli za ziada...</p> : null}
             {eCardMessage && eCardMessage.startsWith('Sampuli za E-card hazijapakiwa:') && <p className="ecard-form-hint">{eCardMessage}</p>}
             <div className="ecard-choice-grid">
-              {BUILT_IN_ECARD_TEMPLATES.map(item => <button type="button" key={item.id} className={"ecard-choice-card "+(selectedTemplateId===item.id?'selected':'')} onClick={()=>setSelectedTemplateId(item.id)} aria-pressed={selectedTemplateId===item.id}>
-                <span className={"ecard-choice-art ecard-choice-art-"+item.style}><ECardFloralOrnament className="ecard-choice-floral-art" variant={item.style}/><span className="ecard-choice-script">{item.occasion}</span><b>{item.name}</b><small>ForteEvents invitation</small></span>
+              {BUILT_IN_ECARD_TEMPLATES.map(item => <div
+                key={item.id}
+                className={"ecard-choice-card ecard-choice-card-live "+(selectedTemplateId===item.id?'selected':'')}
+                role="button"
+                tabIndex={0}
+                onClick={()=>setSelectedTemplateId(item.id)}
+                onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setSelectedTemplateId(item.id)}}}
+                aria-pressed={selectedTemplateId===item.id}
+                aria-label={"Chagua sampuli "+item.name}
+              >
+                <div className="ecard-choice-preview-window">
+                  <ECardArtwork
+                    card={{occasion:item.occasion,title:item.name,host_names:'FAMILIA YAKO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',message:DEFAULT_ECARD_MESSAGE,design:{templateId:item.id}}}
+                    recipientName="[JINA LA MWALIKWA]"
+                    guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}}
+                    qrUrl={window.location.origin+'/?ecard-template='+encodeURIComponent(item.id)}
+                  />
+                </div>
                 <strong>{item.name}</strong><small>{item.description}</small>{selectedTemplateId===item.id&&<em>Imechaguliwa</em>}
-              </button>)}
+              </div>)}
               {ecardTemplates.map(item => <button type="button" key={item.id} className={"ecard-choice-card "+(selectedTemplateId===item.id?'selected':'')} onClick={()=>setSelectedTemplateId(item.id)} aria-pressed={selectedTemplateId===item.id}>
                 <img className="ecard-choice-uploaded" src={item.image_url} alt={"Sampuli "+item.name}/><strong>{item.name}</strong><small>{item.description || item.occasion}</small>{selectedTemplateId===item.id&&<em>Imechaguliwa</em>}
               </button>)}
