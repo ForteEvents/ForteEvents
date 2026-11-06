@@ -1487,3 +1487,64 @@ button[type="submit"] {
 }
 /* Keep the template sample thumbnail visually consistent with the clean invitation. */
 .ecard-choice-preview-window .ecard-professional-preview{border-radius:8px!important;box-shadow:none!important}
+
+
+/* Final invitation typography and footer spacing refinement */
+.ecard-invitation-titles{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  font-size:9px!important;
+  line-height:1.25!important;
+  font-weight:500!important;
+  letter-spacing:0!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  margin:3px auto!important;
+}
+.ecard-family-copy>span{
+  font-size:9px!important;
+  line-height:1.2!important;
+}
+.ecard-family-copy>strong{
+  font-size:clamp(13px,1.8vw,17px)!important;
+  line-height:1.15!important;
+}
+.ecard-family-message{
+  font-size:12px!important;
+  line-height:1.45!important;
+  font-style:normal!important;
+  margin:7px auto 0!important;
+  padding:0 14px!important;
+  max-width:94%!important;
+}
+.ecard-family-message p{
+  font-size:12px!important;
+  line-height:1.45!important;
+  margin:2px auto!important;
+}
+.ecard-card-qr-section{
+  margin:11px auto 0!important;
+  padding:5px 0 0!important;
+}
+.ecard-card-qr{
+  width:62px!important;
+  height:62px!important;
+}
+.ecard-card-brand{
+  margin:5px auto 0!important;
+}
+.ecard-export-mode .ecard-family-message,
+.ecard-export-mode .ecard-family-message p{
+  font-size:12px!important;
+  line-height:1.45!important;
+}
+.ecard-export-mode .ecard-card-qr-section{
+  margin-top:11px!important;
+}
+@media(max-width:700px){
+  .ecard-invitation-titles{font-size:9px!important;line-height:1.25!important}
+  .ecard-family-message,.ecard-family-message p{font-size:11px!important;line-height:1.4!important}
+  .ecard-card-qr-section{margin-top:9px!important}
+}
