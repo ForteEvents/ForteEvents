@@ -1057,3 +1057,17 @@ button[type="submit"] {
 .ecard-choice-art>b{max-width:86%!important;padding:5px 8px!important;background:rgba(255,255,255,.72)!important;border-radius:5px!important}
 .ecard-choice-art>small{padding:3px 6px!important;background:rgba(255,255,255,.72)!important;border-radius:4px!important}
 @media(max-width:700px){.ecard-choice-art>.ecard-choice-script{margin-top:18px!important;font-size:19px!important}.ecard-choice-floral-art{opacity:.9!important}}
+
+.ecard-card-photo-blue,.ecard-photo-placeholder{
+ display:block!important;width:min(76%,470px)!important;max-width:76%!important;height:clamp(150px,24vw,245px)!important;
+ object-fit:cover!important;object-position:center 38%!important;margin:12px auto 18px!important;
+ border:6px double #c6a45f!important;border-radius:46% 46% 8px 8px!important;
+ box-shadow:0 7px 20px rgba(28,52,78,.17),inset 0 0 0 4px rgba(255,255,255,.7)!important
+}
+.ecard-photo-placeholder{
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ background:radial-gradient(ellipse at center,#fff 0%,#dce8f1 72%,#c6d4e0 100%)!important;color:#315477!important
+}
+.ecard-photo-placeholder>span{font:normal 78px/1 Georgia,serif!important;color:#b99a58!important}
+.ecard-photo-placeholder>small{margin-top:9px!important;font:700 10px/1.4 Arial,sans-serif!important;letter-spacing:.14em!important}
+@media(max-width:700px){.ecard-card-photo-blue,.ecard-photo-placeholder{width:84%!important;max-width:84%!important;height:clamp(135px,42vw,205px)!important}}
