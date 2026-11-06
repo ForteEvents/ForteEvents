@@ -523,6 +523,7 @@ function App() {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [message, setMessage] = useState('')
@@ -2152,13 +2153,25 @@ useEffect(() => {
               required
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                required
+              />
+              <button
+                type="button"
+                className="password-visibility-toggle"
+                onClick={() => setShowPassword(value => !value)}
+                aria-label={showPassword ? 'Ficha password' : 'Onyesha password'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? 'Ficha' : '👁'}
+              </button>
+            </div>
 
             {mode === 'login' && (
               <button
@@ -3252,7 +3265,7 @@ return (
                 <p><strong>Hali:</strong> {card.is_published ? 'Imechapishwa' : 'Haijachapishwa'}</p>
                 <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
                 <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
-                <button type="button" className="secondary-button" onClick={() => deleteECard(card)}>Futa</button>
+                <button type="button" className="danger-button" onClick={() => deleteECard(card)} aria-label={'Futa kadi '+card.title}>🗑 Futa kadi</button>
                 {card.is_published && <>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
                     <button type="button" className="primary-button" onClick={() => shareECard(card, 'link', setECardMessage)}>WhatsApp — Link</button>
