@@ -30,8 +30,9 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
 
 const DEFAULT_ECARD_MESSAGE='Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee.'
 const BUILT_IN_ECARD_TEMPLATES = [
-  { id:'forte-white-gold', name:'White & Gold Bloom', occasion:'Harusi', description:'Maua meupe, fremu ya dhahabu na mwonekano wa kifahari.', style:'white-gold' },
-  { id:'forte-cream-blue', name:'Cream & Royal Blue', occasion:'Send-off', description:'Mandhari ya cream, maua ya machungwa na bluu ya kifalme.', style:'cream-blue' }
+  { id:'forte-ivory-gold-rose', name:'Ivory & Gold Roses', occasion:'Harusi', description:'Kadi ya ivory yenye waridi meupe, maua ya pembe na fremu ya dhahabu.', style:'ivory-gold' },
+  { id:'forte-blush-rose', name:'Blush Rose Elegance', occasion:'Send-off', description:'Mandhari ya waridi hafifu, waridi za pinki na maandishi ya burgundy.', style:'blush-rose' },
+  { id:'forte-blue-rose', name:'Royal Blue & White Roses', occasion:'Harusi', description:'Maua meupe na bluu, mapambo ya dhahabu na sehemu ya picha ya wanandoa.', style:'blue-rose' }
 ]
 const ECARD_DRESS_PALETTE = [
   {value:'Black',label:'Nyeusi',hex:'#171717'}, {value:'White',label:'Nyeupe',hex:'#ffffff'},
@@ -51,7 +52,44 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
  return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
 }
 function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
-function ECardFloralOrnament({className=''}){return <svg className={['ecard-floral-ornament',className].filter(Boolean).join(' ')} viewBox="0 0 260 205" aria-hidden="true" focusable="false"><g fill="none" stroke="#79503a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M8 196 C48 164 65 128 93 104 C124 77 169 61 245 8"/><path d="M47 163 C19 159 10 137 14 116 C39 120 54 139 47 163Z" fill="#b7a47b"/><path d="M79 128 C51 123 43 101 49 82 C73 89 86 107 79 128Z" fill="#d0bd91"/><path d="M124 89 C99 82 94 60 103 43 C126 52 137 70 124 89Z" fill="#b7a47b"/><path d="M178 57 C157 42 158 21 174 7 C192 24 194 43 178 57Z" fill="#d0bd91"/></g><g stroke="#9a5632" strokeWidth="2.2" fill="#e98b50"><ellipse cx="174" cy="106" rx="13" ry="30"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(45 174 106)"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(90 174 106)"/><ellipse cx="174" cy="106" rx="13" ry="30" transform="rotate(135 174 106)"/><circle cx="174" cy="106" r="11" fill="#a85a31"/><ellipse cx="104" cy="53" rx="10" ry="23" fill="#f1b17d"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(45 104 53)"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(90 104 53)"/><ellipse cx="104" cy="53" rx="10" ry="23" transform="rotate(135 104 53)"/><circle cx="104" cy="53" r="8" fill="#a85a31"/></g><g fill="#d8b48a" stroke="#8c593b" strokeWidth="1.5"><circle cx="174" cy="106" r="4"/><circle cx="104" cy="53" r="3"/></g></svg>}
+function ECardFloralOrnament({className='',variant='ivory-gold'}){
+  const palettes={
+    'ivory-gold':{petal:'#fffdf7',shadow:'#e8dfd1',inner:'#f4eee5',center:'#c79b43',leaf:'#78845d',stem:'#8d7951'},
+    'blush-rose':{petal:'#f5cbd2',shadow:'#df9eaa',inner:'#ffe8e8',center:'#a94c60',leaf:'#73856a',stem:'#98705d'},
+    'blue-rose':{petal:'#fffdf8',shadow:'#a9bfd4',inner:'#dce8f1',center:'#c69b45',leaf:'#617e91',stem:'#8b795c'}
+  };
+  const p=palettes[variant]||palettes['ivory-gold'];
+  const rose=(x,y,r)=> <g transform={'translate('+x+' '+y+') scale('+r+')'} stroke={p.center} strokeWidth="1.15">
+    <ellipse cx="0" cy="-16" rx="11" ry="19" fill={p.petal}/>
+    <ellipse cx="0" cy="-16" rx="11" ry="19" fill={p.shadow} transform="rotate(45)"/>
+    <ellipse cx="0" cy="-16" rx="11" ry="19" fill={p.petal} transform="rotate(90)"/>
+    <ellipse cx="0" cy="-16" rx="11" ry="19" fill={p.shadow} transform="rotate(135)"/>
+    <ellipse cx="0" cy="-11" rx="9" ry="15" fill={p.inner} transform="rotate(22)"/>
+    <ellipse cx="0" cy="-11" rx="9" ry="15" fill={p.petal} transform="rotate(67)"/>
+    <ellipse cx="0" cy="-11" rx="9" ry="15" fill={p.inner} transform="rotate(112)"/>
+    <ellipse cx="0" cy="-11" rx="9" ry="15" fill={p.petal} transform="rotate(157)"/>
+    <path d="M-7 1 C-8 -10 7 -14 9 -3 C11 6 -2 11 -7 1Z" fill={p.shadow}/>
+    <path d="M-4 0 C-4 -7 5 -8 5 -1 C5 4 -2 6 -4 0Z" fill={p.center} stroke="none"/>
+    <circle cx="0" cy="0" r="2.5" fill="#f7df9d" stroke="none"/>
+  </g>;
+  return <svg className={['ecard-floral-ornament','ecard-floral-'+variant,className].filter(Boolean).join(' ')} viewBox="0 0 300 230" aria-hidden="true" focusable="false">
+    <g fill="none" stroke={p.stem} strokeWidth="2.5" strokeLinecap="round">
+      <path d="M8 220 C46 185 56 143 103 112 C154 79 213 64 291 8"/>
+      <path d="M36 188 C14 169 13 148 22 129 C48 139 55 165 36 188Z" fill={p.leaf}/>
+      <path d="M70 151 C43 139 38 115 49 96 C74 108 84 132 70 151Z" fill={p.leaf}/>
+      <path d="M116 113 C91 96 93 72 108 55 C130 75 135 98 116 113Z" fill={p.leaf}/>
+      <path d="M169 81 C146 61 152 39 171 24 C190 45 190 66 169 81Z" fill={p.leaf}/>
+      <path d="M214 54 C204 32 215 15 236 8 C246 31 237 49 214 54Z" fill={p.leaf}/>
+      <path d="M91 126 C111 143 131 148 150 143" strokeWidth="1.4"/>
+      <path d="M151 91 C166 107 187 111 204 105" strokeWidth="1.4"/>
+    </g>
+    {rose(192,137,1.08)}
+    {rose(105,67,.72)}
+    {rose(250,38,.52)}
+    <g fill={p.leaf} stroke={p.stem} strokeWidth="1.2"><path d="M137 100 C117 83 119 67 130 57 C149 72 151 89 137 100Z"/><path d="M55 176 C38 155 43 139 58 132 C73 151 70 168 55 176Z"/></g>
+    <g fill="none" stroke="#c8a45e" strokeWidth="1.6" opacity=".9"><path d="M9 205 C40 190 52 170 66 150"/><path d="M204 91 C235 73 257 51 279 23"/><path d="M22 215 C60 201 84 178 102 151"/></g>
+  </svg>
+}
 function buildECardDetailItems(card){return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',(card?.dress_colors||[]).length?'colors':''],['RSVP',card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:''],['MAWASILIANO 1',[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · ')],['MAWASILIANO 2',[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
 function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}><b>{label}</b><span>{label==='DRESS CODE'?<>{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i title={color} aria-label={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/></span>)}</>:label==='MAWASILIANO 1'?<><strong>{card?.rsvp_contact_name}</strong>{card?.rsvp_contact_phone&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone}>{card.rsvp_contact_phone}</a>}</>:label==='MAWASILIANO 2'?<><strong>{card?.rsvp_contact_name_2}</strong>{card?.rsvp_contact_phone_2&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone_2}>{card.rsvp_contact_phone_2}</a>}</>:value}</span></p>)}</div>}
 
@@ -75,7 +113,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
         <div className="ecard-invitation-label">INVITATION</div>
       </div>
-      <ECardFloralOrnament className="ecard-floral-top"/>
+      <ECardFloralOrnament className="ecard-floral-top" variant={style}/>
       <div className="ecard-family-copy"><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
       <ECardInvitationCopy card={card} recipientName={displayName}/>
       {card?.image_url && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
@@ -93,7 +131,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         <div className="ecard-card-qr-caption">Onyesha QR hii wakati wa kuingia</div>
         <div className="ecard-card-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
       </section>
-      <ECardFloralOrnament className="ecard-floral-bottom"/>
+      <ECardFloralOrnament className="ecard-floral-bottom" variant={style}/>
       <div className="ecard-card-footer">Imetengenezwa kwa upendo na ForteEvents</div>
     </div>
   </article>
@@ -3047,7 +3085,7 @@ return (
             {eCardMessage && eCardMessage.startsWith('Sampuli za E-card hazijapakiwa:') && <p className="ecard-form-hint">{eCardMessage}</p>}
             <div className="ecard-choice-grid">
               {BUILT_IN_ECARD_TEMPLATES.map(item => <button type="button" key={item.id} className={"ecard-choice-card "+(selectedTemplateId===item.id?'selected':'')} onClick={()=>setSelectedTemplateId(item.id)} aria-pressed={selectedTemplateId===item.id}>
-                <span className={"ecard-choice-art ecard-choice-art-"+item.style}><i className="ecard-choice-flower flower-one"/><i className="ecard-choice-flower flower-two"/><span className="ecard-choice-script">{item.occasion}</span><b>{item.name}</b><small>ForteEvents invitation</small></span>
+                <span className={"ecard-choice-art ecard-choice-art-"+item.style}><ECardFloralOrnament className="ecard-choice-floral-art" variant={item.style}/><span className="ecard-choice-script">{item.occasion}</span><b>{item.name}</b><small>ForteEvents invitation</small></span>
                 <strong>{item.name}</strong><small>{item.description}</small>{selectedTemplateId===item.id&&<em>Imechaguliwa</em>}
               </button>)}
               {ecardTemplates.map(item => <button type="button" key={item.id} className={"ecard-choice-card "+(selectedTemplateId===item.id?'selected':'')} onClick={()=>setSelectedTemplateId(item.id)} aria-pressed={selectedTemplateId===item.id}>
