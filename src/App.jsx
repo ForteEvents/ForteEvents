@@ -114,10 +114,13 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
         <div className="ecard-invitation-label">INVITATION</div>
       </div>
+      {style==='blue-rose' && (card?.image_url
+        ? <img className="ecard-card-photo ecard-card-photo-blue" src={card.image_url} alt="Picha ya wanandoa au tukio"/>
+        : <div className="ecard-photo-placeholder" aria-label="Sehemu ya picha ya wanandoa"><span>♡</span><small>WEKA PICHA YA WANANDOA</small></div>)}
       <ECardFloralOrnament className="ecard-floral-top" variant={style}/>
       <div className="ecard-family-copy"><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
       <ECardInvitationCopy card={card} recipientName={displayName}/>
-      {card?.image_url && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
+      {card?.image_url && style!=='blue-rose' && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
       <div className="ecard-date-line">{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
       <ECardDetails card={card} showDate={false}/>
       {card?.location_url && <div className="ecard-map-link-section">
