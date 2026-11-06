@@ -1136,3 +1136,33 @@ button[type="submit"] {
  .ecard-choice-preview-window>.ecard-professional-preview{transform:translateX(-50%) scale(.18)!important}
  .ecard-choice-preview-window .ecard-floral-top{width:165px!important}
 }
+
+
+/* Correct one-panel floral card geometry in the editor, public view and PNG. */
+.ecard-professional-preview{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.ecard-professional-preview>.ecard-main-panel{
+  grid-column:1 / -1!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+.ecard-professional-preview.ecard-export-mode{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:760px!important;
+  min-width:760px!important;
+  max-width:760px!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+  overflow:visible!important;
+  box-sizing:border-box!important;
+}
+.ecard-export-host{width:760px!important;min-width:760px!important}
