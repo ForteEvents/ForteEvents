@@ -149,17 +149,33 @@ async function createECardPng(card, guest = null) {
   try {
     root.render(<ECardArtwork card={card} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={invitationUrl} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
-    await new Promise(resolve=>{
+
+    // Wait for the QR image actually rendered by ECardArtwork, not the old pass-QR selector.
+    const qrImage=await new Promise(resolve=>{
       let attempts=0
       const check=()=>{
-        if(host.querySelector('.ecard-pass-qr img') || attempts++>50) resolve()
-        else window.setTimeout(check,50)
+        const image=host.querySelector('.ecard-card-qr img')
+        if(image?.complete && image.naturalWidth>0) resolve(image)
+        else if(attempts++>=80) resolve(null)
+        else window.setTimeout(check,25)
       }
       check()
     })
+    if(!qrImage) throw new Error('QR ya mwaliko haijakamilika. Tafadhali jaribu tena.')
+
     const artwork=host.querySelector('.ecard-professional-preview')
     if(!artwork) throw new Error('Muundo wa kadi haujaandaliwa.')
-    const canvas=await html2canvas(artwork,{backgroundColor:null,scale:2,useCORS:true,allowTaint:false,logging:false,width:1120,windowWidth:1120})
+    const images=Array.from(artwork.querySelectorAll('img'))
+    await Promise.all(images.map(image=>image.decode ? image.decode().catch(()=>{}) : Promise.resolve()))
+    const bounds=artwork.getBoundingClientRect()
+    const exportWidth=Math.round(bounds.width)
+    const exportHeight=Math.round(bounds.height)
+    if(!exportWidth || !exportHeight) throw new Error('Vipimo vya kadi havijasomeka.')
+    const canvas=await html2canvas(artwork,{
+      backgroundColor:'#fff',scale:2,useCORS:true,allowTaint:false,logging:false,
+      width:exportWidth,height:exportHeight,windowWidth:exportWidth,windowHeight:exportHeight,
+      scrollX:0,scrollY:0
+    })
     return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG haikuundwa.')),'image/png'))
   } finally {
     root.unmount()
