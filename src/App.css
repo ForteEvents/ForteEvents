@@ -1771,3 +1771,81 @@ button[type="submit"] {
  .ecard-family-message{font-size:11px!important;line-height:1.4!important}
  .ecard-card-qr{width:64px!important;height:64px!important}
 }
+
+
+/* Compact, legible invitation hierarchy. Override legacy conflicting card rules. */
+.ecard-professional-preview{
+  display:block!important;width:min(100%,760px)!important;max-width:760px!important;
+  height:auto!important;min-height:0!important;aspect-ratio:auto!important;
+  overflow:visible!important;padding:8px!important;box-sizing:border-box!important;
+}
+.ecard-professional-preview>.ecard-main-panel{
+  position:relative!important;inset:auto!important;display:flex!important;
+  flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;height:auto!important;min-height:0!important;
+  padding:16px 22px 10px!important;overflow:visible!important;box-sizing:border-box!important;
+}
+.ecard-main-heading{margin:2px auto 7px!important}
+.ecard-family-copy{margin:4px auto 6px!important;line-height:1.22!important}
+.ecard-family-copy>span{font-size:14px!important}
+.ecard-family-copy>strong{font-size:clamp(20px,2.8vw,30px)!important;line-height:1.2!important}
+.ecard-invitation-copy{margin:4px auto 6px!important;line-height:1.25!important}
+.ecard-invitation-copy p{margin:2px auto!important}
+.ecard-invitation-titles{margin:2px auto!important}
+.ecard-invitation-recipient{font-size:clamp(19px,2.4vw,27px)!important;padding:2px 10px!important}
+.ecard-date-line{margin:5px auto 7px!important}
+.ecard-detail-flow{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;justify-items:stretch!important;
+  width:100%!important;max-width:680px!important;
+  gap:4px 14px!important;margin:6px auto 8px!important;
+}
+.ecard-detail-line{
+  display:flex!important;flex-direction:row!important;align-items:baseline!important;
+  justify-content:flex-start!important;flex-wrap:wrap!important;gap:4px 7px!important;
+  min-width:0!important;width:100%!important;margin:0!important;padding:5px 7px!important;
+  border-bottom:1px solid rgba(183,132,37,.28)!important;text-align:left!important;
+}
+.ecard-detail-line>b{
+  display:inline-block!important;font-size:13px!important;font-weight:800!important;
+  letter-spacing:.04em!important;line-height:1.2!important;color:#765014!important;
+}
+.ecard-detail-line>span{
+  display:inline-flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;
+  max-width:100%!important;font-size:15px!important;line-height:1.25!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;text-align:left!important;
+}
+.ecard-detail-line strong,.ecard-detail-line .ecard-phone-link{
+  font-size:16px!important;font-weight:700!important;line-height:1.25!important;
+}
+.ecard-family-message{margin:7px auto 5px!important;padding:6px 10px!important;line-height:1.35!important}
+.ecard-card-qr-section{margin:7px auto 0!important}
+.ecard-card-qr{width:76px!important;height:76px!important}
+.ecard-card-qr-caption{font-size:9px!important}
+.ecard-card-brand img{max-height:28px!important}
+.ecard-floral-top{position:absolute!important;right:3px!important;top:2px!important;width:clamp(82px,15vw,118px)!important;height:auto!important;max-width:20%!important;z-index:2!important;display:block!important}
+.ecard-floral-bottom{display:block!important;width:clamp(75px,13vw,100px)!important;height:auto!important;margin:3px auto 0!important;transform:rotate(180deg)!important}
+.ecard-card-footer{margin:3px auto 0!important;font-size:9px!important}
+.ecard-professional-preview.ecard-export-mode{width:760px!important;min-width:760px!important;max-width:760px!important;height:auto!important;min-height:0!important;aspect-ratio:auto!important;overflow:visible!important}
+.ecard-export-mode>.ecard-main-panel{position:relative!important;inset:auto!important;height:auto!important;min-height:0!important;overflow:visible!important}
+@media(max-width:700px){
+ .ecard-professional-preview{width:100%!important;max-width:100%!important;padding:5px!important}
+ .ecard-professional-preview>.ecard-main-panel{padding:13px 9px 8px!important}
+ .ecard-main-heading{margin:1px auto 5px!important}
+ .ecard-family-copy>span{font-size:12px!important}
+ .ecard-family-copy>strong{font-size:clamp(18px,5vw,23px)!important}
+ .ecard-invitation-copy p{font-size:13px!important;line-height:1.25!important}
+ .ecard-invitation-titles{font-size:13px!important}
+ .ecard-invitation-recipient{font-size:clamp(17px,4.7vw,22px)!important}
+ .ecard-date-line{font-size:12px!important;margin:4px auto 5px!important}
+ .ecard-detail-flow{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px 6px!important;margin:4px auto 6px!important}
+ .ecard-detail-line{gap:2px 4px!important;padding:4px 4px!important}
+ .ecard-detail-line>b{font-size:11px!important}
+ .ecard-detail-line>span{font-size:13px!important}
+ .ecard-detail-line strong,.ecard-detail-line .ecard-phone-link{font-size:14px!important}
+ .ecard-family-message{width:96%!important;font-size:10px!important;line-height:1.3!important;margin:5px auto 3px!important;padding:5px!important}
+ .ecard-floral-top{width:clamp(68px,20vw,90px)!important;max-width:22%!important}
+ .ecard-floral-bottom{width:clamp(65px,18vw,82px)!important;margin:2px auto 0!important}
+ .ecard-card-qr{width:62px!important;height:62px!important}
+ .ecard-card-qr-section{margin:5px auto 0!important}
+}

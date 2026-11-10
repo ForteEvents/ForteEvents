@@ -187,22 +187,38 @@ async function shareECard(card, mode, setMessage) {
   const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
   const mapLink = String(card?.location_url || '').trim()
   const message = `Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink ? '\n\nKIUNGO CHA RAMANI YA UKUMBI:\n' + mapLink : ''}`
+  const whatsappUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(message)
 
-  // Link sharing opens WhatsApp immediately during the original tap.
-  if (mode === 'link') {
-    window.location.href = 'https://wa.me/?text=' + encodeURIComponent(message)
+  // Link and Link + Image must open WhatsApp immediately on the user's tap.
+  if (mode === 'link' || mode === 'both') {
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+    if (mode === 'link') {
+      setMessage('WhatsApp inafunguka na ujumbe wa mwaliko uko tayari.')
+      return
+    }
+    // Prepare the image separately; the user attaches it in the already-open WhatsApp chat.
+    setMessage('WhatsApp imefunguliwa. Picha inaandaliwa kupakuliwa...')
+    try {
+      const png = await createECardPng(card)
+      const downloadUrl = URL.createObjectURL(png)
+      const anchor = document.createElement('a')
+      anchor.href = downloadUrl
+      anchor.download = 'ForteEvents-mwaliko.png'
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000)
+      setMessage('WhatsApp iko tayari. Picha ya mwaliko imepakuliwa; irudishe WhatsApp na uiambatishe.')
+    } catch(error) {
+      setMessage('WhatsApp imefunguliwa, lakini picha haikuweza kuandaliwa: ' + (error?.message || 'Jaribu tena.'))
+    }
     return
   }
 
+  // Image-only: download the PNG reliably instead of depending on delayed native-share activation.
   setMessage('Inaandaa picha ya mwaliko...')
   try {
     const png = await createECardPng(card)
-    const file = new File([png], 'ForteEvents-mwaliko.png', {type:'image/png'})
-    if (navigator.share && navigator.canShare?.({files:[file]})) {
-      await navigator.share({files:[file],title:card.title,text:message})
-      setMessage('Chagua WhatsApp kwenye menyu ya kushiriki ili kutuma picha.')
-      return
-    }
     const downloadUrl = URL.createObjectURL(png)
     const anchor = document.createElement('a')
     anchor.href = downloadUrl
@@ -211,7 +227,7 @@ async function shareECard(card, mode, setMessage) {
     anchor.click()
     anchor.remove()
     window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000)
-    setMessage('Picha imepakuliwa. Fungua WhatsApp na uambatishe picha hiyo.')
+    setMessage('Picha imepakuliwa. Unaweza kuifungua WhatsApp na kuambatisha picha hiyo.')
   } catch(error) {
     setMessage('Imeshindikana kuandaa picha: ' + (error?.message || 'Tafadhali jaribu tena.'))
   }
