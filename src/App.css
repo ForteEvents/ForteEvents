@@ -2196,3 +2196,20 @@ button[type="submit"] {
  .ecard-professional-preview .ecard-family-message{font-size:clamp(9px,2.5vw,12px)!important}
  .ecard-professional-preview .ecard-card-qr{width:clamp(58px,16vw,72px)!important;height:clamp(58px,16vw,72px)!important}
 }
+
+
+/* QR check-in clarity: larger, crisp QR modules in preview and exported invitation */
+.ecard-card-qr{
+  width:clamp(160px,22vw,184px)!important;
+  padding:8px!important;
+  background:#fff!important;
+  border:2px solid #b58a3c!important;
+}
+.ecard-card-qr img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  image-rendering:pixelated!important;
+}
+.ecard-export-mode .ecard-card-qr{width:224px!important;padding:8px!important}
+@media(max-width:700px){.ecard-card-qr{width:164px!important}}

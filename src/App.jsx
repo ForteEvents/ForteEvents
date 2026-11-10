@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import QRCode from 'qrcode'
 import html2canvas from 'html2canvas'
 import { createRoot } from 'react-dom/client'
@@ -14,9 +14,9 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
     let active = true
     setSrc('')
     QRCode.toDataURL(value, {
-      errorCorrectionLevel: 'H',
-      margin: 1,
-      width: 260,
+      errorCorrectionLevel: 'M',
+      margin: 4,
+      width: 600,
       color: { dark: '#000000', light: '#FFFFFF' }
     }).then(dataUrl => {
       if (active) setSrc(dataUrl)
@@ -137,15 +137,15 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
 }
 
 async function createECardPng(card, guest = null) {
-  const invitationUrl=guest
-    ? window.location.origin+'/?card='+encodeURIComponent(card.slug)+'&guest='+encodeURIComponent(guest.token)
+  const qrPayload=guest?.token
+    ? String(guest.token)
     : window.location.origin+'/?card='+encodeURIComponent(card.slug || '')
   const host=document.createElement('div')
   host.className='ecard-export-host'
   document.body.appendChild(host)
   const root=createRoot(host)
   try {
-    root.render(<ECardArtwork card={card} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={invitationUrl} exportMode/>)
+    root.render(<ECardArtwork card={card} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
     const qrImage=await new Promise(resolve=>{
@@ -1069,8 +1069,18 @@ function App() {
   }
 
   const checkInECardGuest = async (rawToken) => {
-    const token = String(rawToken || '').trim()
+    let token = String(rawToken || '').trim()
     if (!token) { setScanResult('Weka au scan QR token kwanza.'); return }
+    try {
+      const parsed = new URL(token)
+      token = parsed.searchParams.get('guest') || token
+    } catch {}
+    const uuidMatch = token.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i)
+    if (uuidMatch) token = uuidMatch[0]
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)) {
+      setScanResult('QR haijasomeka vizuri. Hakikisha unascan QR ya mwaliko wa mgeni, si link ya kadi ya jumla.')
+      return
+    }
     const { data, error } = await supabase.rpc('check_in_e_card_guest', { p_token: token })
     if (error) { setScanResult(error.message || 'QR haijatambulika.'); return }
     const guest = Array.isArray(data) ? data[0] : data
@@ -1085,12 +1095,12 @@ function App() {
       setScanResult('')
       setScannerActive(true)
       await new Promise(resolve => requestAnimationFrame(resolve))
-      const scanner = new Html5Qrcode('ecard-qr-reader')
+      const scanner = new Html5Qrcode('ecard-qr-reader', { formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE], verbose: false })
       scanVideoRef.current = scanner
       let handled = false
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+        { fps: 15, qrbox: { width: 260, height: 260 }, aspectRatio: 1 },
         async decodedText => {
           if (handled) return
           handled = true
@@ -1098,15 +1108,7 @@ function App() {
           try { await scanner.stop() } catch {}
           try { await scanner.clear() } catch {}
           scanVideoRef.current = null
-          let token = decodedText.trim()
-          try {
-            const parsed = new URL(token)
-            token = parsed.searchParams.get('guest') || token
-          } catch {
-            const found = token.match(/[?&]guest=([a-f0-9-]+)/i)
-            if (found) token = found[1]
-          }
-          await checkInECardGuest(token)
+          await checkInECardGuest(decodedText)
         },
         () => {}
       )
@@ -3362,7 +3364,7 @@ return (
             </form>
             {eCardGuests.map(g => {
               const card = eCards.find(item => item.id === guestCardId)
-              const guestUrl = window.location.origin + '/?card=' + encodeURIComponent(card?.slug || '') + '&guest=' + encodeURIComponent(g.token)
+              const guestUrl = g.token
               return <div key={g.id} className="ecard-guest-print ecard-guest-sheet">
                 <ECardArtwork
                   card={card}
