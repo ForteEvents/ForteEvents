@@ -190,7 +190,7 @@ function downloadECardPng(png, filename='ForteEvents-mwaliko.png') {
 
 async function shareGuestECard(card, guest, setMessage) {
   const mapLink=String(card?.location_url || '').trim()
-  const caption='Mwaliko wako wa ForteEvents.'+(mapLink?'\\n\\nFungua ramani ya ukumbi:\\n'+mapLink:'')
+  const caption='Mwaliko wako wa ForteEvents.'+(mapLink?'\n\nFungua ramani ya ukumbi:\n'+mapLink:'')
   const whatsappUrl='https://api.whatsapp.com/send?text='+encodeURIComponent(caption)
   const whatsappWindow=window.open(whatsappUrl,'_blank')
   if(!whatsappWindow) window.location.href=whatsappUrl
@@ -208,7 +208,7 @@ async function shareGuestECard(card, guest, setMessage) {
 async function shareECard(card, mode, setMessage) {
   const url=window.location.origin+'/?card='+encodeURIComponent(card.slug)
   const mapLink=String(card?.location_url || '').trim()
-  const message=`Habari! Tunakualika kwenye ${card.title}.\\n\\nKIUNGO CHA KADI:\\n${url}${mapLink?'\\n\\nKIUNGO CHA RAMANI YA UKUMBI:\\n'+mapLink:''}`
+  const message=`Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink?'\n\nKIUNGO CHA RAMANI YA UKUMBI:\n'+mapLink:''}`
   const whatsappUrl='https://api.whatsapp.com/send?text='+encodeURIComponent(message)
   if(mode==='link' || mode==='both') {
     const whatsappWindow=window.open(whatsappUrl,'_blank')
