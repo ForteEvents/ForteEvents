@@ -187,15 +187,57 @@ async function shareECard(card, mode, setMessage) {
   const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
   const mapLink = String(card?.location_url || '').trim()
   const message = `Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink ? '\n\nKIUNGO CHA RAMANI YA UKUMBI:\n' + mapLink : ''}`
-  if (mode === 'link') { window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer'); return }
+
+  if (mode === 'link') {
+    // This runs directly in the click handler so mobile browsers retain user activation.
+    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank')
+    return
+  }
+
+  // Reserve the tab during the click; navigating it after PNG creation avoids popup blocking.
+  const whatsappTab = window.open('about:blank', '_blank')
+  setMessage('Inaandaa picha ya mwaliko...')
+
   try {
     const png = await createECardPng(card)
-    const file = new File([png], 'ForteEvents-mwaliko.png', {type:'image/png'})
-    if (navigator.share && navigator.canShare?.({files:[file]})) { await navigator.share({files:[file],text:message,title:card.title}); setMessage('Shiriki picha pamoja na ujumbe wenye kiungo cha kadi kamili; ramani itafunguka kupitia kiungo au QR.'); return }
-    const downloadUrl=URL.createObjectURL(png); const anchor=document.createElement('a'); anchor.href=downloadUrl; anchor.download='ForteEvents-mwaliko.png'; anchor.click(); URL.revokeObjectURL(downloadUrl)
-    window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer')
-    setMessage('Picha imepakuliwa na WhatsApp imefunguliwa. Ambatisha picha pamoja na kiungo kilichoandaliwa ili mteja afungue ramani.')
-  } catch(error) { setMessage('Imeshindikana kuandaa picha ya mwaliko: '+error.message) }
+    const file = new File([png], 'ForteEvents-mwaliko.png', { type: 'image/png' })
+
+    // Try the native share sheet first. If the browser refuses after rendering,
+    // use the already-opened tab as a reliable WhatsApp fallback.
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text: message, title: card.title })
+        if (whatsappTab && !whatsappTab.closed) whatsappTab.close()
+        setMessage('Chagua WhatsApp kwenye menyu ya kushiriki ili kutuma picha ya mwaliko.')
+        return
+      } catch (shareError) {
+        if (shareError?.name === 'AbortError') {
+          if (whatsappTab && !whatsappTab.closed) whatsappTab.close()
+          setMessage('Umeghairi kushiriki picha.')
+          return
+        }
+      }
+    }
+
+    const downloadUrl = URL.createObjectURL(png)
+    const anchor = document.createElement('a')
+    anchor.href = downloadUrl
+    anchor.download = 'ForteEvents-mwaliko.png'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000)
+
+    if (whatsappTab && !whatsappTab.closed) {
+      whatsappTab.location.replace('https://wa.me/?text=' + encodeURIComponent(message))
+      setMessage('Picha imepakuliwa. WhatsApp inafunguka; ambatisha picha uliyopakua kisha tuma ujumbe.')
+    } else {
+      setMessage('Picha imepakuliwa. Fungua WhatsApp, ambatisha picha hiyo, kisha tumia ujumbe wa mwaliko: ' + message)
+    }
+  } catch (error) {
+    if (whatsappTab && !whatsappTab.closed) whatsappTab.close()
+    setMessage('Imeshindikana kuandaa picha ya mwaliko: ' + (error?.message || 'Tafadhali jaribu tena.'))
+  }
 }
 
 function AdminCustomers({ session, onBack }) {
