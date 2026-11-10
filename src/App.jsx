@@ -177,53 +177,63 @@ async function createECardPng(card, guest = null) {
     host.remove()
   }
 }
-async function shareECard(card, mode, setMessage) {
-  const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug)
-  const mapLink = String(card?.location_url || '').trim()
-  const message = `Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink ? '\n\nKIUNGO CHA RAMANI YA UKUMBI:\n' + mapLink : ''}`
-  const whatsappUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(message)
+function downloadECardPng(png, filename='ForteEvents-mwaliko.png') {
+  const downloadUrl=URL.createObjectURL(png)
+  const anchor=document.createElement('a')
+  anchor.href=downloadUrl
+  anchor.download=filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(()=>URL.revokeObjectURL(downloadUrl),60000)
+}
 
-  // Link and Link + Image must open WhatsApp immediately on the user's tap.
-  if (mode === 'link' || mode === 'both') {
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
-    if (mode === 'link') {
+async function shareGuestECard(card, guest, setMessage) {
+  const mapLink=String(card?.location_url || '').trim()
+  const caption='Mwaliko wako wa ForteEvents.'+(mapLink?'\n\nFungua ramani ya ukumbi:\n'+mapLink:'')
+  const whatsappUrl='https://api.whatsapp.com/send?text='+encodeURIComponent(caption)
+  const whatsappWindow=window.open(whatsappUrl,'_blank')
+  if(!whatsappWindow) window.location.href=whatsappUrl
+  setMessage('WhatsApp inafunguka. Picha ya mwaliko inaandaliwa kupakuliwa...')
+  try {
+    const png=await createECardPng({...card},guest)
+    const filename='ForteEvents-'+String(guest?.guest_name || 'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png'
+    downloadECardPng(png,filename)
+    setMessage('Picha imepakuliwa. Rudi WhatsApp na uiambatishe kwenye mazungumzo ya mpokeaji.')
+  } catch(error) {
+    setMessage('WhatsApp imefunguliwa, lakini picha haikuweza kupakuliwa: '+(error?.message || 'Jaribu tena.'))
+  }
+}
+
+async function shareECard(card, mode, setMessage) {
+  const url=window.location.origin+'/?card='+encodeURIComponent(card.slug)
+  const mapLink=String(card?.location_url || '').trim()
+  const message=`Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink?'\n\nKIUNGO CHA RAMANI YA UKUMBI:\n'+mapLink:''}`
+  const whatsappUrl='https://api.whatsapp.com/send?text='+encodeURIComponent(message)
+  if(mode==='link' || mode==='both') {
+    const whatsappWindow=window.open(whatsappUrl,'_blank')
+    if(!whatsappWindow) window.location.href=whatsappUrl
+    if(mode==='link') {
       setMessage('WhatsApp inafunguka na ujumbe wa mwaliko uko tayari.')
       return
     }
-    // Prepare the image separately; the user attaches it in the already-open WhatsApp chat.
-    setMessage('WhatsApp imefunguliwa. Picha inaandaliwa kupakuliwa...')
+    setMessage('WhatsApp inafunguka. Picha inaandaliwa kupakuliwa...')
     try {
-      const png = await createECardPng(card)
-      const downloadUrl = URL.createObjectURL(png)
-      const anchor = document.createElement('a')
-      anchor.href = downloadUrl
-      anchor.download = 'ForteEvents-mwaliko.png'
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000)
-      setMessage('WhatsApp iko tayari. Picha ya mwaliko imepakuliwa; irudishe WhatsApp na uiambatishe.')
+      const png=await createECardPng(card)
+      downloadECardPng(png)
+      setMessage('Picha imepakuliwa. Rudi WhatsApp na uiambatishe kwenye mazungumzo.')
     } catch(error) {
-      setMessage('WhatsApp imefunguliwa, lakini picha haikuweza kuandaliwa: ' + (error?.message || 'Jaribu tena.'))
+      setMessage('WhatsApp imefunguliwa, lakini picha haikuweza kuandaliwa: '+(error?.message || 'Jaribu tena.'))
     }
     return
   }
-
-  // Image-only: download the PNG reliably instead of depending on delayed native-share activation.
   setMessage('Inaandaa picha ya mwaliko...')
   try {
-    const png = await createECardPng(card)
-    const downloadUrl = URL.createObjectURL(png)
-    const anchor = document.createElement('a')
-    anchor.href = downloadUrl
-    anchor.download = 'ForteEvents-mwaliko.png'
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000)
+    const png=await createECardPng(card)
+    downloadECardPng(png)
     setMessage('Picha imepakuliwa. Unaweza kuifungua WhatsApp na kuambatisha picha hiyo.')
   } catch(error) {
-    setMessage('Imeshindikana kuandaa picha: ' + (error?.message || 'Tafadhali jaribu tena.'))
+    setMessage('Imeshindikana kuandaa picha: '+(error?.message || 'Tafadhali jaribu tena.'))
   }
 }
 
@@ -3324,7 +3334,7 @@ return (
                   recipientName={g.guest_name}
                   qrUrl={guestUrl}
                 />
-                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={async()=>{try{setECardMessage('Inaandaa picha ya kadi...');const png=await createECardPng({...card},g);const name='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';const file=new File([png],name,{type:'image/png'});const map=String(card.location_url||'').trim();const caption='Mwaliko wako wa ForteEvents.'+(map?'\n\nFungua ramani ya ukumbi:\n'+map:'');if(!navigator.share)throw new Error('Kivinjari hiki hakiruhusu kushiriki picha. Tumia Chrome kwenye simu.');await navigator.share({files:[file],text:caption,title:'Mwaliko wako wa ForteEvents'});setECardMessage('Menyu ya kushiriki imefunguka. Chagua WhatsApp kutuma picha pamoja na kiungo cha ramani.');}catch(error){setECardMessage(error.name==='AbortError'?'Umeghairi kushiriki.':'Picha haikutumwa: '+error.message);}}}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
+                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={()=>shareGuestECard(card,g,setECardMessage)}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
               </div>
             })}
           </div>
