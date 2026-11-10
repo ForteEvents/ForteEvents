@@ -188,37 +188,21 @@ async function shareECard(card, mode, setMessage) {
   const mapLink = String(card?.location_url || '').trim()
   const message = `Habari! Tunakualika kwenye ${card.title}.\n\nKIUNGO CHA KADI:\n${url}${mapLink ? '\n\nKIUNGO CHA RAMANI YA UKUMBI:\n' + mapLink : ''}`
 
+  // Link sharing opens WhatsApp immediately during the original tap.
   if (mode === 'link') {
-    // This runs directly in the click handler so mobile browsers retain user activation.
-    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank')
+    window.location.href = 'https://wa.me/?text=' + encodeURIComponent(message)
     return
   }
 
-  // Reserve the tab during the click; navigating it after PNG creation avoids popup blocking.
-  const whatsappTab = window.open('about:blank', '_blank')
   setMessage('Inaandaa picha ya mwaliko...')
-
   try {
     const png = await createECardPng(card)
-    const file = new File([png], 'ForteEvents-mwaliko.png', { type: 'image/png' })
-
-    // Try the native share sheet first. If the browser refuses after rendering,
-    // use the already-opened tab as a reliable WhatsApp fallback.
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], text: message, title: card.title })
-        if (whatsappTab && !whatsappTab.closed) whatsappTab.close()
-        setMessage('Chagua WhatsApp kwenye menyu ya kushiriki ili kutuma picha ya mwaliko.')
-        return
-      } catch (shareError) {
-        if (shareError?.name === 'AbortError') {
-          if (whatsappTab && !whatsappTab.closed) whatsappTab.close()
-          setMessage('Umeghairi kushiriki picha.')
-          return
-        }
-      }
+    const file = new File([png], 'ForteEvents-mwaliko.png', {type:'image/png'})
+    if (navigator.share && navigator.canShare?.({files:[file]})) {
+      await navigator.share({files:[file],title:card.title,text:message})
+      setMessage('Chagua WhatsApp kwenye menyu ya kushiriki ili kutuma picha.')
+      return
     }
-
     const downloadUrl = URL.createObjectURL(png)
     const anchor = document.createElement('a')
     anchor.href = downloadUrl
@@ -227,16 +211,9 @@ async function shareECard(card, mode, setMessage) {
     anchor.click()
     anchor.remove()
     window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000)
-
-    if (whatsappTab && !whatsappTab.closed) {
-      whatsappTab.location.replace('https://wa.me/?text=' + encodeURIComponent(message))
-      setMessage('Picha imepakuliwa. WhatsApp inafunguka; ambatisha picha uliyopakua kisha tuma ujumbe.')
-    } else {
-      setMessage('Picha imepakuliwa. Fungua WhatsApp, ambatisha picha hiyo, kisha tumia ujumbe wa mwaliko: ' + message)
-    }
-  } catch (error) {
-    if (whatsappTab && !whatsappTab.closed) whatsappTab.close()
-    setMessage('Imeshindikana kuandaa picha ya mwaliko: ' + (error?.message || 'Tafadhali jaribu tena.'))
+    setMessage('Picha imepakuliwa. Fungua WhatsApp na uambatishe picha hiyo.')
+  } catch(error) {
+    setMessage('Imeshindikana kuandaa picha: ' + (error?.message || 'Tafadhali jaribu tena.'))
   }
 }
 
