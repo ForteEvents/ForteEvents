@@ -113,7 +113,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       {style==='blue-rose' && (card?.image_url
         ? <img className="ecard-card-photo ecard-card-photo-blue" src={card.image_url} alt="Picha ya wanandoa au tukio"/>
         : <div className="ecard-photo-placeholder" aria-label="Sehemu ya picha ya wanandoa"><span>♡</span><small>WEKA PICHA YA WANANDOA</small></div>)}
-      <ECardFloralOrnament className="ecard-floral-top" variant={style}/>
+
       <div className="ecard-family-copy"><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
       <ECardInvitationCopy card={card} recipientName={displayName}/>
       {card?.image_url && style!=='blue-rose' && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
@@ -130,7 +130,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         <div className="ecard-card-qr-caption">Onyesha QR hii wakati wa kuingia</div>
         <div className="ecard-card-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
       </section>
-      <ECardFloralOrnament className="ecard-floral-bottom" variant={style}/>
+
       <div className="ecard-card-footer">ForteEvents · Make your event extraordinary</div>
     </div>
   </article>
