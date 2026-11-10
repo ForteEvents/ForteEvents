@@ -2213,3 +2213,39 @@ button[type="submit"] {
 }
 .ecard-export-mode .ecard-card-qr{width:224px!important;padding:8px!important}
 @media(max-width:700px){.ecard-card-qr{width:164px!important}}
+
+
+/* ForteEvents floral refresh — real rose photography, with editable invitation text */
+.ecard-professional-preview{
+  position:relative!important;
+  border:7px double #c6a35f!important;
+  border-radius:5px!important;
+  background:#fffdf7!important;
+  box-shadow:0 14px 34px rgba(42,34,22,.18),inset 0 0 0 2px rgba(255,255,255,.9)!important;
+}
+.ecard-professional-preview::after{
+  content:"";position:absolute;inset:2.2%;border:1px solid rgba(184,145,75,.72);
+  pointer-events:none;z-index:3;
+}
+.ecard-template-flower{
+  position:absolute!important;display:block!important;width:32%!important;height:auto!important;
+  max-width:32%!important;object-fit:contain!important;opacity:1!important;
+  z-index:1!important;pointer-events:none!important;
+  filter:drop-shadow(0 3px 3px rgba(45,34,20,.16))!important;
+}
+.ecard-template-flower-top{top:-.5%!important;left:-1%!important}
+.ecard-template-flower-bottom{right:-1%!important;bottom:-.5%!important;transform:rotate(180deg)!important}
+.ecard-professional-preview>.ecard-main-panel{z-index:2!important;background:transparent!important}
+.ecard-style-ivory-gold{background:linear-gradient(145deg,#fffefa 0%,#f7f0e2 55%,#fffdf8 100%)!important}
+.ecard-style-ivory-gold::after{border-color:rgba(177,137,57,.78)!important}
+.ecard-style-blush-rose{background:linear-gradient(145deg,#fff8f5 0%,#f8e6e5 52%,#fff9f4 100%)!important;border-color:#c49a8a!important}
+.ecard-style-blush-rose::after{border-color:rgba(174,105,116,.7)!important}
+.ecard-style-blue-rose{background:linear-gradient(145deg,#fff 0%,#edf2f7 52%,#fffdf7 100%)!important;border-color:#b99a58!important}
+.ecard-style-blue-rose::after{border-color:rgba(47,76,107,.55)!important}
+.ecard-style-blue-rose .ecard-template-flower-top{left:auto!important;right:-1%!important}
+.ecard-style-blue-rose .ecard-template-flower-bottom{right:auto!important;left:-1%!important;transform:rotate(180deg)!important}
+.ecard-style-blush-rose .ecard-template-flower{filter:drop-shadow(0 3px 3px rgba(126,54,69,.15))!important}
+@media(max-width:700px){
+ .ecard-template-flower{width:31%!important;max-width:31%!important}
+}
+.ecard-export-mode::after{inset:2.2%!important}

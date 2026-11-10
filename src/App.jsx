@@ -103,7 +103,8 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
   return <article className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
-    <img className="ecard-template-artwork" src={template.artwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={template.artwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={template.artwork} alt="" aria-hidden="true"/>
     <div className="ecard-main-panel">
       <div className="ecard-main-heading">
         <div className="ecard-document-title">KADI YA MWALIKO</div>
