@@ -2,7 +2,7 @@
 // Pixabay Content License: free commercial use and adaptation; do not redistribute these images standalone.
 // Pink roses: https://pixabay.com/photos/roses-pink-arrangement-perfume-3618271/
 // White roses: https://pixabay.com/photos/flowers-roses-white-fragrant-4016915/
-const PINK_ROSES = 'https://cdn.pixabay.com/photo/2018/08/20/06/58/roses-3618271_1280.png'
+const PINK_ROSES = 'https://cdn.pixabay.com/photo/2019/05/11/00/52/roses-4194891_1280.png'
 const WHITE_ROSES = 'https://cdn.pixabay.com/photo/2019/02/24/02/46/flowers-4016915_1280.png'
 
 export const ECARD_TEMPLATES = [
