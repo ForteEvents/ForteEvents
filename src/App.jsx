@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas'
 import { createRoot } from 'react-dom/client'
 import { supabase } from './supabaseClient'
 import './App.css'
+import { ECARD_TEMPLATES as BUILT_IN_ECARD_TEMPLATES, getECardTemplate } from './ecard/templateRegistry.js'
 
 
 function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
@@ -29,11 +30,7 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
 
 
 const DEFAULT_ECARD_MESSAGE='Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee.'
-const BUILT_IN_ECARD_TEMPLATES = [
-  { id:'forte-ivory-gold-rose', name:'Ivory & Gold Roses', occasion:'Harusi', description:'Kadi ya ivory yenye waridi meupe, maua ya pembe na fremu ya dhahabu.', style:'ivory-gold' },
-  { id:'forte-blush-rose', name:'Blush Rose Elegance', occasion:'Send-off', description:'Mandhari ya waridi hafifu, waridi za pinki na maandishi ya burgundy.', style:'blush-rose' },
-  { id:'forte-blue-rose', name:'Royal Blue & White Roses', occasion:'Harusi', description:'Maua meupe na bluu, mapambo ya dhahabu na sehemu ya picha ya wanandoa.', style:'blue-rose' }
-]
+
 const ECARD_DRESS_PALETTE = [
   {value:'Black',label:'Nyeusi',hex:'#171717'}, {value:'White',label:'Nyeupe',hex:'#ffffff'},
   {value:'Gold',label:'Dhahabu',hex:'#c79a35'}, {value:'Silver',label:'Fedha',hex:'#c4c9cf'},
@@ -101,11 +98,12 @@ function ECardFamilyMessage({message}) {
 function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false}) {
   const savedTemplateId=card?.design?.templateId || card?.template_id || 'forte-ivory-gold-rose'
   const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
-  const template=BUILT_IN_ECARD_TEMPLATES.find(item=>item.id===templateId)
-  const style=template?.style || 'white-gold'
+  const template=getECardTemplate(templateId)
+  const style=template?.style || 'ivory-gold'
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
   return <article className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
+    <img className="ecard-template-artwork" src={template.artwork} alt="" aria-hidden="true"/>
     <div className="ecard-main-panel">
       <div className="ecard-main-heading">
         <div className="ecard-document-title">KADI YA MWALIKO</div>
