@@ -235,6 +235,44 @@ async function shareECard(card, mode, setMessage) {
   }
 }
 
+
+function ECardImageShareButton({card,guest=null,onMessage,label='Shiriki picha WhatsApp'}) {
+  const [preparedFile,setPreparedFile]=useState(null)
+  const [preparing,setPreparing]=useState(true)
+  useEffect(()=>{
+    let active=true
+    setPreparedFile(null)
+    setPreparing(true)
+    createECardPng(card,guest).then(blob=>{
+      if(active) setPreparedFile(new File([blob],
+        'ForteEvents-'+String(guest?.guest_name||card?.title||'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png',
+        {type:'image/png'}))
+    }).catch(error=>{
+      if(active) onMessage('Picha haikuweza kuandaliwa: '+(error?.message||'Jaribu tena.'))
+    }).finally(()=>{if(active)setPreparing(false)})
+    return ()=>{active=false}
+  },[card,guest,onMessage])
+  const shareImage=()=>{
+    if(!preparedFile){onMessage('Subiri picha ya kadi ikamilishe kuandaliwa.');return}
+    const shareData={files:[preparedFile],text:'Mwaliko wako wa ForteEvents.'+(card?.location_url?'\\n\\nRamani ya ukumbi: '+card.location_url:'')}
+    if(!navigator.share||!navigator.canShare||!navigator.canShare({files:[preparedFile]})){
+      onMessage('Kivinjari hiki hakiwezi kutuma picha moja kwa moja. Tumia Chrome ya simu yenye kipengele cha kushiriki faili.');return
+    }
+    try {
+      const pendingShare=navigator.share(shareData)
+      onMessage('Chagua WhatsApp kwenye menyu ya kushiriki ili kutuma picha ya kadi.')
+      pendingShare.catch(error=>{
+        if(error?.name!=='AbortError') onMessage('Picha haikutumwa: '+(error?.message||'Jaribu tena.'))
+      })
+    } catch(error) {
+      onMessage('Picha haikutumwa: '+(error?.message||'Jaribu tena.'))
+    }
+  }
+  return <button type="button" className="secondary-button" onClick={shareImage} disabled={preparing||!preparedFile}>
+    {preparing?'Inaandaa picha...':label}
+  </button>
+}
+
 function AdminCustomers({ session, onBack }) {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -3332,7 +3370,7 @@ return (
                   recipientName={g.guest_name}
                   qrUrl={guestUrl}
                 />
-                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><button type="button" className="secondary-button" onClick={()=>shareGuestECard(card,g,setECardMessage)}>Shiriki picha + link</button><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
+                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><ECardImageShareButton card={card} guest={g} onMessage={setECardMessage} label="Shiriki picha WhatsApp"/><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
               </div>
             })}
           </div>
@@ -3348,8 +3386,8 @@ return (
                 {card.is_published && <>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
                     <button type="button" className="primary-button" onClick={() => shareECard(card, 'link', setECardMessage)}>WhatsApp — Link</button>
-                    <button type="button" className="secondary-button" onClick={() => shareECard(card, 'image', setECardMessage)}>WhatsApp — Picha</button>
-                    <button type="button" className="secondary-button" onClick={() => shareECard(card, 'both', setECardMessage)}>WhatsApp — Link + Picha</button>
+                    <ECardImageShareButton card={card} onMessage={setECardMessage} label="WhatsApp — Picha"/>
+                    <ECardImageShareButton card={card} onMessage={setECardMessage} label="WhatsApp — Link + Picha"/>
                     <button type="button" className="secondary-button" onClick={async () => {
                       const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
                       try {
