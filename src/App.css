@@ -2228,8 +2228,8 @@ button[type="submit"] {
   pointer-events:none;z-index:3;
 }
 .ecard-template-flower{
-  position:absolute!important;display:block!important;width:39%!important;height:auto!important;
-  max-width:39%!important;object-fit:contain!important;opacity:1!important;
+  position:absolute!important;display:block!important;width:32%!important;height:auto!important;
+  max-width:32%!important;object-fit:contain!important;opacity:1!important;
   z-index:1!important;pointer-events:none!important;
   filter:drop-shadow(0 3px 3px rgba(45,34,20,.16))!important;
 }
@@ -2246,6 +2246,6 @@ button[type="submit"] {
 .ecard-style-blue-rose .ecard-template-flower-bottom{right:auto!important;left:-1%!important;transform:rotate(180deg)!important}
 .ecard-style-blush-rose .ecard-template-flower{filter:drop-shadow(0 3px 3px rgba(126,54,69,.15))!important}
 @media(max-width:700px){
- .ecard-template-flower{width:37%!important;max-width:37%!important}
+ .ecard-template-flower{width:31%!important;max-width:31%!important}
 }
 .ecard-export-mode::after{inset:2.2%!important}
