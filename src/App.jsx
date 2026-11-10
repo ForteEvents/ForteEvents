@@ -150,7 +150,6 @@ async function createECardPng(card, guest = null) {
     root.render(<ECardArtwork card={card} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={invitationUrl} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
-
     const qrImage=await new Promise(resolve=>{
       let attempts=0
       const check=()=>{
@@ -162,23 +161,16 @@ async function createECardPng(card, guest = null) {
       check()
     })
     if(!qrImage) throw new Error('QR ya mwaliko haijakamilika. Tafadhali jaribu tena.')
-
     const artwork=host.querySelector('.ecard-professional-preview')
     if(!artwork) throw new Error('Muundo wa kadi haujaandaliwa.')
-    const images=Array.from(artwork.querySelectorAll('img'))
-    await Promise.all(images.map(image=>image.decode ? image.decode().catch(()=>{}) : Promise.resolve()))
+    await Promise.all(Array.from(artwork.querySelectorAll('img')).map(image=>image.decode ? image.decode().catch(()=>{}) : Promise.resolve()))
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
-
-    // Capture the complete natural content height, not only the visible CSS box.
-    const bounds=artwork.getBoundingClientRect()
-    const exportWidth=Math.ceil(Math.max(bounds.width,artwork.scrollWidth))
-    const exportHeight=Math.ceil(Math.max(bounds.height,artwork.scrollHeight))
-    if(!exportWidth || !exportHeight) throw new Error('Vipimo vya kadi havijasomeka.')
     const canvas=await html2canvas(artwork,{
       backgroundColor:'#fffdf8',scale:2,useCORS:true,allowTaint:false,logging:false,
-      width:exportWidth,height:exportHeight,windowWidth:exportWidth,windowHeight:exportHeight,
+      width:760,height:1064,windowWidth:800,windowHeight:1200,
       scrollX:0,scrollY:0,x:0,y:0
     })
+    if(canvas.width!==1520 || canvas.height!==2128) throw new Error('Vipimo vya picha ya kadi haviko 5:7.')
     return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG haikuundwa.')),'image/png'))
   } finally {
     root.unmount()
