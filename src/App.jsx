@@ -31,12 +31,21 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
 
 const DEFAULT_ECARD_MESSAGE='Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee.'
 
-function getSavedECardTemplateId(card){
+function getECardDesignData(card){
   let design=card?.design
   if(typeof design==='string'){
     try{design=JSON.parse(design)}catch{design={}}
   }
+  return design && typeof design==='object' ? design : {}
+}
+function getSavedECardTemplateId(card){
+  const design=getECardDesignData(card)
   return design?.templateId || design?.template_id || card?.template_id || card?.templateId || 'forte-ivory-gold-rose'
+}
+function getSavedECardTemplate(card,fallbackTemplateId){
+  const design=getECardDesignData(card)
+  if(design?.templateSnapshot?.id) return design.templateSnapshot
+  return getECardTemplate(fallbackTemplateId || getSavedECardTemplateId(card))
 }
 
 const ECARD_DRESS_PALETTE = [
@@ -144,17 +153,19 @@ function ECardFamilyMessage({message}) {
   return <div className="ecard-family-message">{value}</div>
 }
 
-function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId}) {
+function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId,template:templateOverride}) {
   const savedTemplateId=forcedTemplateId || getSavedECardTemplateId(card)
   const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
-  const template=getECardTemplate(templateId)
+  const savedTemplate=getSavedECardTemplate(card,templateId)
+  const template=templateOverride && templateOverride.id===templateId ? templateOverride : savedTemplate
   const style=template?.style || 'ivory-gold'
+  const templateArtwork=template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
   if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode}/>
   return <article className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
-    <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={template.artwork} alt="" aria-hidden="true"/>
-    <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={template.artwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <div className="ecard-main-panel">
       <div className="ecard-main-heading">
         <div className="ecard-document-title">KADI YA MWALIKO</div>
@@ -1017,7 +1028,7 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
-        design: { ...defaultECardDesign, templateId: selectedTemplateId },
+        design: { ...defaultECardDesign, templateId: selectedTemplateId, templateSnapshot: { id: selectedECardTemplate?.id || selectedTemplateId, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
         event_time: eCardForm.event_time || null,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
@@ -3291,7 +3302,7 @@ return (
               <h2>Kadi ya mfano — hariri taarifa zake</h2>
               <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
             </div>
-            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} card={{...eCardForm,design:{templateId:selectedTemplateId}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
+            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} template={selectedECardTemplate} card={{...eCardForm,design:{templateId:selectedTemplateId,templateSnapshot:selectedECardTemplate}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
             <form onSubmit={saveECard}>
               <label>Jina la tukio</label>
               <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
@@ -3434,7 +3445,7 @@ return (
             <h2>Kadi Zangu</h2>
             {eCardsLoading ? <p>Inapakia...</p> : eCards.length === 0 ? <p>Bado hujatengeneza E-card.</p> : eCards.map(card => (
               <div key={card.id} style={{border:'1px solid #d6bd78',borderRadius:'10px',padding:'16px',marginBottom:'12px'}}>
-                <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p><p><strong>Template:</strong> {getECardTemplate(getSavedECardTemplateId(card))?.name || 'Ivory & Gold Roses'}</p>
+                <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p><p><strong>Template:</strong> {getSavedECardTemplate(card)?.name || 'Ivory & Gold Roses'}</p>
                 <p><strong>Hali:</strong> {card.is_published ? 'Imechapishwa' : 'Haijachapishwa'}</p>
                 <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
                 <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
