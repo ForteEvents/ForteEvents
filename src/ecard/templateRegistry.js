@@ -9,6 +9,7 @@ const BLUE_HYDRANGEA = 'https://cdn.pixabay.com/photo/2017/11/26/23/07/flower-29
 
 export const ECARD_TEMPLATES = [
   { id: 'forte-ivory-gold-rose', name: 'Ivory & Gold Roses', occasion: 'Harusi', style: 'ivory-gold', artwork: WHITE_ROSES, aspectRatio: '5 / 7', photoSlot: false, description: 'Maua halisi meupe, fremu ya dhahabu na mandhari ya ivory.' },
+  { id: 'forte-luxury-floral-gold', name: 'Luxury Floral Gold', occasion: 'Harusi', style: 'luxury-floral-gold', artwork: WHITE_ROSES, aspectRatio: '5 / 7', photoSlot: false, description: 'Kadi ya harusi ya kifahari: maua ya waridi, fremu ya dhahabu na maandishi ya maroon.' },
   { id: 'forte-blush-rose', name: 'Blush Rose Elegance', occasion: 'Send-off', style: 'blush-rose', artwork: PINK_ROSES, aspectRatio: '5 / 7', photoSlot: false, description: 'Roses za pinki, rangi ya blush na maandishi ya burgundy.' },
   { id: 'forte-blue-rose', name: 'Royal Blue & White Roses', occasion: 'Harusi', style: 'blue-rose', artwork: BLUE_HYDRANGEA, aspectRatio: '5 / 7', photoSlot: true, description: 'Hydrangea za bluu zenye muonekano wa kifahari, royal blue na fremu ya dhahabu.' }
 ]
