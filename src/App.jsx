@@ -132,8 +132,8 @@ function ECardFamilyMessage({message}) {
   return <div className="ecard-family-message">{value}</div>
 }
 
-function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false}) {
-  const savedTemplateId=card?.design?.templateId || card?.template_id || 'forte-ivory-gold-rose'
+function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId}) {
+  const savedTemplateId=forcedTemplateId || card?.design?.templateId || card?.template_id || 'forte-ivory-gold-rose'
   const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
   const template=getECardTemplate(templateId)
   const style=template?.style || 'ivory-gold'
@@ -3257,6 +3257,8 @@ return (
               >
                 <div className="ecard-choice-preview-window">
                   <ECardArtwork
+                    key={'template-thumb-'+item.id}
+                    templateId={item.id}
                     card={{occasion:item.occasion,title:item.name,host_names:'FAMILIA YAKO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',message:DEFAULT_ECARD_MESSAGE,design:{templateId:item.id}}}
                     recipientName="[JINA LA MWALIKWA]"
                     guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}}
@@ -3276,7 +3278,7 @@ return (
               <h2>Kadi ya mfano — hariri taarifa zake</h2>
               <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
             </div>
-            <ECardArtwork card={{...eCardForm,design:{templateId:selectedTemplateId}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
+            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} card={{...eCardForm,design:{templateId:selectedTemplateId}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
             <form onSubmit={saveECard}>
               <label>Jina la tukio</label>
               <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
