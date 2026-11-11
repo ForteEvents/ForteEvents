@@ -2389,3 +2389,32 @@ button[type="submit"] {
 .ecard-luxury-export{width:760px!important;max-width:none!important;margin:0!important}
 .ecard-luxury-export .ecard-luxury-kicker{font-size:4.2cqw}
 @media(max-width:520px){.ecard-luxury-floral-card{max-width:100%}}
+
+
+/* Luxury Floral Gold: final spacing and legibility refinements */
+.ecard-luxury-family{top:18.8%;left:10%;width:80%}
+.ecard-luxury-family strong{font-size:5.7cqw;line-height:1.08}
+.ecard-luxury-invite-copy{top:28.2%;left:10%;width:80%;height:13.2%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.45cqw;line-height:1.12}
+.ecard-luxury-invite-copy p{font-size:3.55cqw;line-height:1.12;margin:0}
+.ecard-luxury-invite-copy .ecard-invitation-titles{font-size:3.55cqw;line-height:1.12}
+.ecard-luxury-invite-copy .ecard-invitation-recipient{font-size:3.9cqw;line-height:1.12}
+.ecard-luxury-couple{top:42.1%;left:8%;width:84%;font-size:5.7cqw;line-height:1.12}
+.ecard-luxury-date{top:46.4%;left:14%;width:72%;height:4.8%;font-size:3.45cqw;line-height:1.12;padding:0 1cqw;box-sizing:border-box}
+.ecard-luxury-details{top:52.2%;left:7%;width:86%;height:14.5%;grid-template-columns:1fr 1fr;gap:3%}
+.ecard-luxury-detail-column{gap:1.35cqw}
+.ecard-luxury-detail{font-size:2.85cqw;line-height:1.2;gap:1.25cqw}
+.ecard-luxury-detail i{flex-basis:4.4cqw;width:4.4cqw;font-size:4.3cqw}
+.ecard-luxury-detail em{width:3.8cqw;height:3.8cqw}
+.ecard-luxury-contacts{position:absolute;top:67.3%;left:12%;width:76%;height:7.2%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;font-family:Arial,sans-serif;color:#171717}
+.ecard-luxury-contacts-title{font-family:Georgia,serif;color:#8d1732;font-size:3.15cqw;line-height:1.1;margin-bottom:.55cqw}
+.ecard-luxury-contact-list{display:flex;justify-content:center;align-items:flex-start;gap:8%;width:100%}
+.ecard-luxury-contact{display:flex;flex-direction:column;align-items:center;min-width:0;font-size:2.65cqw;line-height:1.18;overflow-wrap:anywhere}
+.ecard-luxury-contact strong{font-weight:700}
+.ecard-luxury-contact a{color:#171717;text-decoration:none;white-space:nowrap}
+.ecard-luxury-venue{top:74.5%;left:18%;width:64%;font-size:2.8cqw;line-height:1.12}
+.ecard-luxury-venue b{font-size:3cqw}
+.ecard-luxury-message{top:77.2%;left:9%;width:82%;font-size:3.15cqw;line-height:1.12;max-height:5.2%;overflow:hidden}
+.ecard-luxury-qr{top:83%;left:41%;width:18%;padding:.8cqw}
+.ecard-luxury-brand{top:92%;left:33%;width:34%;height:6.5%}
+.ecard-luxury-brand img{width:49%;height:61%}
+.ecard-luxury-brand span{font-size:2.45cqw}
