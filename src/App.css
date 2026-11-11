@@ -2418,3 +2418,24 @@ button[type="submit"] {
 .ecard-luxury-brand{top:92%;left:33%;width:34%;height:6.5%}
 .ecard-luxury-brand img{width:49%;height:61%}
 .ecard-luxury-brand span{font-size:2.45cqw}
+
+
+/* Luxury Floral Gold: lower-section layout, no overlaps or clipped invitation copy */
+.ecard-luxury-details{top:51.5%;height:16.2%;align-items:start}
+.ecard-luxury-detail-column{gap:1.05cqw;min-width:0}
+.ecard-luxury-detail{font-size:2.55cqw;line-height:1.16;align-items:flex-start}
+.ecard-luxury-detail span{min-width:0;overflow-wrap:anywhere}
+.ecard-luxury-detail em{flex:0 0 3.4cqw;width:3.4cqw;height:3.4cqw;margin:.2cqw .35cqw}
+.ecard-luxury-contacts{position:static;width:100%;height:auto;margin-top:1.15cqw;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;font-family:Arial,sans-serif;color:#171717}
+.ecard-luxury-contacts-title{font-family:Georgia,serif;color:#8d1732;font-size:2.65cqw;line-height:1.08;margin:0 0 .45cqw}
+.ecard-luxury-contact-list{display:flex;flex-direction:column;align-items:flex-start;gap:.35cqw;width:100%}
+.ecard-luxury-contact{display:flex;flex-direction:column;align-items:flex-start;min-width:0;font-size:2.15cqw;line-height:1.12;overflow-wrap:anywhere}
+.ecard-luxury-contact strong{font-weight:700}
+.ecard-luxury-contact a{color:#171717;text-decoration:none;white-space:normal}
+.ecard-luxury-venue{top:68.5%;left:18%;width:64%;font-size:2.55cqw;line-height:1.12}
+.ecard-luxury-venue b{font-size:2.7cqw}
+.ecard-luxury-message{top:73.4%;left:8%;width:84%;height:8.8%;max-height:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:var(--ecard-message-size,2.7cqw);line-height:1.13;padding:0 .5cqw;box-sizing:border-box}
+.ecard-luxury-qr{top:84%;left:30%;width:21%;padding:.8cqw}
+.ecard-luxury-brand{top:84.5%;left:56%;width:36%;height:12%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5cqw}
+.ecard-luxury-brand img{width:72%;height:72%;object-fit:contain}
+.ecard-luxury-brand span{font-size:2.35cqw;line-height:1.05;white-space:normal}

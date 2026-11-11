@@ -97,21 +97,21 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
       <div className="ecard-luxury-detail-column">
         {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b>IBADA:</b> {ceremony}</span></div>}
         {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>DRESS CODE:</b> {card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
-
+        {contactLines.length>0&&<div className="ecard-luxury-contacts">
+          <b className="ecard-luxury-contacts-title">MAWASILIANO</b>
+          <div className="ecard-luxury-contact-list">
+            {[[card?.rsvp_contact_name,card?.rsvp_contact_phone],[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2]].filter(([name,phone])=>name||phone).map(([name,phone],i)=><div className="ecard-luxury-contact" key={i}>
+              {name&&<strong>{name}</strong>}
+              {phone&&<a href={'tel:'+phone}>{phone}</a>}
+            </div>)}
+          </div>
+        </div>}
       </div>
     </div>
-    {contactLines.length>0&&<div className="ecard-luxury-contacts">
-      <b className="ecard-luxury-contacts-title">MAWASILIANO</b>
-      <div className="ecard-luxury-contact-list">
-        {[[card?.rsvp_contact_name,card?.rsvp_contact_phone],[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2]].filter(([name,phone])=>name||phone).map(([name,phone],i)=><div className="ecard-luxury-contact" key={i}>
-          {name&&<strong>{name}</strong>}
-          {phone&&<a href={'tel:'+phone}>{phone}</a>}
-        </div>)}
-      </div>
-    </div>}
+    }
     {reception&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue"><b>TAARIFA ZA MAPOKEZI</b><span>{card.food_note}</span></div>}
-    <div className="ecard-luxury-message">{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
+    <div className="ecard-luxury-message" style={{'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
     <div className="ecard-luxury-qr"><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
     <div className="ecard-luxury-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/><span>Make your event extraordinary</span></div>
   </article>
