@@ -108,7 +108,6 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
         </div>}
       </div>
     </div>
-    }
     {reception&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue"><b>TAARIFA ZA MAPOKEZI</b><span>{card.food_note}</span></div>}
     <div className="ecard-luxury-message" style={{'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
