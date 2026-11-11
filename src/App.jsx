@@ -48,7 +48,44 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
  else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
  return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
 }
-function ECardInvitationCopy({card,recipientName,className=''}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
+function ECardInvitationCopy({card,recipientName,className='',hideCouple=false}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
+
+function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false}){
+  const parts=buildECardInvitationParts(card,guest?.guest_name||recipientName||'JINA LA MWALIKWA');
+  const dateText=card?.event_date?new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'SIKU, TAREHE NA MWAKA';
+  const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};
+  const contacts=[card?.rsvp_contact_name,card?.rsvp_contact_phone,card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean);
+  return <article className={['ecard-luxury-floral-card',exportMode?'ecard-luxury-export':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
+    <img className="ecard-luxury-background" src="/ecard-templates/luxury-floral-gold-bg.webp" alt="" crossOrigin="anonymous"/>
+    <div className="ecard-luxury-heading">
+      <div className="ecard-luxury-kicker">KADI YA MWALIKO</div>
+      <div className="ecard-luxury-occasion">{card?.occasion||'Harusi'}</div>
+      <div className="ecard-luxury-invitation">INVITATION</div>
+    </div>
+    <div className="ecard-luxury-family"><span>Familia ya</span><strong>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
+    <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple/>
+    <div className="ecard-luxury-ribbon"><span>FORTEEVENTS</span></div>
+    <div className="ecard-luxury-couple">{parts.coupleName||'MAJINA YA BIBI NA BWANA HARUSI'}</div>
+    <div className="ecard-luxury-date">{dateText}</div>
+    <div className="ecard-luxury-details">
+      <div className="ecard-luxury-detail-column">
+        {card?.event_time&&<div className="ecard-luxury-detail"><i>◷</i><span><b>MUDA:</b> Saa {card.event_time}</span></div>}
+        {card?.venue&&<div className="ecard-luxury-detail"><i>⌂</i><span><b>MAHALI:</b> {card.venue}</span></div>}
+        {card?.rsvp_deadline&&<div className="ecard-luxury-detail"><i>✉</i><span><b>RSVP:</b> Mwisho wa kuthibitisha: {card.rsvp_deadline}</span></div>}
+      </div>
+      <div className="ecard-luxury-detail-column">
+        {(card?.ceremony_time||card?.ceremony_venue)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>IBADA:</b> {[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')}</span></div>}
+        {(card?.dress_colors||[]).length>0&&<div className="ecard-luxury-detail"><i>♟</i><span><b>DRESS CODE:</b> {(card.dress_colors||[]).map((color,i)=><em key={color+i} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
+        {(card?.rsvp_contact_phone||card?.rsvp_contact_phone_2)&&<div className="ecard-luxury-detail"><i>★</i><span><b>MAWASILIANO:</b> {[card?.rsvp_contact_name,card?.rsvp_contact_phone,card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')}</span></div>}
+      </div>
+    </div>
+    {card?.reception_venue&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{card.reception_venue}</span></div>}
+    <div className="ecard-luxury-message">{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
+    <div className="ecard-luxury-qr"><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
+    <div className="ecard-luxury-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/><span>Make your event extraordinary</span></div>
+  </article>
+}
+
 function ECardFloralOrnament({className='',variant='ivory-gold'}){
   const palettes={
     'ivory-gold':{petal:'#fffdf7',shadow:'#e8dfd1',inner:'#f4eee5',center:'#c79b43',leaf:'#78845d',stem:'#8d7951'},
@@ -102,6 +139,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const style=template?.style || 'ivory-gold'
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
+  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode}/>
   return <article className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
     <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={template.artwork} alt="" aria-hidden="true"/>
     <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={template.artwork} alt="" aria-hidden="true"/>

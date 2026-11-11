@@ -2353,3 +2353,39 @@ button[type="submit"] {
   .ecard-style-luxury-floral-gold .ecard-detail-flow{gap:.7% 3%!important}
   .ecard-style-luxury-floral-gold .ecard-template-flower{width:31%!important;max-width:31%!important}
 }
+
+
+/* Exact floral reference composition: editable text over the approved floral-and-gold artwork */
+.ecard-luxury-floral-card{position:relative;display:block;width:100%;max-width:760px;aspect-ratio:300/420;margin:16px auto;overflow:hidden;isolation:isolate;container-type:inline-size;background:#fffdf7;color:#151515;font-family:Georgia,'Times New Roman',serif;box-sizing:border-box}
+.ecard-luxury-background{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:-1;pointer-events:none}
+.ecard-luxury-heading{position:absolute;top:4.3%;left:31%;width:58%;height:12%;text-align:center;display:flex;flex-direction:column;align-items:center}
+.ecard-luxury-kicker{font-size:4.2cqw;font-weight:800;letter-spacing:.1em;color:#a87516;white-space:nowrap}
+.ecard-luxury-occasion{font-family:'Brush Script MT','Segoe Script',cursive;font-size:11cqw;font-style:italic;font-weight:700;line-height:.95;color:#8d1732;white-space:nowrap}
+.ecard-luxury-invitation{font-size:4.6cqw;font-weight:700;letter-spacing:.08em;color:#b47c19;line-height:1.1}
+.ecard-luxury-family{position:absolute;top:19.1%;left:13%;width:80%;text-align:center;line-height:1.08}
+.ecard-luxury-family span{display:block;font-size:4.2cqw;color:#111}
+.ecard-luxury-family strong{display:block;font-size:6.1cqw;line-height:1.05;color:#8d1732;font-weight:800;overflow-wrap:anywhere}
+.ecard-luxury-invite-copy{position:absolute;top:29%;left:12%;width:82%;text-align:center;line-height:1.08;color:#111}
+.ecard-luxury-invite-copy p{margin:0 0 .4cqw;font-size:4.2cqw;line-height:1.05}
+.ecard-luxury-invite-copy .ecard-invitation-titles{display:block;color:#8d1732;font-size:4.1cqw;line-height:1.05}
+.ecard-luxury-invite-copy .ecard-invitation-recipient{display:block;color:#8d1732;font-size:4.3cqw;line-height:1.05;overflow-wrap:anywhere}
+.ecard-luxury-ribbon{position:absolute;top:35.2%;left:23%;width:54%;height:3.5%;display:grid;place-items:center;color:#7d1930;font-size:6cqw;font-weight:800;font-style:italic;letter-spacing:.02em;text-align:center}
+.ecard-luxury-couple{position:absolute;top:41.3%;left:10%;width:82%;text-align:center;color:#8d1732;font-family:'Brush Script MT','Segoe Script',cursive;font-size:6.2cqw;font-style:italic;font-weight:700;line-height:1.05;overflow-wrap:anywhere}
+.ecard-luxury-date{position:absolute;top:46.2%;left:25%;width:50%;height:3.8%;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-size:4.4cqw;font-weight:800;line-height:1.05;overflow-wrap:anywhere}
+.ecard-luxury-details{position:absolute;top:51%;left:8%;width:84%;height:16%;display:grid;grid-template-columns:1fr 1fr;gap:4%;text-align:left}
+.ecard-luxury-detail-column{display:flex;flex-direction:column;gap:1.2cqw;min-width:0}
+.ecard-luxury-detail{display:flex;align-items:flex-start;gap:1.7cqw;min-width:0;font-family:Arial,sans-serif;font-size:3.1cqw;line-height:1.16;color:#171717;overflow-wrap:anywhere}
+.ecard-luxury-detail i{flex:0 0 5cqw;width:5cqw;color:#c08a18;font-size:5cqw;font-style:normal;font-weight:800;line-height:1}
+.ecard-luxury-detail b{font-weight:800}
+.ecard-luxury-detail em{display:inline-block;width:4.3cqw;height:4.3cqw;border:1px solid #777;border-radius:50%;vertical-align:middle;margin:0 .6cqw}
+.ecard-luxury-venue{position:absolute;top:68%;left:20%;width:60%;text-align:center;font-size:3.4cqw;line-height:1.2;color:#111}
+.ecard-luxury-venue b{display:block;color:#8d1732;font-size:3.6cqw}
+.ecard-luxury-message{position:absolute;top:72.5%;left:10%;width:80%;text-align:center;font-size:3.8cqw;line-height:1.18;font-style:italic;color:#171717;max-height:5.5%;overflow:hidden}
+.ecard-luxury-qr{position:absolute;top:78.5%;left:41%;width:18%;aspect-ratio:1;background:#fff;border:1px solid #d5a52f;border-radius:3cqw;padding:1.1cqw;box-sizing:border-box;display:grid;place-items:center;overflow:hidden}
+.ecard-luxury-qr img{width:100%;height:100%;object-fit:contain;display:block}
+.ecard-luxury-brand{position:absolute;top:90.3%;left:33%;width:34%;height:8%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ecard-luxury-brand img{width:55%;height:65%;object-fit:contain}
+.ecard-luxury-brand span{font-size:2.7cqw;font-style:italic;color:#3b2a17;white-space:nowrap}
+.ecard-luxury-export{width:760px!important;max-width:none!important;margin:0!important}
+.ecard-luxury-export .ecard-luxury-kicker{font-size:4.2cqw}
+@media(max-width:520px){.ecard-luxury-floral-card{max-width:100%}}
