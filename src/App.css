@@ -2273,3 +2273,83 @@ button[type="submit"] {
  .ecard-detail-line>span .ecard-phone-link{font-size:15px!important}
  .ecard-card-brand{width:180px!important}
 }
+
+
+/* Luxury Floral Gold — premium wedding template inspired by the approved reference */
+.ecard-style-luxury-floral-gold{
+  background:linear-gradient(145deg,#fffdf8 0%,#fbf6e9 52%,#fffefa 100%)!important;
+  border:7px double #d5a52f!important;
+}
+.ecard-style-luxury-floral-gold::after{
+  inset:1.8%!important;border:1px solid rgba(197,145,34,.78)!important;
+}
+.ecard-style-luxury-floral-gold .ecard-main-panel{
+  padding:4.4% 7.5% 3.2%!important;
+}
+.ecard-style-luxury-floral-gold .ecard-document-title{
+  color:#a87516!important;letter-spacing:.12em!important;font-size:clamp(12px,1.7vw,16px)!important;
+}
+.ecard-style-luxury-floral-gold .ecard-script-title{
+  color:#8d1732!important;font-family:"Brush Script MT","Segoe Script",cursive!important;
+  font-size:clamp(36px,5.8vw,61px)!important;font-weight:600!important;
+}
+.ecard-style-luxury-floral-gold .ecard-invitation-label{
+  color:#b47c19!important;letter-spacing:.16em!important;font-weight:700!important;
+}
+.ecard-style-luxury-floral-gold .ecard-family-copy>strong{
+  color:#8d1732!important;font-family:Georgia,serif!important;
+}
+.ecard-style-luxury-floral-gold .ecard-invitation-copy{color:#171717!important}
+.ecard-style-luxury-floral-gold .ecard-invitation-titles{color:#8d1732!important}
+.ecard-style-luxury-floral-gold .ecard-invitation-recipient{
+  color:#8d1732!important;border:0!important;font-weight:800!important;
+}
+.ecard-style-luxury-floral-gold .ecard-invitation-couple{
+  display:block!important;color:#8d1732!important;font-family:"Brush Script MT","Segoe Script",cursive!important;
+  font-style:italic!important;font-size:clamp(19px,2.8vw,27px)!important;
+}
+.ecard-style-luxury-floral-gold .ecard-invitation-couple::before{
+  content:"FORTEEVENTS";display:block;width:min(82%,460px);margin:5px auto 7px;
+  padding:7px 12px;color:#6f1429;background:linear-gradient(90deg,#d69f24,#fff0a8,#d69f24);
+  border:1px solid #c38d20;font:italic 700 clamp(15px,2vw,21px) Georgia,serif;
+  letter-spacing:.08em;box-shadow:0 2px 4px rgba(123,83,14,.16);
+}
+.ecard-style-luxury-floral-gold .ecard-date-line{
+  margin:1.2% auto!important;padding:7px 20px!important;border-radius:18px!important;
+  color:#fff!important;background:linear-gradient(90deg,#8d1732,#a91e3d,#8d1732)!important;
+  font-weight:800!important;box-shadow:0 2px 5px rgba(92,16,37,.16)!important;
+}
+.ecard-style-luxury-floral-gold .ecard-detail-flow{
+  position:relative!important;grid-template-columns:1fr 1fr!important;
+  gap:1.1% 5%!important;margin:1% auto!important;padding:0 1%!important;
+}
+.ecard-style-luxury-floral-gold .ecard-detail-line{
+  border-bottom:1px solid rgba(198,151,47,.25)!important;padding:2px 3px!important;
+}
+.ecard-style-luxury-floral-gold .ecard-detail-line>b{color:#9a6a13!important}
+.ecard-style-luxury-floral-gold .ecard-detail-line>span{color:#171717!important}
+.ecard-style-luxury-floral-gold .ecard-detail-line .ecard-phone-link{color:#8d1732!important}
+.ecard-style-luxury-floral-gold .ecard-family-message{
+  color:#171717!important;font-family:Georgia,serif!important;font-style:italic!important;
+}
+.ecard-style-luxury-floral-gold .ecard-card-qr{
+  border:3px solid #d5a52f!important;border-radius:12px!important;
+}
+.ecard-style-luxury-floral-gold .ecard-card-brand{
+  border-color:#d5a52f!important;background:rgba(255,255,255,.96)!important;
+}
+.ecard-style-luxury-floral-gold .ecard-card-footer{color:#8d1732!important}
+.ecard-style-luxury-floral-gold .ecard-template-flower{
+  width:34%!important;max-width:34%!important;
+}
+.ecard-export-mode.ecard-style-luxury-floral-gold .ecard-main-panel{
+  padding:47px 57px 34px!important;
+}
+@media(max-width:700px){
+  .ecard-style-luxury-floral-gold .ecard-main-panel{padding:4.5% 6.5% 3%!important}
+  .ecard-style-luxury-floral-gold .ecard-script-title{font-size:clamp(25px,7vw,35px)!important}
+  .ecard-style-luxury-floral-gold .ecard-invitation-couple{font-size:clamp(16px,4.2vw,21px)!important}
+  .ecard-style-luxury-floral-gold .ecard-date-line{padding:5px 9px!important}
+  .ecard-style-luxury-floral-gold .ecard-detail-flow{gap:.7% 3%!important}
+  .ecard-style-luxury-floral-gold .ecard-template-flower{width:31%!important;max-width:31%!important}
+}
