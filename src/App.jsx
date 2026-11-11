@@ -31,6 +31,14 @@ function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
 
 const DEFAULT_ECARD_MESSAGE='Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee.'
 
+function getSavedECardTemplateId(card){
+  let design=card?.design
+  if(typeof design==='string'){
+    try{design=JSON.parse(design)}catch{design={}}
+  }
+  return design?.templateId || design?.template_id || card?.template_id || card?.templateId || 'forte-ivory-gold-rose'
+}
+
 const ECARD_DRESS_PALETTE = [
   {value:'Black',label:'Nyeusi',hex:'#171717'}, {value:'White',label:'Nyeupe',hex:'#ffffff'},
   {value:'Gold',label:'Dhahabu',hex:'#c79a35'}, {value:'Silver',label:'Fedha',hex:'#c4c9cf'},
@@ -137,7 +145,7 @@ function ECardFamilyMessage({message}) {
 }
 
 function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId}) {
-  const savedTemplateId=forcedTemplateId || card?.design?.templateId || card?.template_id || 'forte-ivory-gold-rose'
+  const savedTemplateId=forcedTemplateId || getSavedECardTemplateId(card)
   const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
   const template=getECardTemplate(templateId)
   const style=template?.style || 'ivory-gold'
@@ -188,7 +196,7 @@ async function createECardPng(card, guest = null) {
   document.body.appendChild(host)
   const root=createRoot(host)
   try {
-    root.render(<ECardArtwork card={card} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
+    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+getSavedECardTemplateId(card)} card={card} templateId={getSavedECardTemplateId(card)} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
     const qrImage=await new Promise(resolve=>{
@@ -1027,9 +1035,10 @@ function App() {
         : supabase.from('e_cards').insert(payload).select().single()
       const { data, error } = await query
       if (error) throw error
-      setECardMessage('E-card imehifadhiwa. Unaweza kushiriki link yake na wageni.')
+      setECardMessage('E-card imehifadhiwa. Template: '+getECardTemplate(selectedTemplateId)?.name+'. Kadi hii sasa ndiyo itatumika kwenye PNG, WhatsApp na uchapishaji.')
+      setGuestCardId(data.id)
       resetECardForm()
-      await loadECards()
+      await Promise.all([loadECards(),loadECardGuests(data.id)])
     } catch (error) {
       setECardMessage('E-card haijahifadhiwa: ' + error.message)
     } finally {
@@ -1052,7 +1061,7 @@ function App() {
       message: card.message || DEFAULT_ECARD_MESSAGE, image_url: card.image_url || '', theme: card.theme || 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setSelectedTemplateId(card.design?.templateId==='forte-white-gold'?'forte-ivory-gold-rose':card.design?.templateId==='forte-cream-blue'?'forte-blue-rose':card.design?.templateId || 'forte-ivory-gold-rose')
+    setSelectedTemplateId(getSavedECardTemplateId(card)==='forte-white-gold'?'forte-ivory-gold-rose':getSavedECardTemplateId(card)==='forte-cream-blue'?'forte-blue-rose':getSavedECardTemplateId(card))
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
   }
@@ -2224,7 +2233,7 @@ useEffect(() => {
             <><h2>ForteEvents</h2><p>Mwaliko huu haupatikani au bado haujachapishwa.</p></>
           ) : (
             <>
-              <ECardArtwork card={publicECard} guest={publicECard.guest || null} recipientName={publicECard.guest?.guest_name || '[JINA LA MWALIKWA]'} qrUrl={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + (publicECard.guest?.token ? '&guest=' + encodeURIComponent(publicECard.guest.token) : '')}/>
+              <ECardArtwork key={'public-card-'+publicECard.id+'-'+getSavedECardTemplateId(publicECard)} templateId={getSavedECardTemplateId(publicECard)} card={publicECard} guest={publicECard.guest || null} recipientName={publicECard.guest?.guest_name || '[JINA LA MWALIKWA]'} qrUrl={window.location.origin + window.location.pathname + '?card=' + encodeURIComponent(new URLSearchParams(window.location.search).get('card')) + (publicECard.guest?.token ? '&guest=' + encodeURIComponent(publicECard.guest.token) : '')}/>
             </>
           )}
         </div>
@@ -3425,7 +3434,7 @@ return (
             <h2>Kadi Zangu</h2>
             {eCardsLoading ? <p>Inapakia...</p> : eCards.length === 0 ? <p>Bado hujatengeneza E-card.</p> : eCards.map(card => (
               <div key={card.id} style={{border:'1px solid #d6bd78',borderRadius:'10px',padding:'16px',marginBottom:'12px'}}>
-                <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p>
+                <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p><p><strong>Template:</strong> {getECardTemplate(getSavedECardTemplateId(card))?.name || 'Ivory & Gold Roses'}</p>
                 <p><strong>Hali:</strong> {card.is_published ? 'Imechapishwa' : 'Haijachapishwa'}</p>
                 <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
                 <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
