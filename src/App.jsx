@@ -79,7 +79,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
       <div className="ecard-luxury-detail-column">
         {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b>IBADA:</b> {ceremony}</span></div>}
         {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>DRESS CODE:</b> {card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
-        {contactLines.length>0&&<div className="ecard-luxury-detail"><i>★</i><span><b>MAWASILIANO:</b> {contactLines.map((line,i)=><React.Fragment key={i}>{i>0&&<br/>}{line}</React.Fragment>)}</span></div>}
+        {contactLines.length>0&&<div className="ecard-luxury-detail"><i>★</i><span><b>MAWASILIANO:</b> {contactLines.map((line,i)=><span key={i} style={{display:'contents'}}>{i>0&&<br/>}{line}</span>)}</span></div>}
       </div>
     </div>
     {reception&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
