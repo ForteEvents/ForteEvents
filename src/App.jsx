@@ -82,7 +82,6 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     <div className="ecard-luxury-heading">
       <div className="ecard-luxury-kicker">KADI YA MWALIKO</div>
       <div className="ecard-luxury-occasion">{card?.occasion||'Harusi'}</div>
-      <div className="ecard-luxury-invitation">INVITATION</div>
     </div>
     <div className="ecard-luxury-family"><span>Familia ya</span><strong>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
     <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple/>

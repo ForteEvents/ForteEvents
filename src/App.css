@@ -2439,3 +2439,145 @@ button[type="submit"] {
 .ecard-luxury-brand{top:84.5%;left:56%;width:36%;height:12%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5cqw}
 .ecard-luxury-brand img{width:72%;height:72%;object-fit:contain}
 .ecard-luxury-brand span{font-size:2.35cqw;line-height:1.05;white-space:normal}
+
+
+/* Luxury Floral Gold: typography hierarchy and balanced artwork composition */
+.ecard-luxury-heading{
+  top:4.5%;
+  left:31%;
+  width:58%;
+  height:11.8%;
+  justify-content:center;
+  gap:.7cqw;
+}
+.ecard-luxury-kicker{font-size:4.15cqw;line-height:1.08}
+.ecard-luxury-occasion{
+  display:block;
+  width:100%;
+  text-align:center;
+  font-size:11.2cqw;
+  line-height:1.02;
+  margin:0;
+}
+.ecard-luxury-family{
+  top:17.1%;
+  left:10%;
+  width:80%;
+  line-height:1.08;
+}
+.ecard-luxury-family span{font-size:3.9cqw;line-height:1.12;margin-bottom:.25cqw}
+.ecard-luxury-family strong{font-size:5.15cqw;line-height:1.12;overflow-wrap:anywhere}
+.ecard-luxury-invite-copy{
+  top:26.4%;
+  left:9%;
+  width:82%;
+  height:13.5%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:.55cqw;
+  text-align:center;
+  line-height:1.16;
+}
+.ecard-luxury-invite-copy p{
+  display:block;
+  width:100%;
+  margin:0;
+  font-size:3.25cqw;
+  line-height:1.16;
+}
+.ecard-luxury-invite-copy .ecard-invitation-titles{
+  display:block;
+  width:100%;
+  font-size:3.45cqw;
+  line-height:1.14;
+  overflow-wrap:anywhere;
+}
+.ecard-luxury-invite-copy .ecard-invitation-recipient{
+  display:block;
+  width:100%;
+  font-size:3.55cqw;
+  line-height:1.14;
+  overflow-wrap:anywhere;
+}
+.ecard-luxury-couple{
+  top:40.5%;
+  left:7%;
+  width:86%;
+  font-size:5.1cqw;
+  line-height:1.14;
+  text-align:center;
+  padding:0 1cqw;
+  box-sizing:border-box;
+}
+.ecard-luxury-date{
+  top:45.2%;
+  left:13%;
+  width:74%;
+  height:4.5%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:3.25cqw;
+  line-height:1.12;
+  padding:0 1.5cqw;
+  box-sizing:border-box;
+}
+.ecard-luxury-details{top:51%;height:16.2%}
+.ecard-luxury-message{
+  top:73.2%;
+  left:7%;
+  width:86%;
+  height:8.5%;
+  max-height:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding:.4cqw 1cqw;
+  box-sizing:border-box;
+  font-size:clamp(1.8cqw,var(--ecard-message-size,2.6cqw),2.8cqw);
+  line-height:1.15;
+  overflow-wrap:anywhere;
+  text-wrap:pretty;
+}
+.ecard-luxury-qr{
+  top:84%;
+  left:28%;
+  width:23%;
+  aspect-ratio:1;
+  padding:1.25cqw;
+}
+.ecard-luxury-brand{
+  top:84%;
+  left:54%;
+  width:40%;
+  height:12.5%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:.55cqw;
+  text-align:center;
+}
+.ecard-luxury-brand img{
+  display:block;
+  width:86%;
+  height:72%;
+  object-fit:contain;
+  object-position:center;
+}
+.ecard-luxury-brand span{
+  display:block;
+  width:100%;
+  font-size:2.25cqw;
+  line-height:1.1;
+  white-space:normal;
+  text-align:center;
+}
+.ecard-luxury-export{
+  width:760px!important;
+  max-width:none!important;
+}
