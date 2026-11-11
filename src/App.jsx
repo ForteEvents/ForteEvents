@@ -53,8 +53,11 @@ function ECardInvitationCopy({card,recipientName,className='',hideCouple=false})
 function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false}){
   const parts=buildECardInvitationParts(card,guest?.guest_name||recipientName||'JINA LA MWALIKWA');
   const dateText=card?.event_date?new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'SIKU, TAREHE NA MWAKA';
-  const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};
-  const contacts=[card?.rsvp_contact_name,card?.rsvp_contact_phone,card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean);
+  const colors={'gold':'#c69a32','cream':'#f2e6c9','white':'#fff','black':'#222','red':'#b52d35','blue':'#3567a8','navy':'#182b4b','pink':'#e8a6b8','green':'#477b53','silver':'#c7cbd1','purple':'#76518e','brown':'#79533a','orange':'#d97927','maroon':'#702b3b','beige':'#d9c6a0','grey':'#888','gray':'#888','red wine':'#702b3b'};
+  const dressColors=Array.isArray(card?.dress_colors)?card.dress_colors:[];
+  const contactLines=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')].filter(Boolean);
+  const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
+  const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
   return <article className={['ecard-luxury-floral-card',exportMode?'ecard-luxury-export':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
     <img className="ecard-luxury-background" src="/ecard-templates/luxury-floral-gold-bg.webp" alt="" crossOrigin="anonymous"/>
     <div className="ecard-luxury-heading">
@@ -74,18 +77,19 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
         {card?.rsvp_deadline&&<div className="ecard-luxury-detail"><i>✉</i><span><b>RSVP:</b> Mwisho wa kuthibitisha: {card.rsvp_deadline}</span></div>}
       </div>
       <div className="ecard-luxury-detail-column">
-        {(card?.ceremony_time||card?.ceremony_venue)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>IBADA:</b> {[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')}</span></div>}
-        {(card?.dress_colors||[]).length>0&&<div className="ecard-luxury-detail"><i>♟</i><span><b>DRESS CODE:</b> {(card.dress_colors||[]).map((color,i)=><em key={color+i} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
-        {(card?.rsvp_contact_phone||card?.rsvp_contact_phone_2)&&<div className="ecard-luxury-detail"><i>★</i><span><b>MAWASILIANO:</b> {[card?.rsvp_contact_name,card?.rsvp_contact_phone,card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')}</span></div>}
+        {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b>IBADA:</b> {ceremony}</span></div>}
+        {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>DRESS CODE:</b> {card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
+        {contactLines.length>0&&<div className="ecard-luxury-detail"><i>★</i><span><b>MAWASILIANO:</b> {contactLines.map((line,i)=><React.Fragment key={i}>{i>0&&<br/>}{line}</React.Fragment>)}</span></div>}
       </div>
     </div>
-    {card?.reception_venue&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{card.reception_venue}</span></div>}
+    {reception&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
+    {!reception&&card?.food_note&&<div className="ecard-luxury-venue"><b>TAARIFA ZA MAPOKEZI</b><span>{card.food_note}</span></div>}
     <div className="ecard-luxury-message">{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
+    {card?.location_url&&<div className="ecard-luxury-map">RAMANI YA UKUMBI: {card.venue||'Fungua link ya eneo'}</div>}
     <div className="ecard-luxury-qr"><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
     <div className="ecard-luxury-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/><span>Make your event extraordinary</span></div>
   </article>
 }
-
 function ECardFloralOrnament({className='',variant='ivory-gold'}){
   const palettes={
     'ivory-gold':{petal:'#fffdf7',shadow:'#e8dfd1',inner:'#f4eee5',center:'#c79b43',leaf:'#78845d',stem:'#8d7951'},
@@ -190,7 +194,7 @@ async function createECardPng(card, guest = null) {
     const qrImage=await new Promise(resolve=>{
       let attempts=0
       const check=()=>{
-        const image=host.querySelector('.ecard-card-qr img')
+        const image=host.querySelector('.ecard-card-qr img, .ecard-luxury-qr img')
         if(image?.complete && image.naturalWidth>0) resolve(image)
         else if(attempts++>=80) resolve(null)
         else window.setTimeout(check,25)
@@ -198,13 +202,13 @@ async function createECardPng(card, guest = null) {
       check()
     })
     if(!qrImage) throw new Error('QR ya mwaliko haijakamilika. Tafadhali jaribu tena.')
-    const artwork=host.querySelector('.ecard-professional-preview')
+    const artwork=host.querySelector('.ecard-professional-preview, .ecard-luxury-floral-card')
     if(!artwork) throw new Error('Muundo wa kadi haujaandaliwa.')
     await Promise.all(Array.from(artwork.querySelectorAll('img')).map(image=>image.decode ? image.decode().catch(()=>{}) : Promise.resolve()))
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
     const canvas=await html2canvas(artwork,{
       backgroundColor:'#fffdf8',scale:2,useCORS:true,allowTaint:false,logging:false,
-      width:760,height:1064,windowWidth:800,windowHeight:1200,
+      width:artwork.scrollWidth || 760,height:artwork.scrollHeight || 1064,windowWidth:800,windowHeight:1200,
       scrollX:0,scrollY:0,x:0,y:0
     })
     if(canvas.width!==1520 || canvas.height!==2128) throw new Error('Vipimo vya picha ya kadi haviko 5:7.')
