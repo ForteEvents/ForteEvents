@@ -44,8 +44,10 @@ function getSavedECardTemplateId(card){
 }
 function getSavedECardTemplate(card,fallbackTemplateId){
   const design=getECardDesignData(card)
-  if(design?.templateSnapshot?.id) return design.templateSnapshot
-  return getECardTemplate(fallbackTemplateId || getSavedECardTemplateId(card))
+  const id=design?.templateSnapshot?.id || fallbackTemplateId || getSavedECardTemplateId(card)
+  const base=getECardTemplate(id)
+  const snapshot=design?.templateSnapshot || {}
+  return {...base,...snapshot,id:snapshot.id||id,style:snapshot.style||base?.style||'ivory-gold',artwork:snapshot.artwork||snapshot.image_url||base?.artwork,aspectRatio:snapshot.aspectRatio||base?.aspectRatio||'5 / 7'}
 }
 
 const ECARD_DRESS_PALETTE = [
@@ -199,38 +201,43 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
 }
 
 async function createECardPng(card, guest = null) {
-  const qrPayload=guest?.token
-    ? String(guest.token)
-    : window.location.origin+'/?card='+encodeURIComponent(card.slug || '')
+  const qrPayload=guest?.token ? String(guest.token) : window.location.origin+'/?card='+encodeURIComponent(card.slug || '')
   const host=document.createElement('div')
   host.className='ecard-export-host'
+  host.style.cssText='position:fixed;left:-12000px;top:0;width:800px;height:1200px;overflow:visible;pointer-events:none;background:#fff;z-index:2147483000'
   document.body.appendChild(host)
   const root=createRoot(host)
   try {
-    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+getSavedECardTemplateId(card)} card={card} templateId={getSavedECardTemplateId(card)} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
+    const templateId=getSavedECardTemplateId(card)
+    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+templateId} card={card} templateId={templateId} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
-    const qrImage=await new Promise(resolve=>{
-      let attempts=0
-      const check=()=>{
-        const image=host.querySelector('.ecard-card-qr img, .ecard-luxury-qr img')
-        if(image?.complete && image.naturalWidth>0) resolve(image)
-        else if(attempts++>=80) resolve(null)
-        else window.setTimeout(check,25)
-      }
-      check()
-    })
-    if(!qrImage) throw new Error('QR ya mwaliko haijakamilika. Tafadhali jaribu tena.')
+    let qrImage=null
+    for(let attempt=0;attempt<100;attempt++){
+      qrImage=host.querySelector('.ecard-card-qr img, .ecard-luxury-qr img')
+      if(qrImage?.complete && qrImage.naturalWidth>0) break
+      await new Promise(resolve=>window.setTimeout(resolve,30))
+    }
+    if(!qrImage?.complete || !qrImage.naturalWidth) throw new Error('QR ya mwaliko haijaandaliwa. Hakikisha intaneti ipo kisha jaribu tena.')
     const artwork=host.querySelector('.ecard-professional-preview, .ecard-luxury-floral-card')
     if(!artwork) throw new Error('Muundo wa kadi haujaandaliwa.')
-    await Promise.all(Array.from(artwork.querySelectorAll('img')).map(image=>image.decode ? image.decode().catch(()=>{}) : Promise.resolve()))
+    artwork.style.setProperty('width','760px','important')
+    artwork.style.setProperty('height','1064px','important')
+    artwork.style.setProperty('max-width','none','important')
+    artwork.style.setProperty('min-width','760px','important')
+    artwork.style.setProperty('aspect-ratio','auto','important')
+    artwork.style.setProperty('margin','0','important')
+    artwork.style.setProperty('overflow','hidden','important')
+    const images=Array.from(artwork.querySelectorAll('img'))
+    await Promise.all(images.map(async image=>{
+      if(!image.complete) await new Promise(resolve=>{image.onload=resolve;image.onerror=resolve})
+      if(image.decode) await image.decode().catch(()=>{})
+    }))
+    const missing=images.find(image=>!image.naturalWidth)
+    if(missing) throw new Error('Picha ya mapambo ya template haijapakia. Refresh ukurasa kisha jaribu tena.')
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
-    const canvas=await html2canvas(artwork,{
-      backgroundColor:'#fffdf8',scale:2,useCORS:true,allowTaint:false,logging:false,
-      width:artwork.scrollWidth || 760,height:artwork.scrollHeight || 1064,windowWidth:800,windowHeight:1200,
-      scrollX:0,scrollY:0,x:0,y:0
-    })
-    if(canvas.width!==1520 || canvas.height!==2128) throw new Error('Vipimo vya picha ya kadi haviko 5:7.')
+    const canvas=await html2canvas(artwork,{backgroundColor:'#fffdf8',scale:2,useCORS:true,allowTaint:false,logging:false,width:760,height:1064,windowWidth:800,windowHeight:1200,scrollX:0,scrollY:0,x:0,y:0})
+    if(canvas.width<1400 || canvas.height<1900) throw new Error('Picha ya kadi imetengenezwa kwa vipimo visivyotosha ('+canvas.width+' × '+canvas.height+'). Jaribu tena.')
     return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG haikuundwa.')),'image/png'))
   } finally {
     root.unmount()
@@ -301,40 +308,42 @@ async function shareECard(card, mode, setMessage) {
 function ECardImageShareButton({card,guest=null,onMessage,label='Shiriki picha WhatsApp'}) {
   const [preparedFile,setPreparedFile]=useState(null)
   const [preparing,setPreparing]=useState(true)
+  const [prepareError,setPrepareError]=useState('')
+  const prepareImage=async()=>{
+    setPreparing(true);setPrepareError('');setPreparedFile(null)
+    try{
+      const blob=await createECardPng(card,guest)
+      const file=new File([blob],'ForteEvents-'+String(guest?.guest_name||card?.title||'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'})
+      setPreparedFile(file);return file
+    }catch(error){
+      const message=error?.message||'Jaribu tena.'
+      setPrepareError(message);onMessage('Picha haikuweza kuandaliwa: '+message);return null
+    }finally{setPreparing(false)}
+  }
   useEffect(()=>{
     let active=true
-    setPreparedFile(null)
-    setPreparing(true)
+    setPreparedFile(null);setPreparing(true);setPrepareError('')
     createECardPng(card,guest).then(blob=>{
-      if(active) setPreparedFile(new File([blob],
-        'ForteEvents-'+String(guest?.guest_name||card?.title||'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png',
-        {type:'image/png'}))
+      if(active)setPreparedFile(new File([blob],'ForteEvents-'+String(guest?.guest_name||card?.title||'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png',{type:'image/png'}))
     }).catch(error=>{
-      if(active) onMessage('Picha haikuweza kuandaliwa: '+(error?.message||'Jaribu tena.'))
+      if(active){const message=error?.message||'Jaribu tena.';setPrepareError(message);onMessage('Picha haikuweza kuandaliwa: '+message)}
     }).finally(()=>{if(active)setPreparing(false)})
     return ()=>{active=false}
-  },[card,guest,onMessage])
+  },[card?.id,card?.updated_at,card?.design,guest?.id,guest?.token,guest?.guest_name,onMessage])
   const shareImage=()=>{
-    if(!preparedFile){onMessage('Subiri picha ya kadi ikamilishe kuandaliwa.');return}
-    const shareData={files:[preparedFile],text:'Mwaliko wako wa ForteEvents.'+(card?.location_url?'\\n\\nRamani ya ukumbi: '+card.location_url:'')}
+    if(!preparedFile){if(!preparing)prepareImage();else onMessage('Subiri picha ya kadi ikamilishe kuandaliwa.');return}
+    const shareData={files:[preparedFile],text:'Mwaliko wako wa ForteEvents.'+(card?.location_url?'\n\nRamani ya ukumbi: '+card.location_url:'')}
     if(!navigator.share||!navigator.canShare||!navigator.canShare({files:[preparedFile]})){
-      onMessage('Kivinjari hiki hakiwezi kutuma picha moja kwa moja. Tumia Chrome ya simu yenye kipengele cha kushiriki faili.');return
+      onMessage('Kivinjari hiki hakiwezi kutuma picha moja kwa moja. Pakua PNG kisha uiambatishe WhatsApp.');return
     }
-    try {
-      const pendingShare=navigator.share(shareData)
-      onMessage('Chagua WhatsApp kwenye menyu ya kushiriki ili kutuma picha ya kadi.')
-      pendingShare.catch(error=>{
-        if(error?.name!=='AbortError') onMessage('Picha haikutumwa: '+(error?.message||'Jaribu tena.'))
-      })
-    } catch(error) {
-      onMessage('Picha haikutumwa: '+(error?.message||'Jaribu tena.'))
-    }
+    navigator.share(shareData).then(()=>onMessage('Picha imeshirikishwa.')).catch(error=>{
+      if(error?.name!=='AbortError')onMessage('Picha haikutumwa: '+(error?.message||'Jaribu tena.'))
+    })
   }
-  return <button type="button" className="secondary-button" onClick={shareImage} disabled={preparing||!preparedFile}>
-    {preparing?'Inaandaa picha...':label}
+  return <button type="button" className="secondary-button" onClick={shareImage} disabled={preparing}>
+    {preparing?'Inaandaa picha...':preparedFile?label:'Jaribu tena kuandaa picha'}
   </button>
 }
-
 function AdminCustomers({ session, onBack }) {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -1028,7 +1037,7 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
-        design: { ...defaultECardDesign, templateId: selectedTemplateId, templateSnapshot: { id: selectedECardTemplate?.id || selectedTemplateId, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
+        design: { ...defaultECardDesign, templateId: selectedECardTemplate?.id || selectedTemplateId, templateSnapshot: { ...selectedECardTemplate, id: selectedECardTemplate?.id || selectedTemplateId, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || selectedECardTemplate?.design?.style || getECardTemplate(selectedTemplateId)?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || selectedECardTemplate?.design?.artwork || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
         event_time: eCardForm.event_time || null,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
@@ -1046,7 +1055,7 @@ function App() {
         : supabase.from('e_cards').insert(payload).select().single()
       const { data, error } = await query
       if (error) throw error
-      setECardMessage('E-card imehifadhiwa. Template: '+getECardTemplate(selectedTemplateId)?.name+'. Kadi hii sasa ndiyo itatumika kwenye PNG, WhatsApp na uchapishaji.')
+      setECardMessage('E-card imehifadhiwa. Template: '+(selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name)+'. Kadi hii sasa ndiyo itatumika kwenye PNG, WhatsApp na uchapishaji.')
       setGuestCardId(data.id)
       resetECardForm()
       await Promise.all([loadECards(),loadECardGuests(data.id)])
@@ -3437,7 +3446,7 @@ return (
                   recipientName={g.guest_name}
                   qrUrl={guestUrl}
                 />
-                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);const href=URL.createObjectURL(png);const a=document.createElement('a');a.href=href;a.download='ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png';a.click();URL.revokeObjectURL(href)}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><ECardImageShareButton card={card} guest={g} onMessage={setECardMessage} label="Shiriki picha WhatsApp"/><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
+                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);downloadECardPng(png,'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png')}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><ECardImageShareButton card={card} guest={g} onMessage={setECardMessage} label="Shiriki picha WhatsApp"/><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
               </div>
             })}
           </div>
@@ -3448,13 +3457,14 @@ return (
                 <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p><p><strong>Template:</strong> {getSavedECardTemplate(card)?.name || 'Ivory & Gold Roses'}</p>
                 <p><strong>Hali:</strong> {card.is_published ? 'Imechapishwa' : 'Haijachapishwa'}</p>
                 <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
+                <button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng(card);downloadECardPng(png,'ForteEvents-'+String(card.title||'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png');setECardMessage('Kadi imepakuliwa kama PNG.')}catch(error){setECardMessage('Imeshindikana kupakua kadi: '+(error?.message||'Jaribu tena.'))}}}>Pakua PNG</button>{' '}
+                <ECardImageShareButton card={card} onMessage={setECardMessage} label="Shiriki picha WhatsApp"/>{' '}
                 <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
                 <button type="button" className="danger-button" onClick={() => deleteECard(card)} aria-label={'Futa kadi '+card.title}>🗑 Futa kadi</button>
                 {card.is_published && <>
                   <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
                     <button type="button" className="primary-button" onClick={() => shareECard(card, 'link', setECardMessage)}>WhatsApp — Link</button>
-                    <ECardImageShareButton card={card} onMessage={setECardMessage} label="WhatsApp — Picha"/>
-                    <ECardImageShareButton card={card} onMessage={setECardMessage} label="WhatsApp — Link + Picha"/>
+                    <button type="button" className="secondary-button" onClick={() => window.print()}>Chapisha</button>
                     <button type="button" className="secondary-button" onClick={async () => {
                       const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
                       try {
