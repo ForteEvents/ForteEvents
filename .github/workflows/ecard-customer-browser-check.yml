@@ -23,10 +23,10 @@ jobs:
         with:
           node-version: 24
       - name: Install app dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund --package-lock=false
       - name: Install Playwright and Chromium
         run: |
-          npm install --no-save playwright
+          npm install --no-save --no-audit --no-fund --package-lock=false playwright
           npx playwright install --with-deps chromium
       - name: Run test-customer E-card flow
         env:
