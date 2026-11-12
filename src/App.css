@@ -2435,7 +2435,7 @@ button[type="submit"] {
 .ecard-luxury-venue{top:68.5%;left:18%;width:64%;font-size:2.55cqw;line-height:1.12}
 .ecard-luxury-venue b{font-size:2.7cqw}
 .ecard-luxury-message{top:73.4%;left:8%;width:84%;height:8.8%;max-height:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:var(--ecard-message-size,2.7cqw);line-height:1.13;padding:0 .5cqw;box-sizing:border-box}
-.ecard-luxury-qr{top:84%;left:30%;width:21%;padding:.8cqw}
+.ecard-luxury-qr{top:83.5%;left:30%;width:21%;padding:.8cqw}
 .ecard-luxury-brand{top:84.5%;left:56%;width:36%;height:12%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5cqw}
 .ecard-luxury-brand img{width:72%;height:72%;object-fit:contain}
 .ecard-luxury-brand span{font-size:2.35cqw;line-height:1.05;white-space:normal}
