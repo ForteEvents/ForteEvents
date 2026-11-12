@@ -2694,3 +2694,13 @@ button[type="submit"] {
 .ecard-layout-editing [data-editor-element]:active{cursor:grabbing;outline:2px solid #a77b20}
 @media(max-width:850px){.ecard-studio-grid{grid-template-columns:1fr}.ecard-studio-preview{order:1}.ecard-studio-tools{order:2}}
 @media(max-width:520px){.ecard-studio-permissions{grid-template-columns:1fr}.ecard-studio-coordinates{grid-template-columns:1fr 90px}}
+
+/* Card-relative layout coordinates scale identically in preview, public view and PNG export. */
+.ecard-professional-preview{container-type:inline-size}
+.ecard-layout-editing .ecard-luxury-background{pointer-events:auto;cursor:grab;touch-action:none}
+.ecard-layout-editing .ecard-template-flower{pointer-events:auto!important;cursor:grab;touch-action:none}
+.ecard-admin-styled .ecard-detail-line>b{color:var(--ecard-admin-accent)!important}
+.ecard-admin-styled .ecard-card-footer{color:var(--ecard-admin-accent)!important}
+.ecard-admin-styled .ecard-luxury-detail{color:var(--ecard-admin-text)}
+.ecard-admin-styled .ecard-luxury-occasion{color:var(--ecard-admin-accent)!important}
+.ecard-admin-styled .ecard-luxury-brand,.ecard-admin-styled .ecard-card-brand{font-family:var(--ecard-admin-font)}
