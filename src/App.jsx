@@ -837,10 +837,10 @@ function App() {
   const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
   const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
   const [selectedTemplateId, setSelectedTemplateId] = useState('forte-ivory-gold-rose')
+  const [ecardTemplateSettings,setEcardTemplateSettings]=useState({})
   const selectedECardTemplateBase = [...BUILT_IN_ECARD_TEMPLATES, ...ecardTemplates].find(item => item.id === selectedTemplateId) || BUILT_IN_ECARD_TEMPLATES[0]
   const selectedECardTemplate = {...selectedECardTemplateBase,templateConfig:ecardTemplateSettings[selectedTemplateId]?.config||{},templatePublished:Boolean(ecardTemplateSettings[selectedTemplateId]?.is_published)}
   const canEditTemplateField = key => selectedECardTemplate?.templateConfig?.permissions?.[key] !== false
-  const [ecardTemplateSettings,setEcardTemplateSettings]=useState({})
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
     event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
