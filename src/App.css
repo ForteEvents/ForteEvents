@@ -2642,3 +2642,40 @@ button[type="submit"] {
   text-align: center;
   white-space: nowrap;
 }
+
+
+/* Refine the Luxury Floral Gold footer: compact logo, no badge border,
+   QR/logo bottoms aligned, and a quiet centered tagline below. */
+.ecard-luxury-floral-card .ecard-luxury-qr {
+  top: 76.5%;
+  left: 28%;
+  width: 23%;
+}
+.ecard-luxury-floral-card .ecard-luxury-brand {
+  top: 82.5%;
+  left: 52%;
+  width: 30%;
+  height: 10.4%;
+  padding: .35cqw;
+  border: 0;
+  border-radius: 0;
+  background: rgba(255, 255, 255, .48);
+  box-shadow: 0 .25cqw .8cqw rgba(80, 55, 15, .10);
+  backdrop-filter: blur(.6px);
+}
+.ecard-luxury-floral-card .ecard-luxury-brand img {
+  width: 94%;
+  height: 94%;
+  object-fit: contain;
+}
+.ecard-luxury-floral-card .ecard-luxury-brand span {
+  top:  calc(100% + 1.1cqw);
+  left: -80%;
+  width: 180%;
+  font-size: 2.05cqw;
+  line-height: 1.05;
+  color: #8d671d;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 .15cqw .5cqw rgba(255,255,255,.75);
+}
