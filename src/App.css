@@ -562,7 +562,7 @@ button[type="submit"] {
 .ecard-sample-first-intro+.ecard-live-preview{margin-top:14px}
 
 /* ForteEvents professional landscape invitation studio */
-.ecard-professional-preview{width:100%;max-width:1120px;aspect-ratio:3/2;margin:24px auto 30px;padding:14px;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,2.1fr) minmax(245px,.92fr);gap:14px;border:5px double #bd861b;border-radius:14px;background:radial-gradient(ellipse at 65% 0%,#fff 0%,#fffaf0 62%,#f4e6cc 100%);box-shadow:0 12px 34px rgba(79,51,10,.18);font-family:Georgia,'Times New Roman',serif;color:#241a12;overflow:hidden}
+.ecard-professional-preview{container-type:inline-size;width:100%;max-width:1120px;aspect-ratio:3/2;margin:24px auto 30px;padding:14px;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,2.1fr) minmax(245px,.92fr);gap:14px;border:5px double #bd861b;border-radius:14px;background:radial-gradient(ellipse at 65% 0%,#fff 0%,#fffaf0 62%,#f4e6cc 100%);box-shadow:0 12px 34px rgba(79,51,10,.18);font-family:Georgia,'Times New Roman',serif;color:#241a12;overflow:hidden}
 .ecard-main-panel{position:relative;min-width:0;text-align:center;padding:15px 22px 12px;border-right:1px solid #d5b66f;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,250,239,.65))}
 .ecard-brand-lockup{align-self:flex-start;text-align:left;color:#a36b08;margin:0 0 4px 8px}
 .ecard-brand-lockup strong{display:block;font-size:clamp(17px,2.1vw,28px);line-height:1.05}
@@ -2739,6 +2739,7 @@ button[type="submit"] {
   box-sizing: border-box;
 }
 .ecard-professional-preview {
+  container-type: inline-size;
   min-width: 0;
   height: auto !important;
   overflow: visible !important;
@@ -2841,21 +2842,21 @@ button[type="submit"] {
 
 /* Keep the customer preview text at the same relative scale as the exported card. */
 .ecard-professional-preview .ecard-detail-line > b {
-  font-size: 1.5cqw !important;
+  font-size: clamp(10px, 1.15cqw, 13px) !important;
   line-height: 1.15 !important;
 }
 .ecard-professional-preview .ecard-detail-line > span {
-  font-size: 1.65cqw !important;
+  font-size: clamp(11px, 1.25cqw, 15px) !important;
   line-height: 1.18 !important;
 }
 .ecard-professional-preview .ecard-detail-line > span strong,
 .ecard-professional-preview .ecard-detail-line > span .ecard-phone-link {
-  font-size: 1.9cqw !important;
+  font-size: clamp(13px, 1.45cqw, 17px) !important;
   line-height: 1.18 !important;
   font-weight: 700 !important;
 }
 .ecard-professional-preview .ecard-detail-line {
-  gap: .35cqw !important;
+  gap: clamp(3px, .3cqw, 4px) !important;
 }
 
 /* Clear, compact sans-serif participant names; avoid decorative script faces. */
