@@ -2664,6 +2664,5 @@ button[type="submit"] {
 .ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-brand:active,
 .ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-tagline-drag:active{cursor:grabbing}
 .ecard-luxury-tagline-drag{position:absolute;z-index:3;text-align:center;color:#8d671d;font-family:Georgia,serif;font-style:italic;font-size:2.05cqw;line-height:1.05;white-space:nowrap;text-shadow:0 .1cqw .25cqw rgba(255,255,255,.45)}
-.ecard-luxury-floral-card:not(.ecard-layout-editing) .ecard-luxury-tagline-drag{display:none}
-.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-brand span{display:none}
+.ecard-luxury-floral-card .ecard-luxury-brand span{display:none}
 @media(max-width:520px){.ecard-layout-editor-panel{padding:11px}.ecard-layout-controls label{align-items:flex-start;flex-direction:column}.ecard-layout-controls input[type=range]{width:100%}}
