@@ -233,7 +233,9 @@ async function createECardPng(card, guest = null) {
   const root=createRoot(host)
   try {
     const templateId=getSavedECardTemplateId(card)
-    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+templateId} card={card} templateId={templateId} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
+    const {data:publishedSetting}=await supabase.from('e_card_template_settings').select('config').eq('template_id',templateId).eq('is_published',true).maybeSingle()
+    const exportCard=publishedSetting?.config ? {...card,design:{...getECardDesignData(card),templateConfig:publishedSetting.config}} : card
+    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+templateId} card={exportCard} templateId={templateId} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
     let qrImage=null
@@ -652,7 +654,7 @@ function AdminECardTemplateStudio({session,onBack}){
     if(uploaded.error)setError('Sampuli: '+uploaded.error.message);
     if(settings.error)setError('Mipangilio: '+settings.error.message);
     const rows=settings.data||[];
-    const all=[...BUILT_IN_ECARD_TEMPLATES,...(uploaded.data||[]).filter(x=>x.is_active)];
+    const all=[...BUILT_IN_ECARD_TEMPLATES,...(uploaded.data||[])];
     const merged=all.map(t=>({...t,adminConfig:rows.find(x=>x.template_id===t.id)?.config||{},adminPublished:rows.find(x=>x.template_id===t.id)?.is_published||false}));
     setTemplates(merged);
     const current=merged.find(t=>t.id===selectedId)||merged[0];
@@ -679,7 +681,7 @@ function AdminECardTemplateStudio({session,onBack}){
     else{setPublished(publish);setNotice(publish?'Kiolezo kimehifadhiwa na kuchapishwa kwa wateja wote.':'Mpangilio umehifadhiwa kama rasimu; wateja bado hawaoni mabadiliko.');await load();}
     setBusy(false);
   };
-  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',design:{templateId:selectedId,templateSnapshot:selected,templateConfig:config}};
+  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...(config.defaults||{}),design:{templateId:selectedId,templateSnapshot:selected,templateConfig:config}};
   return <>
     <div className="page-header"><div><h1>Studio ya Miundo ya E-card</h1><p>Wewe Admin unapanga kadi kuu; wateja wanapata muundo uliouchapisha.</p></div><button className="secondary-button" onClick={onBack}>Rudi Dashboard</button></div>
     {loading?<p>Inapakia miundo...</p>:<>
@@ -1140,7 +1142,14 @@ function App() {
       setECardMessage('Imeshindikana kupakia E-card: ' + error.message)
       setECards([])
     } else {
-      setECards(data || [])
+      const {data:publishedSettings}=await supabase.from('e_card_template_settings').select('template_id,config').eq('is_published',true)
+      const settingsById=Object.fromEntries((publishedSettings||[]).map(row=>[row.template_id,row.config]))
+      const cards=(data||[]).map(card=>{
+        const templateId=getSavedECardTemplateId(card)
+        const config=settingsById[templateId]
+        return config ? {...card,design:{...getECardDesignData(card),templateConfig:config}} : card
+      })
+      setECards(cards)
       setECardMessage('')
     }
     setECardsLoading(false)
