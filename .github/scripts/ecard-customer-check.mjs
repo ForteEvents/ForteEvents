@@ -18,7 +18,21 @@ try {
   await page.getByPlaceholder('Email', { exact: true }).fill(email)
   await page.getByPlaceholder('Password', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Login', exact: true }).click()
-  await page.getByRole('button', { name: 'E-card', exact: true }).waitFor({ state: 'visible', timeout: 60000 })
+  const ecardNav = page.getByRole('button', { name: 'E-card', exact: true })
+  try {
+    await ecardNav.waitFor({ state: 'visible', timeout: 60000 })
+  } catch (error) {
+    const state = await page.evaluate(() => ({
+      url: location.href,
+      title: document.title,
+      headings: [...document.querySelectorAll('h1,h2,h3')].map(el => (el.innerText || '').trim()).filter(Boolean).slice(0, 20),
+      visibleButtons: [...document.querySelectorAll('button')].filter(el => el.getClientRects().length).map(el => (el.innerText || el.getAttribute('aria-label') || '').trim()).filter(Boolean).slice(0, 40),
+      alerts: [...document.querySelectorAll('[role="alert"],[role="status"]')].filter(el => el.getClientRects().length).map(el => (el.innerText || '').trim()).filter(Boolean).slice(0, 20),
+      loginFormVisible: [...document.querySelectorAll('input')].some(el => el.getClientRects().length && /password/i.test(el.type))
+    }))
+    await fs.writeFile('artifacts/ecard-login-diagnostics.json', JSON.stringify(state, null, 2))
+    throw new Error('E-card navigation did not appear after login. Safe page diagnostics saved to artifacts/ecard-login-diagnostics.json. Original: ' + error.message)
+  }
   await page.getByRole('button', { name: 'E-card', exact: true }).click()
   await page.getByText('Chagua kadi unayoipenda').waitFor({ state: 'visible', timeout: 30000 })
 
