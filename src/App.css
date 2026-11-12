@@ -1824,7 +1824,7 @@ button[type="submit"] {
 .ecard-card-qr-caption{font-size:9px!important}
 .ecard-card-brand img{max-height:28px!important}
 .ecard-floral-top{position:absolute!important;right:3px!important;top:2px!important;width:clamp(82px,15vw,118px)!important;height:auto!important;max-width:20%!important;z-index:2!important;display:block!important}
-.ecard-floral-bottom{display:block!important;width:clamp(75px,13vw,100px)!important;height:auto!important;margin:3px auto 0!important;transform:rotate(180deg)!important}
+.ecard-floral-bottom{display:block!important;width:clamp(75px,13vw,100px)!important;height:auto!important;margin:3px auto 0!important;}
 .ecard-card-footer{margin:3px auto 0!important;font-size:9px!important}
 .ecard-professional-preview.ecard-export-mode{width:760px!important;min-width:760px!important;max-width:760px!important;height:auto!important;min-height:0!important;aspect-ratio:auto!important;overflow:visible!important}
 .ecard-export-mode>.ecard-main-panel{position:relative!important;inset:auto!important;height:auto!important;min-height:0!important;overflow:visible!important}
