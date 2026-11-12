@@ -1824,7 +1824,7 @@ button[type="submit"] {
 .ecard-card-qr-caption{font-size:9px!important}
 .ecard-card-brand img{max-height:28px!important}
 .ecard-floral-top{position:absolute!important;right:3px!important;top:2px!important;width:clamp(82px,15vw,118px)!important;height:auto!important;max-width:20%!important;z-index:2!important;display:block!important}
-.ecard-floral-bottom{display:block!important;width:clamp(75px,13vw,100px)!important;height:auto!important;margin:3px auto 0!important;transform:rotate(180deg)!important}
+.ecard-floral-bottom{display:block!important;width:clamp(75px,13vw,100px)!important;height:auto!important;margin:3px auto 0!important;}
 .ecard-card-footer{margin:3px auto 0!important;font-size:9px!important}
 .ecard-professional-preview.ecard-export-mode{width:760px!important;min-width:760px!important;max-width:760px!important;height:auto!important;min-height:0!important;aspect-ratio:auto!important;overflow:visible!important}
 .ecard-export-mode>.ecard-main-panel{position:relative!important;inset:auto!important;height:auto!important;min-height:0!important;overflow:visible!important}
@@ -2704,3 +2704,11 @@ button[type="submit"] {
 .ecard-admin-styled .ecard-luxury-detail{color:var(--ecard-admin-text)}
 .ecard-admin-styled .ecard-luxury-occasion{color:var(--ecard-admin-accent)!important}
 .ecard-admin-styled .ecard-luxury-brand,.ecard-admin-styled .ecard-card-brand{font-family:var(--ecard-admin-font)}
+
+/* Admin can arrange each flower independently in every E-card design. */
+.ecard-studio-flower{position:absolute!important;display:block;width:30%!important;max-width:30%!important;height:auto!important;margin:0!important;z-index:4;pointer-events:none}
+.ecard-studio-flower-top{left:0;top:0}
+.ecard-studio-flower-bottom{right:0;bottom:0}
+.ecard-layout-editing .ecard-studio-flower{pointer-events:auto;cursor:grab;touch-action:none}
+.ecard-layout-editing .ecard-template-flower{pointer-events:auto!important;cursor:grab!important;touch-action:none}
+.ecard-layout-editing .ecard-template-flower:active,.ecard-layout-editing .ecard-studio-flower:active{cursor:grabbing}
