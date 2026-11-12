@@ -2679,3 +2679,20 @@ button[type="submit"] {
   white-space: nowrap;
   text-shadow: 0 .15cqw .5cqw rgba(255,255,255,.75);
 }
+
+
+/* Bring the ForteEvents mark tightly toward the QR; keep its backing nearly invisible. */
+.ecard-luxury-floral-card .ecard-luxury-brand {
+  left: 48.5%;
+  width: 32%;
+  align-items: flex-start;
+  padding: .15cqw 0;
+  background: rgba(255, 255, 255, .16);
+  box-shadow: 0 .12cqw .35cqw rgba(80, 55, 15, .045);
+  backdrop-filter: blur(.15px);
+}
+.ecard-luxury-floral-card .ecard-luxury-brand img {
+  width: 100%;
+  height: 100%;
+  object-position: left center;
+}
