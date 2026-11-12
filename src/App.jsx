@@ -134,7 +134,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
   </article>
 }
-function ECardFloralOrnament({className='',variant='ivory-gold'}){
+function ECardFloralOrnament({className='',variant='ivory-gold',editorProps={}}){
   const palettes={
     'ivory-gold':{petal:'#fffdf7',shadow:'#e8dfd1',inner:'#f4eee5',center:'#c79b43',leaf:'#78845d',stem:'#8d7951'},
     'blush-rose':{petal:'#f5cbd2',shadow:'#df9eaa',inner:'#ffe8e8',center:'#a94c60',leaf:'#73856a',stem:'#98705d'},
@@ -154,7 +154,7 @@ function ECardFloralOrnament({className='',variant='ivory-gold'}){
     <path d="M-4 0 C-4 -7 5 -8 5 -1 C5 4 -2 6 -4 0Z" fill={p.center} stroke="none"/>
     <circle cx="0" cy="0" r="2.5" fill="#f7df9d" stroke="none"/>
   </g>;
-  return <svg {...(arguments[0]?.editorProps||{})} className={['ecard-floral-ornament','ecard-floral-'+variant,className].filter(Boolean).join(' ')} viewBox="0 0 300 230" aria-hidden="true" focusable="false">
+  return <svg {...editorProps} className={['ecard-floral-ornament','ecard-floral-'+variant,className].filter(Boolean).join(' ')} viewBox="0 0 300 230" aria-hidden="true" focusable="false">
     <g fill="none" stroke={p.stem} strokeWidth="2.5" strokeLinecap="round">
       <path d="M8 220 C46 185 56 143 103 112 C154 79 213 64 291 8"/>
       <path d="M36 188 C14 169 13 148 22 129 C48 139 55 165 36 188Z" fill={p.leaf}/>
