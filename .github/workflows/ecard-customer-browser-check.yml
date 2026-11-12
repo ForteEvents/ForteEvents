@@ -28,6 +28,22 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund --package-lock=false playwright
           npx playwright install --with-deps chromium
+      - name: Diagnose test secret availability
+        env:
+          FORTE_TEST_EMAIL: ${{ secrets.FORTE_TEST_EMAIL }}
+          FORTE_TEST_PASSWORD: ${{ secrets.FORTE_TEST_PASSWORD }}
+        shell: bash
+        run: |
+          if [ -n "$FORTE_TEST_EMAIL" ]; then
+            echo "FORTE_TEST_EMAIL: PRESENT"
+          else
+            echo "FORTE_TEST_EMAIL: MISSING_OR_EMPTY"
+          fi
+          if [ -n "$FORTE_TEST_PASSWORD" ]; then
+            echo "FORTE_TEST_PASSWORD: PRESENT"
+          else
+            echo "FORTE_TEST_PASSWORD: MISSING_OR_EMPTY"
+          fi
       - name: Run test-customer E-card flow
         env:
           FORTE_BASE_URL: ${{ inputs.base_url }}
