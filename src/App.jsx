@@ -69,15 +69,21 @@ const ECARD_DRESS_PALETTE = [
   {value:'Cream',label:'Cream',hex:'#f2e6c9'}, {value:'Beige',label:'Beige',hex:'#d9c6a0'}
 ]
 function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]',copy={}){
- const occasion=String(card?.occasion||'').toLowerCase();let eventLine,coupleName=''
- if(occasion.includes('send'))eventLine='kwenye send-off ya binti yao '+(card?.title||'[JINA LA MHUSIKA]')+'.'
- else if(occasion.includes('harusi')){coupleName=[card?.bride_name,card?.groom_name].filter(Boolean).join(' na ')||card?.title||'[MAJINA YA BIBI NA BWANA HARUSI]';eventLine='kwenye harusi ya vijana wao wapendwa'}
- else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
- if(copy.eventLine)eventLine=String(copy.eventLine).replaceAll('{event}',card?.title||'[JINA LA TUKIO]').replaceAll('{occasion}',card?.occasion||'tukio').replaceAll('{couple}',coupleName)
- if(copy.coupleName)coupleName=String(copy.coupleName).replaceAll('{bride}',card?.bride_name||'').replaceAll('{groom}',card?.groom_name||'').replaceAll('{event}',card?.title||'')
- return {intro:copy.invitationIntro||'Wanayo furaha kukualika',titles:copy.invitationTitles||'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
+ const occasion=String(card?.occasion||'').toLowerCase();
+ let eventLine='',coupleName='';
+ if(occasion.includes('send')){
+   coupleName=String(card?.bride_name||'').trim();
+   eventLine='kwenye send-off ya binti yao.';
+ }else if(occasion.includes('harusi')){
+   coupleName=[card?.bride_name,card?.groom_name].map(value=>String(value||'').trim()).filter(Boolean).join(' na ');
+   eventLine='kwenye harusi ya vijana wao wapendwa.';
+ }else{
+   eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+'.';
+ }
+ if(copy.eventLine)eventLine=String(copy.eventLine).replaceAll('{event}',card?.title||'').replaceAll('{occasion}',card?.occasion||'tukio').replaceAll('{couple}',coupleName);
+ return {intro:copy.invitationIntro||'Wanayo furaha kukualika',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName};
 }
-function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
+function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 
 function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement}){
   const config=getECardTemplateConfig(card); const layout=config.layout||{}; const copy=config.copy||{};
@@ -104,7 +110,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     </div>
     <div className="ecard-luxury-family" {...elementProps('family')}><span>{copy.familyLabel||'Familia ya'}</span><strong>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
     <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple copy={copy} editorProps={elementProps('invitation')}/>
-    <div className="ecard-luxury-couple" {...elementProps('couple')}>{parts.coupleName||'MAJINA YA BIBI NA BWANA HARUSI'}</div>
+    {parts.coupleName&&<div className="ecard-luxury-couple" {...elementProps('couple')}>{parts.coupleName}</div>}
     <div className="ecard-luxury-date" {...elementProps('date')}>{dateText}</div>
     <div className="ecard-luxury-details" {...elementProps('details')}>
       <div className="ecard-luxury-detail-column">
