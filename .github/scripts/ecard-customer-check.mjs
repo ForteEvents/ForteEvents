@@ -10,8 +10,13 @@ await fs.mkdir('artifacts', { recursive: true })
 const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, deviceScaleFactor: 1 })
 const failures = []
+const authResponses = []
 page.on('pageerror', error => failures.push('PAGE ERROR: ' + error.message))
 page.on('console', message => { if (message.type() === 'error') failures.push('CONSOLE: ' + message.text()) })
+page.on('response', response => {
+  const url = new URL(response.url())
+  if (/supabase|auth/i.test(url.hostname + url.pathname)) authResponses.push({ url: url.origin + url.pathname, status: response.status() })
+})
 
 try {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 })
@@ -28,8 +33,11 @@ try {
       headings: [...document.querySelectorAll('h1,h2,h3')].map(el => (el.innerText || '').trim()).filter(Boolean).slice(0, 20),
       visibleButtons: [...document.querySelectorAll('button')].filter(el => el.getClientRects().length).map(el => (el.innerText || el.getAttribute('aria-label') || '').trim()).filter(Boolean).slice(0, 40),
       alerts: [...document.querySelectorAll('[role="alert"],[role="status"]')].filter(el => el.getClientRects().length).map(el => (el.innerText || '').trim()).filter(Boolean).slice(0, 20),
+      visibleMessages: [...document.querySelectorAll('.message')].filter(el => el.getClientRects().length).map(el => (el.innerText || '').trim()).filter(Boolean).slice(0, 20),
       loginFormVisible: [...document.querySelectorAll('input')].some(el => el.getClientRects().length && /password/i.test(el.type))
     }))
+    state.authResponses = authResponses
+    state.browserErrors = failures
     await fs.writeFile('artifacts/ecard-login-diagnostics.json', JSON.stringify(state, null, 2))
     throw new Error('E-card navigation did not appear after login. Safe page diagnostics saved to artifacts/ecard-login-diagnostics.json. Original: ' + error.message)
   }
