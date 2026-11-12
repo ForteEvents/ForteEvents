@@ -1197,7 +1197,7 @@ function App() {
       setECardMessage('Jaza jina la tukio na tarehe.')
       return
     }
-    const textLimits = { title:45, host_names:55, bride_name:40, groom_name:40, ceremony_venue:55, reception_venue:55, food_note:70, dress_code:35, rsvp_contact_name:35, rsvp_contact_name_2:35, rsvp_contact_phone:20, rsvp_contact_phone_2:20, venue:55, message:220 }
+    const textLimits = { title:45, host_names:40, bride_name:28, groom_name:28, ceremony_venue:55, reception_venue:55, food_note:70, dress_code:35, rsvp_contact_name:35, rsvp_contact_name_2:35, rsvp_contact_phone:20, rsvp_contact_phone_2:20, venue:55, message:120 }
     const exceeded = Object.entries(textLimits).find(([field,limit]) => String(eCardForm[field] || '').trim().length > limit)
     if (exceeded) {
       const labels = {title:'Jina la tukio',host_names:'Jina la familia',bride_name:'Jina la bibi harusi',groom_name:'Jina la bwana harusi',ceremony_venue:'Mahali pa ibada',reception_venue:'Mahali pa mapokezi',food_note:'Ujumbe wa chakula',dress_code:'Dress code',rsvp_contact_name:'Jina la mawasiliano 1',rsvp_contact_name_2:'Jina la mawasiliano 2',rsvp_contact_phone:'Simu ya mawasiliano 1',rsvp_contact_phone_2:'Simu ya mawasiliano 2',venue:'Mahali / Ukumbi',message:'Ujumbe wa familia'}
@@ -3505,15 +3505,15 @@ return (
                 <option>Harusi</option><option>Send-off</option><option>Kipaimara</option><option>Graduation</option><option>Birthday</option><option>Kitchen Party</option><option>Shukrani</option><option>Kupongeza</option><option>Kumuaga</option><option>Tukio lingine</option>
               </select>
               <label>Jina la familia inayoalika</label>
-              <input value={eCardForm.host_names} maxLength={55} disabled={!canEditTemplateField('host_names')} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: Bwana na Bi. Amini Mlashi" />
+              <input value={eCardForm.host_names} maxLength={40} disabled={!canEditTemplateField('host_names')} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: Bwana na Bi. Amini Mlashi" />
               <label>Tarehe</label>
               <input type="date" value={eCardForm.event_date} disabled={!canEditTemplateField('event_date')} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
               <label>Muda wa tukio</label>
               <input type="time" value={eCardForm.event_time} disabled={!canEditTemplateField('event_time')} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
               <label>Jina la bibi harusi</label>
-              <input value={eCardForm.bride_name} maxLength={40} disabled={!canEditTemplateField('bride_name')} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
+              <input value={eCardForm.bride_name} maxLength={28} disabled={!canEditTemplateField('bride_name')} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
               <label>Jina la bwana harusi</label>
-              <input value={eCardForm.groom_name} maxLength={40} disabled={!canEditTemplateField('groom_name')} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
+              <input value={eCardForm.groom_name} maxLength={28} disabled={!canEditTemplateField('groom_name')} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
               <label>Muda wa ibada</label>
               <input type="time" value={eCardForm.ceremony_time} disabled={!canEditTemplateField('ceremony_time')} onChange={e => setECardForm(v => ({...v, ceremony_time:e.target.value}))} />
               <label>Mahali pa ibada</label>
@@ -3545,7 +3545,7 @@ return (
               <input type="url" value={eCardForm.location_url} disabled={!canEditTemplateField('location_url')} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
               <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
               <label>Ujumbe wa Familia</label>
-              <textarea rows="4" maxLength={220} value={eCardForm.message} disabled={!canEditTemplateField('message')} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
+              <textarea rows="4" maxLength={120} value={eCardForm.message} disabled={!canEditTemplateField('message')} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
               <p className="ecard-form-hint">Ujumbe huu utaonekana chini ya taarifa za mwaliko. Unaweza kuubadilisha au kuacha mfano huu.</p>
               <label>Pakia picha ya mwaliko (JPG, PNG au WEBP; hadi 5MB)</label>
               <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
