@@ -1353,6 +1353,11 @@ function App() {
           .eq('token', guestToken).eq('card_id', data.id).maybeSingle()
         guest = result.error ? null : result.data
       }
+      if (!error && data) {
+        const templateId=getSavedECardTemplateId(data)
+        const {data:publishedSetting}=await supabase.from('e_card_template_settings').select('config,is_published').eq('template_id',templateId).eq('is_published',true).maybeSingle()
+        if(publishedSetting?.config) data.design={...getECardDesignData(data),templateConfig:publishedSetting.config}
+      }
       if (active) {
         setPublicECard(error ? null : (data ? {...data, guest} : null))
         setPublicECardLoading(false)
