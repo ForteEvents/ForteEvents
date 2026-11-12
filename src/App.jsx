@@ -252,13 +252,22 @@ async function createECardPng(card, guest = null) {
     if(!qrImage?.complete || !qrImage.naturalWidth) throw new Error('QR ya mwaliko haijaandaliwa. Hakikisha intaneti ipo kisha jaribu tena.')
     const artwork=host.querySelector('.ecard-professional-preview, .ecard-luxury-floral-card')
     if(!artwork) throw new Error('Muundo wa kadi haujaandaliwa.')
+    const isLuxuryArtwork=artwork.classList.contains('ecard-luxury-floral-card')
     artwork.style.setProperty('width','760px','important')
-    artwork.style.setProperty('height','1064px','important')
     artwork.style.setProperty('max-width','none','important')
     artwork.style.setProperty('min-width','760px','important')
-    artwork.style.setProperty('aspect-ratio','auto','important')
     artwork.style.setProperty('margin','0','important')
-    artwork.style.setProperty('overflow','hidden','important')
+    if(isLuxuryArtwork){
+      artwork.style.setProperty('height','1064px','important')
+      artwork.style.setProperty('min-height','1064px','important')
+      artwork.style.setProperty('aspect-ratio','auto','important')
+      artwork.style.setProperty('overflow','hidden','important')
+    }else{
+      artwork.style.setProperty('height','auto','important')
+      artwork.style.setProperty('min-height','1064px','important')
+      artwork.style.setProperty('aspect-ratio','auto','important')
+      artwork.style.setProperty('overflow','visible','important')
+    }
     const images=Array.from(artwork.querySelectorAll('img'))
     await Promise.all(images.map(async image=>{
       if(!image.complete) await new Promise(resolve=>{image.onload=resolve;image.onerror=resolve})
@@ -267,7 +276,10 @@ async function createECardPng(card, guest = null) {
     const missing=images.find(image=>!image.naturalWidth)
     if(missing) throw new Error('Picha ya mapambo ya template haijapakia. Refresh ukurasa kisha jaribu tena.')
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
-    const canvas=await html2canvas(artwork,{backgroundColor:'#fffdf8',scale:2,useCORS:true,allowTaint:false,logging:false,width:760,height:1064,windowWidth:800,windowHeight:1200,scrollX:0,scrollY:0,x:0,y:0})
+    const exportBounds=artwork.getBoundingClientRect()
+    const exportWidth=Math.ceil(Math.max(760,exportBounds.width))
+    const exportHeight=Math.ceil(Math.max(1064,artwork.scrollHeight,exportBounds.height))
+    const canvas=await html2canvas(artwork,{backgroundColor:'#fffdf8',scale:2,useCORS:true,allowTaint:false,logging:false,width:exportWidth,height:exportHeight,windowWidth:800,windowHeight:Math.max(1200,exportHeight+100),scrollX:0,scrollY:0,x:0,y:0})
     if(canvas.width<1400 || canvas.height<1900) throw new Error('Picha ya kadi imetengenezwa kwa vipimo visivyotosha ('+canvas.width+' × '+canvas.height+'). Jaribu tena.')
     return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('PNG haikuundwa.')),'image/png'))
   } finally {
