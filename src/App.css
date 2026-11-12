@@ -2593,26 +2593,52 @@ button[type="submit"] {
 }
 
 
-/* Keep ForteEvents branding readable beside the QR without changing QR placement. */
+/* Luxury Floral Gold: QR and ForteEvents logo share one aligned row;
+   the tagline sits centered beneath both with clear space above the card edge. */
+.ecard-luxury-floral-card .ecard-luxury-message {
+  top: 72.9%;
+  height: 6%;
+  max-height: none;
+}
+.ecard-luxury-floral-card .ecard-luxury-qr {
+  top: 79.2%;
+  left: 28%;
+  width: 23%;
+  z-index: 2;
+}
 .ecard-luxury-floral-card .ecard-luxury-brand {
-  top: 83.2%;
-  left: 54%;
+  position: absolute;
+  top: 79.2%;
+  left: 52%;
   width: 40%;
-  height: 12.5%;
-  z-index: 20;
+  height: 16.43%;
+  z-index: 2;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
   padding: .8cqw;
-  background: rgba(255, 255, 255, .96);
+  background: rgba(255, 255, 255, .97);
   border: 1px solid #d5a52f;
   border-radius: 1.2cqw;
   box-shadow: 0 .3cqw 1cqw rgba(80, 55, 15, .12);
 }
 .ecard-luxury-floral-card .ecard-luxury-brand img {
-  width: 82%;
-  height: 68%;
+  display: block;
+  width: 86%;
+  height: 78%;
+  object-fit: contain;
 }
 .ecard-luxury-floral-card .ecard-luxury-brand span {
-  font-size: 2.2cqw;
-  line-height: 1.08;
-  color: #3b2a17;
+  position: absolute;
+  top: calc(100% + 1.1cqw);
+  left: -60%;
+  width: 160%;
+  font-size: 2.25cqw;
+  line-height: 1.1;
+  color: #8d671d;
+  text-align: center;
+  white-space: nowrap;
 }
