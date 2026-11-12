@@ -2609,6 +2609,24 @@ button[type="submit"] {
   padding: .8cqw;
   z-index: 2;
 }
+.ecard-luxury-floral-card .ecard-luxury-qr {
+  overflow: visible;
+}
+.ecard-luxury-floral-card .ecard-luxury-qr-type {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 1.1cqw);
+  transform: translateX(-50%);
+  color: #8d671d;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 2.8cqw;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .12cqw;
+  white-space: nowrap;
+  text-align: center;
+  text-shadow: 0 .1cqw .25cqw rgba(255,255,255,.6);
+}
 .ecard-luxury-floral-card .ecard-luxury-brand {
   position: absolute;
   top: 80%;

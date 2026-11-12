@@ -86,6 +86,7 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]',copy=
 function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 
 function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement}){
+  const guestType=String(guest?.invite_type || 'single').toLowerCase();
   const config=getECardTemplateConfig(card); const layout=config.layout||{}; const copy=config.copy||{};
   const dragRef=useRef(null);
   const elementStyle=(key)=>{const item=layout[key]||{};return {display:config.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(item.dx||0)+'cqw, '+(Number(item.dy||0)*1.4)+'cqw) scale('+Number(item.scale||1)+')',transformOrigin:'center center'};};
@@ -135,7 +136,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     {reception&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'MAHALI PA MAPOKEZI'}</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span>{card.food_note}</span></div>}
     <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(2.6,300/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
-    <div className="ecard-luxury-qr" {...elementProps('qr')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
+    <div className="ecard-luxury-qr" {...elementProps('qr')}><div className="ecard-luxury-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
     <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
     <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
   </article>
