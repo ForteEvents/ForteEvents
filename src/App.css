@@ -2823,3 +2823,17 @@ button[type="submit"] {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+
+/* Readable typography for event participant names across E-card templates.
+   Keep each template's existing size, color, placement and decoration. */
+.ecard-invitation-couple,
+.ecard-luxury-couple,
+.ecard-admin-styled .ecard-luxury-couple,
+.ecard-luxury-floral-card .ecard-luxury-couple {
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  text-shadow: none !important;
+}
