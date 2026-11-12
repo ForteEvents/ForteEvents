@@ -3617,6 +3617,7 @@ return (
             <form onSubmit={addECardGuest}>
               <label>Jina la mwalikwa (andika jina pekee; cheo rasmi huongezwa moja kwa moja)</label>
               <input value={guestName} maxLength={45} onChange={e => setGuestName(e.target.value)} placeholder="Jina la mgeni (hadi herufi 45)" required />
+              <small className="ecard-character-count" aria-live="polite">{String(guestName || '').length}/45 herufi</small>
               <label>Aina ya kadi</label>
               <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE</option><option value="double">DOUBLE</option></select>
               <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
