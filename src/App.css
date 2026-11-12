@@ -2581,3 +2581,13 @@ button[type="submit"] {
   width:760px!important;
   max-width:none!important;
 }
+
+
+/* Keep Luxury Floral Gold invitation copy inside its percentage-based text column.
+   The shared E-card rule sets width:100%!important, which overrides the template's
+   82% width while retaining its left offset and creates a 64px horizontal overflow. */
+.ecard-luxury-floral-card .ecard-luxury-invite-copy {
+  width: 82% !important;
+  max-width: 82% !important;
+  box-sizing: border-box !important;
+}

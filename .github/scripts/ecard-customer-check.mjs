@@ -69,7 +69,12 @@ try {
         const r = node.getBoundingClientRect()
         const cs = getComputedStyle(node)
         return { text: (node.innerText || '').trim().slice(0, 100), x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height), fontSize: cs.fontSize }
-      }).filter(x => x.text)
+      }).filter(x => x.text),
+      overflowingChildren: [...el.querySelectorAll('*')].map(node => {
+        const r = node.getBoundingClientRect()
+        const cs = getComputedStyle(node)
+        return { tag: node.tagName.toLowerCase(), className: typeof node.className === 'string' ? node.className : '', text: (node.innerText || node.getAttribute('alt') || '').trim().slice(0, 80), left: Math.round(r.left - rect.left), right: Math.round(r.right - rect.left), top: Math.round(r.top - rect.top), bottom: Math.round(r.bottom - rect.top), width: Math.round(r.width), height: Math.round(r.height), position: cs.position, overflow: cs.overflow }
+      }).filter(item => item.left < -2 || item.right > rect.width + 2 || item.top < -2 || item.bottom > rect.height + 2).slice(0, 40)
     }
   })
   await fs.writeFile('artifacts/ecard-layout.json', JSON.stringify({ baseUrl, geometry, browserErrors: failures }, null, 2))
