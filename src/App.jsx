@@ -117,7 +117,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue"><b>TAARIFA ZA MAPOKEZI</b><span>{card.food_note}</span></div>}
     <div className="ecard-luxury-message" style={{'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
     <div className="ecard-luxury-qr" style={{top:layout.qr.top+'%',left:layout.qr.left+'%',width:layout.qr.width+'%'}} onPointerDown={event=>startDrag('qr',event)}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
-    <div className="ecard-luxury-brand" style={{top:layout.brand.top+'%',left:layout.brand.left+'%',width:layout.brand.width+'%'}} onPointerDown={event=>startDrag('brand',event)}><img src="/forteevents-logo.png" alt="ForteEvents"/><span>Make your event extraordinary</span></div>
+    <div className="ecard-luxury-brand" style={{top:layout.brand.top+'%',left:layout.brand.left+'%',width:layout.brand.width+'%'}} onPointerDown={event=>startDrag('brand',event)}><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
     <div className="ecard-luxury-tagline-drag" style={{top:layout.tagline.top+'%',left:layout.tagline.left+'%',width:layout.tagline.width+'%'}} onPointerDown={event=>startDrag('tagline',event)}>Make your event extraordinary</div>
   </article>
 }
