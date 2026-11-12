@@ -2837,3 +2837,37 @@ button[type="submit"] {
   letter-spacing: 0.01em !important;
   text-shadow: none !important;
 }
+
+
+/* Keep the customer preview text at the same relative scale as the exported card. */
+.ecard-professional-preview .ecard-detail-line > b {
+  font-size: 1.5cqw !important;
+  line-height: 1.15 !important;
+}
+.ecard-professional-preview .ecard-detail-line > span {
+  font-size: 1.65cqw !important;
+  line-height: 1.18 !important;
+}
+.ecard-professional-preview .ecard-detail-line > span strong,
+.ecard-professional-preview .ecard-detail-line > span .ecard-phone-link {
+  font-size: 1.9cqw !important;
+  line-height: 1.18 !important;
+  font-weight: 700 !important;
+}
+.ecard-professional-preview .ecard-detail-line {
+  gap: .35cqw !important;
+}
+
+/* Clear, compact sans-serif participant names; avoid decorative script faces. */
+.ecard-invitation-couple,
+.ecard-luxury-couple,
+.ecard-admin-styled .ecard-luxury-couple,
+.ecard-luxury-floral-card .ecard-luxury-couple,
+.ecard-style-luxury-floral-gold .ecard-invitation-couple,
+.ecard-professional-preview .ecard-invitation-couple {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
