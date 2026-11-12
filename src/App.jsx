@@ -624,6 +624,91 @@ function AdminECardTemplates({ onBack, session }) {
   </>
 }
 
+
+function AdminECardTemplateStudio({session,onBack}){
+  const [templates,setTemplates]=useState([]);
+  const [selectedId,setSelectedId]=useState('forte-luxury-floral-gold');
+  const [config,setConfig]=useState({layout:{},copy:{},permissions:{}});
+  const [selectedElement,setSelectedElement]=useState('qr');
+  const [published,setPublished]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [notice,setNotice]=useState('');
+  const [error,setError]=useState('');
+  const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
+  const elements=[['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu'],['image','Picha']];
+  const copyFields=[['kicker','Kichwa cha kadi'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['brandTagline','Kauli mbiu ya ForteEvents']];
+  const load=async()=>{
+    setLoading(true);setError('');
+    const [uploaded,settings]=await Promise.all([
+      supabase.from('e_card_templates').select('*').order('created_at',{ascending:false}),
+      supabase.from('e_card_template_settings').select('*')
+    ]);
+    if(uploaded.error)setError('Sampuli: '+uploaded.error.message);
+    if(settings.error)setError('Mipangilio: '+settings.error.message);
+    const rows=settings.data||[];
+    const all=[...BUILT_IN_ECARD_TEMPLATES,...(uploaded.data||[]).filter(x=>x.is_active)];
+    const merged=all.map(t=>({...t,adminConfig:rows.find(x=>x.template_id===t.id)?.config||{},adminPublished:rows.find(x=>x.template_id===t.id)?.is_published||false}));
+    setTemplates(merged);
+    const current=merged.find(t=>t.id===selectedId)||merged[0];
+    if(current){setSelectedId(current.id);setConfig({layout:{},copy:{},permissions:{},...(current.adminConfig||{})});setPublished(Boolean(current.adminPublished));}
+    setLoading(false);
+  };
+  useEffect(()=>{load()},[]);
+  const choose=id=>{
+    const t=templates.find(x=>x.id===id);if(!t)return;
+    setSelectedId(id);setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});setPublished(Boolean(t.adminPublished));setNotice('');setError('');
+  };
+  const updateLayout=(key,patch)=>setConfig(v=>({...v,layout:{...(v.layout||{}),[key]:{...(v.layout?.[key]||{}),...patch}}}));
+  const updateCopy=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),[key]:value}}));
+  const updatePermission=(key,value)=>setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));
+  const save=async(publish)=>{
+    setBusy(true);setError('');setNotice('');
+    const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
+    if(saveError)setError('Haikuweza kuhifadhi kiolezo: '+saveError.message);
+    else{setPublished(publish);setNotice(publish?'Kiolezo kimehifadhiwa na kuchapishwa kwa wateja wote.':'Mpangilio umehifadhiwa kama rasimu; wateja bado hawaoni mabadiliko.');await load();}
+    setBusy(false);
+  };
+  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',design:{templateId:selectedId,templateSnapshot:selected,templateConfig:config}};
+  return <>
+    <div className="page-header"><div><h1>Studio ya Miundo ya E-card</h1><p>Wewe Admin unapanga kadi kuu; wateja wanapata muundo uliouchapisha.</p></div><button className="secondary-button" onClick={onBack}>Rudi Dashboard</button></div>
+    {loading?<p>Inapakia miundo...</p>:<>
+      {error&&<div className="card ecard-studio-error">{error}</div>}
+      {notice&&<div className="card ecard-studio-notice">{notice}</div>}
+      <div className="card">
+        <label>Chagua kiolezo cha kuhariri</label>
+        <select value={selectedId} onChange={e=>choose(e.target.value)}>{templates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
+        <p>Hali: <strong>{published?'Kimechapishwa kwa wateja':'Rasimu / hakijachapishwa'}</strong></p>
+      </div>
+      <div className="ecard-studio-grid">
+        <div className="card ecard-studio-preview">
+          <h3>Preview ya Admin — buruta vipengele</h3>
+          <ECardArtwork key={'admin-studio-'+selectedId} templateId={selectedId} template={selected} card={previewCard} recipientName="JINA LA MWALIKWA" guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}} qrUrl="https://forteevents.co.tz/admin-preview" layoutEditor onLayoutChange={updateLayout} onSelectLayoutElement={setSelectedElement}/>
+          <p>Chagua kipengele kwenye orodha, kisha kishike na kukivuta kwenye kadi. Mabadiliko yanaonekana papo hapo.</p>
+          <div className="ecard-studio-actions"><button className="secondary-button" type="button" onClick={()=>setConfig(v=>({...v,layout:{}}))}>Rudisha nafasi za mwanzo</button><button className="secondary-button" type="button" onClick={()=>setConfig(v=>({...v,layout:{...(v.layout||{}),[selectedElement]:{...(v.layout?.[selectedElement]||{}),scale:1}}}))}>Rudisha ukubwa</button></div>
+        </div>
+        <div className="card ecard-studio-tools">
+          <h3>Vipengele vya kadi</h3>
+          <label>Chagua kipengele cha kupanga</label>
+          <select value={selectedElement} onChange={e=>setSelectedElement(e.target.value)}>{elements.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
+          <label>Ukubwa wa kipengele</label>
+          <input type="range" min="0.5" max="2" step="0.05" value={config.layout?.[selectedElement]?.scale||1} onChange={e=>updateLayout(selectedElement,{scale:Number(e.target.value)})}/>
+          <div className="ecard-studio-coordinates"><label>Usogezaji mlalo (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dx||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dx:Number(e.target.value)||0})}/><label>Usogezaji wima (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dy||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dy:Number(e.target.value)||0})}/></div>
+          <h3>Maandishi ya kudumu ya kiolezo</h3>
+          {copyFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.copy?.[key]||''} onChange={e=>updateCopy(key,e.target.value)} placeholder="Acha wazi kutumia maandishi ya kawaida"/></label>)}
+          <h3>Ruhusa za mteja</h3>
+          <p>Weka tiki kwenye taarifa ambazo mteja anaruhusiwa kubadilisha. Zisizo na tiki zitakuwa fixed.</p>
+          <div className="ecard-studio-permissions">{ECARD_TEMPLATE_FIELDS.map(([key,label])=><label key={key}><input type="checkbox" checked={config.permissions?.[key]!==false} onChange={e=>updatePermission(key,e.target.checked)}/>{label}</label>)}</div>
+          <h3>Vipengele visivyoguswa na mteja</h3>
+          <p>QR Code, logo, kauli mbiu na mpangilio wa michoro vinadhibitiwa na Admin; mteja hawezi kuvivuta.</p>
+          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(false)}>{busy?'Inahifadhi...':'Hifadhi rasimu'}</button>
+          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(true)}>Hifadhi na chapisha kwa wateja</button>
+        </div>
+      </div>
+    </>}
+  </>
+}
+
 function AdminECardManagement({ onBack }) {
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
