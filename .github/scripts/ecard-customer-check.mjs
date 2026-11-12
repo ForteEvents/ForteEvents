@@ -80,12 +80,9 @@ try {
   await fs.writeFile('artifacts/ecard-layout.json', JSON.stringify({ baseUrl, geometry, browserErrors: failures }, null, 2))
   if (geometry.overflow) throw new Error('E-card preview container overflows; see artifacts/ecard-layout.json')
 
-  // Save one clearly labelled test card only. No guests are generated, so no TSh 500 guest credits are consumed.
-  await form.getByRole('button', { name: 'Hifadhi E-card', exact: true }).click()
-  await page.getByText(/E-card imehifadhiwa\./).waitFor({ state: 'visible', timeout: 45000 })
-  await page.screenshot({ path: 'artifacts/ecard-after-save.png', fullPage: true })
+  // Read-only QA: do not save the test card, create guests, or consume customer credits.
   if (failures.length) throw new Error('Browser reported errors: ' + failures.join('\n'))
-  console.log('PASS: test customer login, Luxury Floral Gold preview, layout measurement and E-card save.')
+  console.log('PASS: test customer login, Luxury Floral Gold preview and layout measurement. No card saved; no credits consumed.')
 } finally {
   await browser.close()
 }
