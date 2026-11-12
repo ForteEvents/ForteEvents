@@ -93,8 +93,11 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
   const contactLines=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')].filter(Boolean);
   const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
   const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
+  const flowerEditorProps=(key)=>({...elementProps(key),style:{...elementStyle(key),display:config.visibility?.[key]===true?'block':'none'}});
   return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} style={{'--ecard-admin-accent':config.style?.accent||'#a77b20','--ecard-admin-text':config.style?.text||'#252018','--ecard-admin-font':config.style?.font||'Georgia, serif'}} className={['ecard-luxury-floral-card','ecard-admin-styled',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
     <img className="ecard-luxury-background" {...elementProps('background')} src={config.media?.backgroundUrl||"/ecard-templates/luxury-floral-gold-bg.webp"} alt="" crossOrigin="anonymous"/>
+    <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-top" variant="ivory-gold" editorProps={flowerEditorProps('flowerTop')}/>
+    <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-bottom" variant="ivory-gold" editorProps={flowerEditorProps('flowerBottom')}/>
     <div className="ecard-luxury-heading" {...elementProps('heading')}>
       <div className="ecard-luxury-kicker" {...elementProps('kicker')}>{copy.kicker||'KADI YA MWALIKO'}</div>
       <div className="ecard-luxury-occasion" {...elementProps('occasion')}>{card?.occasion||'Harusi'}</div>
@@ -151,7 +154,7 @@ function ECardFloralOrnament({className='',variant='ivory-gold'}){
     <path d="M-4 0 C-4 -7 5 -8 5 -1 C5 4 -2 6 -4 0Z" fill={p.center} stroke="none"/>
     <circle cx="0" cy="0" r="2.5" fill="#f7df9d" stroke="none"/>
   </g>;
-  return <svg className={['ecard-floral-ornament','ecard-floral-'+variant,className].filter(Boolean).join(' ')} viewBox="0 0 300 230" aria-hidden="true" focusable="false">
+  return <svg {...(arguments[0]?.editorProps||{})} className={['ecard-floral-ornament','ecard-floral-'+variant,className].filter(Boolean).join(' ')} viewBox="0 0 300 230" aria-hidden="true" focusable="false">
     <g fill="none" stroke={p.stem} strokeWidth="2.5" strokeLinecap="round">
       <path d="M8 220 C46 185 56 143 103 112 C154 79 213 64 291 8"/>
       <path d="M36 188 C14 169 13 148 22 129 C48 139 55 165 36 188Z" fill={p.leaf}/>
@@ -192,8 +195,10 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
   if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement}/>
   return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} style={{'--ecard-admin-accent':universalConfig.style?.accent||'#a77b20','--ecard-admin-text':universalConfig.style?.text||'#252018','--ecard-admin-font':universalConfig.style?.font||'Georgia, serif'}} className={['ecard-professional-preview','ecard-admin-styled','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
-    <img className="ecard-template-flower ecard-template-flower-top" {...universalElementProps('background')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
-    <img className="ecard-template-flower ecard-template-flower-bottom" {...universalElementProps('background')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-top" {...universalElementProps('flowerTop')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-bottom" {...universalElementProps('flowerBottom')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+    <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-top" variant={style==='blush-rose'?'blush-rose':style==='blue-rose'?'blue-rose':'ivory-gold'} editorProps={{...universalElementProps('flowerTop'),style:{...universalElementProps('flowerTop').style,display:universalConfig.visibility?.flowerTop===true?'block':'none'}}}/>
+    <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-bottom" variant={style==='blush-rose'?'blush-rose':style==='blue-rose'?'blue-rose':'ivory-gold'} editorProps={{...universalElementProps('flowerBottom'),style:{...universalElementProps('flowerBottom').style,display:universalConfig.visibility?.flowerBottom===true?'block':'none'}}}/>
     <div className="ecard-main-panel">
       <div className="ecard-main-heading" {...universalElementProps('heading')}>
         <div className="ecard-document-title">{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
@@ -644,7 +649,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const [notice,setNotice]=useState('');
   const [error,setError]=useState('');
   const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
-  const elements=[['background','Mandhari ya kadi'],['image','Picha ya tukio'],['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']];
+  const elements=[['background','Mandhari ya kadi'],['flowerTop','Ua / pambo la juu'],['flowerBottom','Ua / pambo la chini'],['image','Picha ya tukio'],['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']];
   const copyFields=[['kicker','Kichwa cha kadi'],['invitationLabel','Neno la Invitation'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['eventLine','Sentensi ya mwaliko (tumia {event}, {occasion}, {couple})'],['coupleName','Maandishi ya majina (tumia {bride}, {groom}, {event})'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['qrCaption','Maelekezo chini ya QR'],['brandTagline','Kauli mbiu ya ForteEvents'],['footerText','Maandishi ya chini ya kadi']];
   const defaultFields=ECARD_TEMPLATE_FIELDS.filter(([key])=>!['dress_colors','image_url','location_url'].includes(key));
   const load=async()=>{
