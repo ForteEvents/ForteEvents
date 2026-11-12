@@ -2591,3 +2591,28 @@ button[type="submit"] {
   max-width: 82% !important;
   box-sizing: border-box !important;
 }
+
+
+/* Keep ForteEvents branding readable beside the QR without changing QR placement. */
+.ecard-luxury-floral-card .ecard-luxury-brand {
+  top: 83.2%;
+  left: 54%;
+  width: 40%;
+  height: 12.5%;
+  z-index: 20;
+  box-sizing: border-box;
+  padding: .8cqw;
+  background: rgba(255, 255, 255, .96);
+  border: 1px solid #d5a52f;
+  border-radius: 1.2cqw;
+  box-shadow: 0 .3cqw 1cqw rgba(80, 55, 15, .12);
+}
+.ecard-luxury-floral-card .ecard-luxury-brand img {
+  width: 82%;
+  height: 68%;
+}
+.ecard-luxury-floral-card .ecard-luxury-brand span {
+  font-size: 2.2cqw;
+  line-height: 1.08;
+  color: #3b2a17;
+}
