@@ -2649,3 +2649,20 @@ button[type="submit"] {
   white-space: nowrap;
   text-shadow: 0 .1cqw .25cqw rgba(255,255,255,.45);
 }
+
+
+/* Touch-friendly drag editor for the Luxury Floral Gold invitation footer. */
+.ecard-layout-editor-panel{margin:14px 0 18px;padding:14px;border:1px solid #d9c28b;border-radius:12px;background:#fffdf7}
+.ecard-layout-editor-panel>p{font-size:13px;line-height:1.5;color:#5d513d;margin:10px 0}
+.ecard-layout-controls{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.ecard-layout-controls label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+.ecard-layout-controls input[type=range]{width:55%;accent-color:#a77b20}
+.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-qr,
+.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-brand,
+.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-tagline-drag{touch-action:none;cursor:grab;outline:1px dashed #b58a35;outline-offset:3px}
+.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-qr:active,
+.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-brand:active,
+.ecard-luxury-floral-card.ecard-layout-editing .ecard-luxury-tagline-drag:active{cursor:grabbing}
+.ecard-luxury-tagline-drag{position:absolute;z-index:3;text-align:center;color:#8d671d;font-family:Georgia,serif;font-style:italic;font-size:2.05cqw;line-height:1.05;white-space:nowrap;text-shadow:0 .1cqw .25cqw rgba(255,255,255,.45)}
+.ecard-luxury-floral-card .ecard-luxury-brand span{display:none}
+@media(max-width:520px){.ecard-layout-editor-panel{padding:11px}.ecard-layout-controls label{align-items:flex-start;flex-direction:column}.ecard-layout-controls input[type=range]{width:100%}}
