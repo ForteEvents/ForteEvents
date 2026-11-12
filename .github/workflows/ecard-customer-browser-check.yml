@@ -7,6 +7,10 @@ on:
         description: 'ForteEvents web URL to test'
         required: true
         default: 'https://forteevents-web.onrender.com'
+      test_email:
+        description: 'Test customer email (not a password)'
+        required: true
+        default: 'fredrickglorious@gmail.com'
 
 permissions:
   contents: read
@@ -28,9 +32,9 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund --package-lock=false playwright
           npx playwright install --with-deps chromium
-      - name: Diagnose test secret availability
+      - name: Diagnose test credential availability
         env:
-          FORTE_TEST_EMAIL: ${{ secrets.FORTE_TEST_EMAIL }}
+          FORTE_TEST_EMAIL: ${{ inputs.test_email }}
           FORTE_TEST_PASSWORD: ${{ secrets.FORTE_TEST_PASSWORD }}
         shell: bash
         run: |
@@ -47,7 +51,7 @@ jobs:
       - name: Run test-customer E-card flow
         env:
           FORTE_BASE_URL: ${{ inputs.base_url }}
-          FORTE_TEST_EMAIL: ${{ secrets.FORTE_TEST_EMAIL }}
+          FORTE_TEST_EMAIL: ${{ inputs.test_email }}
           FORTE_TEST_PASSWORD: ${{ secrets.FORTE_TEST_PASSWORD }}
         run: node .github/scripts/ecard-customer-check.mjs
       - name: Upload screenshots and diagnostics
