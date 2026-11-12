@@ -91,7 +91,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
   const contactLines=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')].filter(Boolean);
   const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
   const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
-  return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} className={['ecard-luxury-floral-card',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
+  return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} style={{'--ecard-admin-accent':config.style?.accent||'#a77b20','--ecard-admin-text':config.style?.text||'#252018','--ecard-admin-font':config.style?.font||'Georgia, serif'}} className={['ecard-luxury-floral-card','ecard-admin-styled',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
     <img className="ecard-luxury-background" src="/ecard-templates/luxury-floral-gold-bg.webp" alt="" crossOrigin="anonymous"/>
     <div className="ecard-luxury-heading" {...elementProps('heading')}>
       <div className="ecard-luxury-kicker" {...elementProps('kicker')}>{copy.kicker||'KADI YA MWALIKO'}</div>
@@ -189,7 +189,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
   if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement}/>
-  return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
+  return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} style={{'--ecard-admin-accent':universalConfig.style?.accent||'#a77b20','--ecard-admin-text':universalConfig.style?.text||'#252018','--ecard-admin-font':universalConfig.style?.font||'Georgia, serif'}} className={['ecard-professional-preview','ecard-admin-styled','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
     <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <div className="ecard-main-panel">
@@ -1112,6 +1112,12 @@ function App() {
     loadTemplates()
     return () => { active = false }
   }, [page])
+
+  useEffect(()=>{
+    if(page!=='ecard')return
+    const defaults=ecardTemplateSettings[selectedTemplateId]?.config?.defaults
+    if(defaults&&Object.keys(defaults).length)setECardForm(v=>({...v,...defaults}))
+  },[page,selectedTemplateId,ecardTemplateSettings])
 
   // =========================
   // E-CARD FUNCTIONS
