@@ -674,7 +674,6 @@ function AdminECardTemplateStudio({session,onBack}){
   const updatePermission=(key,value)=>setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));
   const updateDefault=(key,value)=>setConfig(v=>({...v,defaults:{...(v.defaults||{}),[key]:value}}));
   const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
-  const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
   const updateStyle=(key,value)=>setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));
   const updateMedia=(key,value)=>setConfig(v=>({...v,media:{...(v.media||{}),[key]:value}}));
   const updateVisibility=(key,value)=>setConfig(v=>({...v,visibility:{...(v.visibility||{}),[key]:value}}));
