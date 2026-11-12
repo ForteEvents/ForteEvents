@@ -93,7 +93,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
   const contactLines=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')].filter(Boolean);
   const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
   const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
-  const flowerEditorProps=(key)=>({...elementProps(key),style:{...elementStyle(key),display:config.visibility?.[key]===true?'block':'none'}});
+  const flowerEditorProps=(key)=>({...elementProps(key),style:{...elementStyle(key),transform:elementStyle(key).transform+(key==='flowerBottom'?' rotate(180deg)':''),display:config.visibility?.[key]===true?'block':'none'}});
   return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} style={{'--ecard-admin-accent':config.style?.accent||'#a77b20','--ecard-admin-text':config.style?.text||'#252018','--ecard-admin-font':config.style?.font||'Georgia, serif'}} className={['ecard-luxury-floral-card','ecard-admin-styled',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
     <img className="ecard-luxury-background" {...elementProps('background')} src={config.media?.backgroundUrl||"/ecard-templates/luxury-floral-gold-bg.webp"} alt="" crossOrigin="anonymous"/>
     <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-top" variant="ivory-gold" editorProps={flowerEditorProps('flowerTop')}/>
@@ -198,7 +198,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
     <img className="ecard-template-flower ecard-template-flower-top" {...universalElementProps('flowerTop')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <img className="ecard-template-flower ecard-template-flower-bottom" {...universalElementProps('flowerBottom')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-top" variant={style==='blush-rose'?'blush-rose':style==='blue-rose'?'blue-rose':'ivory-gold'} editorProps={{...universalElementProps('flowerTop'),style:{...universalElementProps('flowerTop').style,display:universalConfig.visibility?.flowerTop===true?'block':'none'}}}/>
-    <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-bottom" variant={style==='blush-rose'?'blush-rose':style==='blue-rose'?'blue-rose':'ivory-gold'} editorProps={{...universalElementProps('flowerBottom'),style:{...universalElementProps('flowerBottom').style,display:universalConfig.visibility?.flowerBottom===true?'block':'none'}}}/>
+    <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-bottom" variant={style==='blush-rose'?'blush-rose':style==='blue-rose'?'blue-rose':'ivory-gold'} editorProps={{...universalElementProps('flowerBottom'),style:{...universalElementProps('flowerBottom').style,transform:universalElementProps('flowerBottom').style.transform+' rotate(180deg)',display:universalConfig.visibility?.flowerBottom===true?'block':'none'}}}/>
     <div className="ecard-main-panel">
       <div className="ecard-main-heading" {...universalElementProps('heading')}>
         <div className="ecard-document-title">{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
