@@ -175,7 +175,11 @@ function ECardFamilyMessage({message}) {
   return <div className="ecard-family-message">{value}</div>
 }
 
-function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId,template:templateOverride,layoutEditor=false,onLayoutChange}) {
+function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId,template:templateOverride,layoutEditor=false,onLayoutChange,onSelectLayoutElement}) {
+  const universalConfig=getECardTemplateConfig(card); const universalLayout=universalConfig.layout||{}; const universalDrag=useRef(null);
+  const universalElementProps=key=>({ 'data-editor-element':key, style:{transform:'translate('+Number(universalLayout[key]?.dx||0)+'%, '+Number(universalLayout[key]?.dy||0)+'%) scale('+Number(universalLayout[key]?.scale||1)+')',transformOrigin:'center center'}, onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);universalDrag.current={key,x:event.clientX,y:event.clientY,dx:Number(universalLayout[key]?.dx||0),dy:Number(universalLayout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
+  const universalMove=event=>{if(!layoutEditor||!universalDrag.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=universalDrag.current;const dx=d.dx+(event.clientX-d.x)/rect.width*100;const dy=d.dy+(event.clientY-d.y)/rect.height*100;onLayoutChange?.(v=>({...v,layout:{...(v.layout||{}),[d.key]:{...(v.layout?.[d.key]||{}),dx,dy}}}));};
+  const universalStop=()=>{universalDrag.current=null;};
   const savedTemplateId=forcedTemplateId || getSavedECardTemplateId(card)
   const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
   const savedTemplate=getSavedECardTemplate(card,templateId)
@@ -184,12 +188,12 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const templateArtwork=template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
-  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange}/>
-  return <article className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
+  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement}/>
+  return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
     <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <div className="ecard-main-panel">
-      <div className="ecard-main-heading">
+      <div className="ecard-main-heading" {...universalElementProps('heading')}>
         <div className="ecard-document-title">KADI YA MWALIKO</div>
         <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
         <div className="ecard-invitation-label">INVITATION</div>
@@ -198,24 +202,24 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         ? <img className="ecard-card-photo ecard-card-photo-blue" src={card.image_url} alt="Picha ya wanandoa au tukio"/>
         : <div className="ecard-photo-placeholder" aria-label="Sehemu ya picha ya wanandoa"><span>♡</span><small>WEKA PICHA YA WANANDOA</small></div>)}
 
-      <div className="ecard-family-copy"><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
-      <ECardInvitationCopy card={card} recipientName={displayName}/>
+      <div className="ecard-family-copy" {...universalElementProps('family')}><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
+      <ECardInvitationCopy card={card} recipientName={displayName} editorProps={universalElementProps('invitation')} copy={universalConfig.copy||{}}/>
       {card?.image_url && style!=='blue-rose' && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
-      <div className="ecard-date-line">{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
-      <ECardDetails card={card} showDate={false}/>
-      {card?.location_url && <div className="ecard-map-link-section">
+      <div className="ecard-date-line" {...universalElementProps('date')}>{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
+      <div {...universalElementProps('details')}><ECardDetails card={card} showDate={false}/></div>
+      {card?.location_url && <div className="ecard-map-link-section" {...universalElementProps('venue')}>
         <div className="ecard-map-link-heading">MAHALI PA TUKIO</div>
         <div className="ecard-map-venue-name">{card?.venue || 'Taarifa za ukumbi'}</div>
       </div>}
-      <ECardFamilyMessage message={card?.message}/>
-      <section className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
+      <div {...universalElementProps('message')}><ECardFamilyMessage message={card?.message}/></div>
+      <section {...universalElementProps('qr')} className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
         <div className="ecard-card-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div>
         <div className="ecard-card-qr"><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
         <div className="ecard-card-qr-caption">Onyesha QR hii wakati wa kuingia</div>
-        <div className="ecard-card-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
+        <div className="ecard-card-brand" {...universalElementProps('brand')}><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
       </section>
 
-      <div className="ecard-card-footer">ForteEvents · Make your event extraordinary</div>
+      <div className="ecard-card-footer" {...universalElementProps('tagline')}>ForteEvents · Make your event extraordinary</div>
     </div>
   </article>
 }
@@ -660,6 +664,7 @@ function AdminECardTemplateStudio({session,onBack}){
     setSelectedId(id);setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});setPublished(Boolean(t.adminPublished));setNotice('');setError('');
   };
   const updateLayout=(key,patch)=>setConfig(v=>({...v,layout:{...(v.layout||{}),[key]:{...(v.layout?.[key]||{}),...patch}}}));
+  const handleLayoutChange=updater=>setConfig(v=>updater(v));
   const updateCopy=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),[key]:value}}));
   const updatePermission=(key,value)=>setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));
   const save=async(publish)=>{
@@ -683,7 +688,7 @@ function AdminECardTemplateStudio({session,onBack}){
       <div className="ecard-studio-grid">
         <div className="card ecard-studio-preview">
           <h3>Preview ya Admin — buruta vipengele</h3>
-          <ECardArtwork key={'admin-studio-'+selectedId} templateId={selectedId} template={selected} card={previewCard} recipientName="JINA LA MWALIKWA" guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}} qrUrl="https://forteevents.co.tz/admin-preview" layoutEditor onLayoutChange={updateLayout} onSelectLayoutElement={setSelectedElement}/>
+          <ECardArtwork key={'admin-studio-'+selectedId} templateId={selectedId} template={selected} card={previewCard} recipientName="JINA LA MWALIKWA" guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}} qrUrl="https://forteevents.co.tz/admin-preview" layoutEditor onLayoutChange={handleLayoutChange} onSelectLayoutElement={setSelectedElement}/>
           <p>Chagua kipengele kwenye orodha, kisha kishike na kukivuta kwenye kadi. Mabadiliko yanaonekana papo hapo.</p>
           <div className="ecard-studio-actions"><button className="secondary-button" type="button" onClick={()=>setConfig(v=>({...v,layout:{}}))}>Rudisha nafasi za mwanzo</button><button className="secondary-button" type="button" onClick={()=>setConfig(v=>({...v,layout:{...(v.layout||{}),[selectedElement]:{...(v.layout?.[selectedElement]||{}),scale:1}}}))}>Rudisha ukubwa</button></div>
         </div>
@@ -822,9 +827,9 @@ function App() {
   const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
   const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
   const [selectedTemplateId, setSelectedTemplateId] = useState('forte-ivory-gold-rose')
-  const selectedECardTemplate = [...BUILT_IN_ECARD_TEMPLATES, ...ecardTemplates].find(item => item.id === selectedTemplateId) || BUILT_IN_ECARD_TEMPLATES[0]
-  const [ecardLayoutEditorOpen, setEcardLayoutEditorOpen] = useState(false)
-  const [ecardLayout, setEcardLayout] = useState({qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})
+  const selectedECardTemplateBase = [...BUILT_IN_ECARD_TEMPLATES, ...ecardTemplates].find(item => item.id === selectedTemplateId) || BUILT_IN_ECARD_TEMPLATES[0]
+  const selectedECardTemplate = {...selectedECardTemplateBase,templateConfig:ecardTemplateSettings[selectedTemplateId]?.config||{},templatePublished:Boolean(ecardTemplateSettings[selectedTemplateId]?.is_published)}
+  const [ecardTemplateSettings,setEcardTemplateSettings]=useState({})
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
     event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
@@ -1085,10 +1090,12 @@ function App() {
     let active = true
     const loadTemplates = async () => {
       setEcardTemplatesLoading(true)
-      const { data, error } = await supabase.from('e_card_templates').select('id,name,occasion,description,image_url,theme,design').eq('is_active', true).order('created_at', { ascending: false })
+      const [{data,error},{data:settings,error:settingsError}] = await Promise.all([supabase.from('e_card_templates').select('id,name,occasion,description,image_url,theme,design').eq('is_active', true).order('created_at', { ascending: false }),supabase.from('e_card_template_settings').select('template_id,config,is_published').eq('is_published',true)])
       if (!active) return
       if (error) setECardMessage('Sampuli za E-card hazijapakiwa: ' + error.message)
       else setEcardTemplates(data || [])
+      if(settingsError) setECardMessage('Mipangilio ya kiolezo haijapakiwa: '+settingsError.message)
+      else setEcardTemplateSettings(Object.fromEntries((settings||[]).map(row=>[row.template_id,row])))
       setEcardTemplatesLoading(false)
     }
     loadTemplates()
@@ -1126,8 +1133,7 @@ function App() {
       location_url: '', message: DEFAULT_ECARD_MESSAGE, image_url: '', theme: 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setEcardLayout({qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})
-    setEcardLayoutEditorOpen(false)
+    setEcardTemplateSettings(v=>v)
     setSelectedTemplateId('forte-ivory-gold-rose')
   }
 
@@ -1146,7 +1152,7 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
-        design: { ...defaultECardDesign, layout: ecardLayout, templateId: selectedECardTemplate?.id || selectedTemplateId, templateSnapshot: { ...selectedECardTemplate, id: selectedECardTemplate?.id || selectedTemplateId, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || selectedECardTemplate?.design?.style || getECardTemplate(selectedTemplateId)?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || selectedECardTemplate?.design?.artwork || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
+        design: { ...defaultECardDesign, templateId: selectedECardTemplate?.id || selectedTemplateId, templateConfig: selectedECardTemplate?.templateConfig || {}, templateSnapshot: { ...selectedECardTemplate, id: selectedECardTemplate?.id || selectedTemplateId, templateConfig:selectedECardTemplate?.templateConfig||{}, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || selectedECardTemplate?.design?.style || getECardTemplate(selectedTemplateId)?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || selectedECardTemplate?.design?.artwork || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
         event_time: eCardForm.event_time || null,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
@@ -1190,8 +1196,7 @@ function App() {
       message: card.message || DEFAULT_ECARD_MESSAGE, image_url: card.image_url || '', theme: card.theme || 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setEcardLayout(getECardDesignData(card).layout || {qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})
-    setEcardLayoutEditorOpen(false)
+    setEcardTemplateSettings(v=>v)
     setSelectedTemplateId(getSavedECardTemplateId(card)==='forte-white-gold'?'forte-ivory-gold-rose':getSavedECardTemplateId(card)==='forte-cream-blue'?'forte-blue-rose':getSavedECardTemplateId(card))
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
@@ -3422,18 +3427,7 @@ return (
               <h2>Kadi ya mfano — hariri taarifa zake</h2>
               <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
             </div>
-            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} template={selectedECardTemplate} card={{...eCardForm,design:{templateId:selectedTemplateId,layout:ecardLayout,templateSnapshot:selectedECardTemplate}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'} layoutEditor={ecardLayoutEditorOpen && selectedECardTemplate?.style==='luxury-floral-gold'} onLayoutChange={setEcardLayout}/>
-            {selectedECardTemplate?.style==='luxury-floral-gold' && <div className="ecard-layout-editor-panel">
-              <button type="button" className="secondary-button" onClick={()=>setEcardLayoutEditorOpen(v=>!v)}>{ecardLayoutEditorOpen?'Maliza kupanga muonekano':'Panga Muonekano wa Kadi'}</button>
-              {ecardLayoutEditorOpen && <>
-                <p>Shika QR, logo au tagline kwenye kadi, kisha vuta kwa kidole hadi sehemu unayoitaka. Mabadiliko yanaonekana papo hapo.</p>
-                <div className="ecard-layout-controls">
-                  <label>Ukubwa wa QR <input type="range" min="12" max="24" value={ecardLayout.qr.width} onChange={e=>setEcardLayout(v=>({...v,qr:{...v.qr,width:Number(e.target.value)}}))}/></label>
-                  <label>Ukubwa wa logo <input type="range" min="20" max="48" value={ecardLayout.brand.width} onChange={e=>setEcardLayout(v=>({...v,brand:{...v.brand,width:Number(e.target.value)}}))}/></label>
-                  <button type="button" className="secondary-button" onClick={()=>setEcardLayout({qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})}>Rudisha mpangilio wa mwanzo</button>
-                </div>
-              </>}
-            </div>}
+            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} template={selectedECardTemplate} card={{...eCardForm,design:{templateId:selectedTemplateId,templateConfig:selectedECardTemplate?.templateConfig||{},templateSnapshot:{...selectedECardTemplate,templateConfig:selectedECardTemplate?.templateConfig||{}}}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'} layoutEditor={ecardLayoutEditorOpen && selectedECardTemplate?.style==='luxury-floral-gold'} onLayoutChange={setEcardLayout}/>
             <form onSubmit={saveECard}>
               <label>Jina la tukio</label>
               <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
