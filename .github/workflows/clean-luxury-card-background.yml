@@ -1,0 +1,32 @@
+name: Clean Luxury Floral Gold background
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "tools/remove_luxury_card_bands.py"
+      - ".github/workflows/clean-luxury-card-background.yml"
+permissions:
+  contents: write
+jobs:
+  clean-background:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install image tools
+        run: python -m pip install --upgrade pip pillow opencv-python-headless
+      - name: Remove printed strips from source artwork
+        run: python tools/remove_luxury_card_bands.py
+      - name: Commit cleaned template asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/ecard-templates/luxury-floral-gold-bg.webp
+          git diff --cached --quiet || git commit -m "Remove fixed gold and burgundy strips from luxury card artwork"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
