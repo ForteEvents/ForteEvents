@@ -632,7 +632,7 @@ function AdminECardTemplates({ onBack, session }) {
 function AdminECardTemplateStudio({session,onBack}){
   const [templates,setTemplates]=useState([]);
   const [selectedId,setSelectedId]=useState('forte-luxury-floral-gold');
-  const [config,setConfig]=useState({layout:{},copy:{},permissions:{}});
+  const [config,setConfig]=useState({layout:{},copy:{},permissions:{},defaults:{},style:{}});
   const [selectedElement,setSelectedElement]=useState('qr');
   const [published,setPublished]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -642,6 +642,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
   const elements=[['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu'],['image','Picha']];
   const copyFields=[['kicker','Kichwa cha kadi'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['brandTagline','Kauli mbiu ya ForteEvents']];
+  const defaultFields=ECARD_TEMPLATE_FIELDS.filter(([key])=>!['dress_colors','image_url','location_url'].includes(key));
   const load=async()=>{
     setLoading(true);setError('');
     const [uploaded,settings]=await Promise.all([
@@ -667,6 +668,8 @@ function AdminECardTemplateStudio({session,onBack}){
   const handleLayoutChange=updater=>setConfig(v=>updater(v));
   const updateCopy=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),[key]:value}}));
   const updatePermission=(key,value)=>setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));
+  const updateDefault=(key,value)=>setConfig(v=>({...v,defaults:{...(v.defaults||{}),[key]:value}}));
+  const updateStyle=(key,value)=>setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));
   const save=async(publish)=>{
     setBusy(true);setError('');setNotice('');
     const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
@@ -701,6 +704,13 @@ function AdminECardTemplateStudio({session,onBack}){
           <div className="ecard-studio-coordinates"><label>Usogezaji mlalo (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dx||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dx:Number(e.target.value)||0})}/><label>Usogezaji wima (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dy||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dy:Number(e.target.value)||0})}/></div>
           <h3>Maandishi ya kudumu ya kiolezo</h3>
           {copyFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.copy?.[key]||''} onChange={e=>updateCopy(key,e.target.value)} placeholder="Acha wazi kutumia maandishi ya kawaida"/></label>)}
+          <h3>Taarifa za mwanzo za kadi</h3>
+          <p>Andika maneno ya msingi yatakayoonekana kabla mteja hajaanza kuhariri. Sehemu fixed zitabaki na taarifa hizi.</p>
+          {defaultFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.defaults?.[key]||''} onChange={e=>updateDefault(key,e.target.value)} placeholder="Taarifa ya mwanzo (hiari)"/></label>)}
+          <h3>Rangi na fonti ya kiolezo</h3>
+          <label className="ecard-studio-field">Rangi ya msingi <input type="color" value={config.style?.accent||'#a77b20'} onChange={e=>updateStyle('accent',e.target.value)}/></label>
+          <label className="ecard-studio-field">Rangi ya maandishi <input type="color" value={config.style?.text||'#252018'} onChange={e=>updateStyle('text',e.target.value)}/></label>
+          <label className="ecard-studio-field">Fonti <select value={config.style?.font||'Georgia, serif'} onChange={e=>updateStyle('font',e.target.value)}><option value="Georgia, serif">Georgia</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Verdana, sans-serif">Verdana</option><option value="cursive">Cursive</option></select></label>
           <h3>Ruhusa za mteja</h3>
           <p>Weka tiki kwenye taarifa ambazo mteja anaruhusiwa kubadilisha. Zisizo na tiki zitakuwa fixed.</p>
           <div className="ecard-studio-permissions">{ECARD_TEMPLATE_FIELDS.map(([key,label])=><label key={key}><input type="checkbox" checked={config.permissions?.[key]!==false} onChange={e=>updatePermission(key,e.target.checked)}/>{label}</label>)}</div>
