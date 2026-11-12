@@ -73,6 +73,8 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]',copy=
  if(occasion.includes('send'))eventLine='kwenye send-off ya binti yao '+(card?.title||'[JINA LA MHUSIKA]')+'.'
  else if(occasion.includes('harusi')){coupleName=[card?.bride_name,card?.groom_name].filter(Boolean).join(' na ')||card?.title||'[MAJINA YA BIBI NA BWANA HARUSI]';eventLine='kwenye harusi ya vijana wao wapendwa'}
  else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
+ if(copy.eventLine)eventLine=String(copy.eventLine).replaceAll('{event}',card?.title||'[JINA LA TUKIO]').replaceAll('{occasion}',card?.occasion||'tukio').replaceAll('{couple}',coupleName)
+ if(copy.coupleName)coupleName=String(copy.coupleName).replaceAll('{bride}',card?.bride_name||'').replaceAll('{groom}',card?.groom_name||'').replaceAll('{event}',card?.title||'')
  return {intro:copy.invitationIntro||'Wanayo furaha kukualika',titles:copy.invitationTitles||'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
 }
 function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
@@ -92,7 +94,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
   const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
   const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
   return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} style={{'--ecard-admin-accent':config.style?.accent||'#a77b20','--ecard-admin-text':config.style?.text||'#252018','--ecard-admin-font':config.style?.font||'Georgia, serif'}} className={['ecard-luxury-floral-card','ecard-admin-styled',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
-    <img className="ecard-luxury-background" {...elementProps('background')} src="/ecard-templates/luxury-floral-gold-bg.webp" alt="" crossOrigin="anonymous"/>
+    <img className="ecard-luxury-background" {...elementProps('background')} src={config.media?.backgroundUrl||"/ecard-templates/luxury-floral-gold-bg.webp"} alt="" crossOrigin="anonymous"/>
     <div className="ecard-luxury-heading" {...elementProps('heading')}>
       <div className="ecard-luxury-kicker" {...elementProps('kicker')}>{copy.kicker||'KADI YA MWALIKO'}</div>
       <div className="ecard-luxury-occasion" {...elementProps('occasion')}>{card?.occasion||'Harusi'}</div>
@@ -125,7 +127,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span>{card.food_note}</span></div>}
     <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
     <div className="ecard-luxury-qr" {...elementProps('qr')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
-    <div className="ecard-luxury-brand" {...elementProps('brand')}><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
+    <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
     <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
   </article>
 }
@@ -185,7 +187,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const savedTemplate=getSavedECardTemplate(card,templateId)
   const template=templateOverride && templateOverride.id===templateId ? templateOverride : savedTemplate
   const style=template?.style || 'ivory-gold'
-  const templateArtwork=template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
+  const templateArtwork=universalConfig.media?.backgroundUrl || template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
   if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement}/>
@@ -216,7 +218,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
         <div className="ecard-card-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div>
         <div className="ecard-card-qr"><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
         <div className="ecard-card-qr-caption">{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>
-        <div className="ecard-card-brand" {...universalElementProps('brand')}><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
+        <div className="ecard-card-brand" {...universalElementProps('brand')}><img src={universalConfig.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
       </section>
 
       <div className="ecard-card-footer" {...universalElementProps('tagline')}>{universalConfig.copy?.footerText||('ForteEvents · '+(universalConfig.copy?.brandTagline||'Make your event extraordinary'))}</div>
@@ -643,7 +645,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const [error,setError]=useState('');
   const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
   const elements=[['background','Mandhari ya kadi'],['image','Picha ya tukio'],['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']];
-  const copyFields=[['kicker','Kichwa cha kadi'],['invitationLabel','Neno la Invitation'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['qrCaption','Maelekezo chini ya QR'],['brandTagline','Kauli mbiu ya ForteEvents'],['footerText','Maandishi ya chini ya kadi']];
+  const copyFields=[['kicker','Kichwa cha kadi'],['invitationLabel','Neno la Invitation'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['eventLine','Sentensi ya mwaliko (tumia {event}, {occasion}, {couple})'],['coupleName','Maandishi ya majina (tumia {bride}, {groom}, {event})'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['qrCaption','Maelekezo chini ya QR'],['brandTagline','Kauli mbiu ya ForteEvents'],['footerText','Maandishi ya chini ya kadi']];
   const defaultFields=ECARD_TEMPLATE_FIELDS.filter(([key])=>!['dress_colors','image_url','location_url'].includes(key));
   const load=async()=>{
     setLoading(true);setError('');
@@ -674,6 +676,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
   const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
   const updateStyle=(key,value)=>setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));
+  const updateMedia=(key,value)=>setConfig(v=>({...v,media:{...(v.media||{}),[key]:value}}));
   const save=async(publish)=>{
     setBusy(true);setError('');setNotice('');
     const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
@@ -711,6 +714,9 @@ function AdminECardTemplateStudio({session,onBack}){
           <h3>Taarifa za mwanzo za kadi</h3>
           <p>Andika maneno ya msingi yatakayoonekana kabla mteja hajaanza kuhariri. Sehemu fixed zitabaki na taarifa hizi.</p>
           {defaultFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.defaults?.[key]||''} onChange={e=>updateDefault(key,e.target.value)} placeholder="Taarifa ya mwanzo (hiari)"/></label>)}
+          <h3>Picha na utambulisho</h3>
+          <label className="ecard-studio-field">Link ya picha ya mandhari (https://)<input value={config.media?.backgroundUrl||''} onChange={e=>updateMedia('backgroundUrl',e.target.value)} placeholder="Acha wazi kutumia picha ya sasa"/></label>
+          <label className="ecard-studio-field">Link ya logo (https://)<input value={config.media?.logoUrl||''} onChange={e=>updateMedia('logoUrl',e.target.value)} placeholder="Acha wazi kutumia logo ya ForteEvents"/></label>
           <h3>Rangi na fonti ya kiolezo</h3>
           <label className="ecard-studio-field">Rangi ya msingi <input type="color" value={config.style?.accent||'#a77b20'} onChange={e=>updateStyle('accent',e.target.value)}/></label>
           <label className="ecard-studio-field">Rangi ya maandishi <input type="color" value={config.style?.text||'#252018'} onChange={e=>updateStyle('text',e.target.value)}/></label>
