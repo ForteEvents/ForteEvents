@@ -38,6 +38,14 @@ function getECardDesignData(card){
   }
   return design && typeof design==='object' ? design : {}
 }
+function getECardTemplateConfig(card){
+  const design=getECardDesignData(card)
+  const config=design?.templateConfig || design?.template_config || {}
+  return config && typeof config==='object' ? config : {}
+}
+const ECARD_TEMPLATE_FIELDS=[
+  ['title','Jina la tukio'],['occasion','Aina ya tukio'],['host_names','Familia inayoalika'],['bride_name','Jina la bibi harusi'],['groom_name','Jina la bwana harusi'],['event_date','Tarehe'],['event_time','Muda wa tukio'],['venue','Mahali / ukumbi'],['ceremony_time','Muda wa ibada'],['ceremony_venue','Mahali pa ibada'],['reception_time','Muda wa mapokezi'],['reception_venue','Mahali pa mapokezi'],['food_note','Maelezo ya chakula'],['dress_code','Dress code'],['dress_colors','Rangi za dress code'],['rsvp_deadline','Tarehe ya mwisho ya RSVP'],['rsvp_contact_name','Jina la mawasiliano 1'],['rsvp_contact_phone','Simu ya mawasiliano 1'],['rsvp_contact_name_2','Jina la mawasiliano 2'],['rsvp_contact_phone_2','Simu ya mawasiliano 2'],['location_url','Link ya ramani'],['message','Ujumbe wa familia'],['image_url','Picha ya mwaliko']
+]
 function getSavedECardTemplateId(card){
   const design=getECardDesignData(card)
   return design?.templateId || design?.template_id || card?.template_id || card?.templateId || 'forte-ivory-gold-rose'
@@ -60,50 +68,52 @@ const ECARD_DRESS_PALETTE = [
   {value:'Pink',label:'Waridi',hex:'#e6a9bc'}, {value:'Purple',label:'Zambarau',hex:'#76518e'},
   {value:'Cream',label:'Cream',hex:'#f2e6c9'}, {value:'Beige',label:'Beige',hex:'#d9c6a0'}
 ]
-function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]'){
+function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]',copy={}){
  const occasion=String(card?.occasion||'').toLowerCase();let eventLine,coupleName=''
  if(occasion.includes('send'))eventLine='kwenye send-off ya binti yao '+(card?.title||'[JINA LA MHUSIKA]')+'.'
  else if(occasion.includes('harusi')){coupleName=[card?.bride_name,card?.groom_name].filter(Boolean).join(' na ')||card?.title||'[MAJINA YA BIBI NA BWANA HARUSI]';eventLine='kwenye harusi ya vijana wao wapendwa'}
  else eventLine='kwenye '+String(card?.occasion||'tukio').toLowerCase()+' ya '+(card?.title||'[JINA LA TUKIO]')+'.'
- return {intro:'Wanayo furaha kukualika',titles:'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
+ if(copy.eventLine)eventLine=String(copy.eventLine).replaceAll('{event}',card?.title||'[JINA LA TUKIO]').replaceAll('{occasion}',card?.occasion||'tukio').replaceAll('{couple}',coupleName)
+ if(copy.coupleName)coupleName=String(copy.coupleName).replaceAll('{bride}',card?.bride_name||'').replaceAll('{groom}',card?.groom_name||'').replaceAll('{event}',card?.title||'')
+ return {intro:copy.invitationIntro||'Wanayo furaha kukualika',titles:copy.invitationTitles||'Bw. & Bi. Mhe. Pro. Dkt. Mch. Eng. Bw. au Bi.',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName}
 }
-function ECardInvitationCopy({card,recipientName,className='',hideCouple=false}){const p=buildECardInvitationParts(card,recipientName);return <div className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
+function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-titles">{p.titles}</strong><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 
-function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange}){
-  const savedLayout=getECardDesignData(card).layout || {};
-  const layout={qr:{top:80,left:27,width:18,...savedLayout.qr},brand:{top:80,left:50,width:34,...savedLayout.brand},tagline:{top:94,left:28,width:60,...savedLayout.tagline}};
+function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement}){
+  const config=getECardTemplateConfig(card); const layout=config.layout||{}; const copy=config.copy||{};
   const dragRef=useRef(null);
-  const startDrag=(key,event)=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);dragRef.current={key,x:event.clientX,y:event.clientY,top:layout[key].top,left:layout[key].left};};
-  const moveDrag=(event)=>{if(!layoutEditor||!dragRef.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=dragRef.current;const top=Math.max(0,Math.min(96,d.top+(event.clientY-d.y)/rect.height*100));const left=Math.max(0,Math.min(96,d.left+(event.clientX-d.x)/rect.width*100));onLayoutChange?.(v=>({...v,[d.key]:{...(v[d.key]||layout[d.key]),top,left}}));dragRef.current={...d,x:event.clientX,y:event.clientY,top,left};};
+  const elementStyle=(key)=>{const item=layout[key]||{};return {display:config.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(item.dx||0)+'cqw, '+(Number(item.dy||0)*1.4)+'cqw) scale('+Number(item.scale||1)+')',transformOrigin:'center center'};};
+  const elementProps=(key)=>({ 'data-editor-element':key, style:elementStyle(key), onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);dragRef.current={key,x:event.clientX,y:event.clientY,dx:Number(layout[key]?.dx||0),dy:Number(layout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
+  const moveDrag=(event)=>{if(!layoutEditor||!dragRef.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=dragRef.current;const dx=d.dx+(event.clientX-d.x)/rect.width*100;const dy=d.dy+(event.clientY-d.y)/rect.height*100;onLayoutChange?.(v=>({...v,layout:{...(v.layout||{}),[d.key]:{...(v.layout?.[d.key]||{}),dx,dy}}}));};
   const stopDrag=()=>{dragRef.current=null;};
-  const parts=buildECardInvitationParts(card,guest?.guest_name||recipientName||'JINA LA MWALIKWA');
+  const parts=buildECardInvitationParts(card,guest?.guest_name||recipientName||'JINA LA MWALIKWA',copy);
   const dateText=card?.event_date?new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'SIKU, TAREHE NA MWAKA';
   const colors={'gold':'#c69a32','cream':'#f2e6c9','white':'#fff','black':'#222','red':'#b52d35','blue':'#3567a8','navy':'#182b4b','pink':'#e8a6b8','green':'#477b53','silver':'#c7cbd1','purple':'#76518e','brown':'#79533a','orange':'#d97927','maroon':'#702b3b','beige':'#d9c6a0','grey':'#888','gray':'#888','red wine':'#702b3b'};
   const dressColors=Array.isArray(card?.dress_colors)?card.dress_colors:[];
   const contactLines=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')].filter(Boolean);
   const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
   const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
-  return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} className={['ecard-luxury-floral-card',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
-    <img className="ecard-luxury-background" src="/ecard-templates/luxury-floral-gold-bg.webp" alt="" crossOrigin="anonymous"/>
-    <div className="ecard-luxury-heading">
-      <div className="ecard-luxury-kicker">KADI YA MWALIKO</div>
-      <div className="ecard-luxury-occasion">{card?.occasion||'Harusi'}</div>
+  return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} style={{'--ecard-admin-accent':config.style?.accent||'#a77b20','--ecard-admin-text':config.style?.text||'#252018','--ecard-admin-font':config.style?.font||'Georgia, serif'}} className={['ecard-luxury-floral-card','ecard-admin-styled',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
+    <img className="ecard-luxury-background" {...elementProps('background')} src={config.media?.backgroundUrl||"/ecard-templates/luxury-floral-gold-bg.webp"} alt="" crossOrigin="anonymous"/>
+    <div className="ecard-luxury-heading" {...elementProps('heading')}>
+      <div className="ecard-luxury-kicker" {...elementProps('kicker')}>{copy.kicker||'KADI YA MWALIKO'}</div>
+      <div className="ecard-luxury-occasion" {...elementProps('occasion')}>{card?.occasion||'Harusi'}</div>
     </div>
-    <div className="ecard-luxury-family"><span>Familia ya</span><strong>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
-    <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple/>
-    <div className="ecard-luxury-couple">{parts.coupleName||'MAJINA YA BIBI NA BWANA HARUSI'}</div>
-    <div className="ecard-luxury-date">{dateText}</div>
-    <div className="ecard-luxury-details">
+    <div className="ecard-luxury-family" {...elementProps('family')}><span>{copy.familyLabel||'Familia ya'}</span><strong>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
+    <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple copy={copy} editorProps={elementProps('invitation')}/>
+    <div className="ecard-luxury-couple" {...elementProps('couple')}>{parts.coupleName||'MAJINA YA BIBI NA BWANA HARUSI'}</div>
+    <div className="ecard-luxury-date" {...elementProps('date')}>{dateText}</div>
+    <div className="ecard-luxury-details" {...elementProps('details')}>
       <div className="ecard-luxury-detail-column">
-        {card?.event_time&&<div className="ecard-luxury-detail"><i>◷</i><span><b>MUDA:</b> Saa {card.event_time}</span></div>}
-        {card?.venue&&<div className="ecard-luxury-detail"><i>⌂</i><span><b>MAHALI:</b> {card.venue}</span></div>}
-        {card?.rsvp_deadline&&<div className="ecard-luxury-detail"><i>✉</i><span><b>RSVP:</b> Mwisho wa kuthibitisha: {card.rsvp_deadline}</span></div>}
+        {card?.event_time&&<div className="ecard-luxury-detail"><i>◷</i><span><b>{copy.detailLabels?.MUDA||'MUDA'}:</b> Saa {card.event_time}</span></div>}
+        {card?.venue&&<div className="ecard-luxury-detail"><i>⌂</i><span><b>{copy.detailLabels?.MAHALI||'MAHALI'}:</b> {card.venue}</span></div>}
+        {card?.rsvp_deadline&&<div className="ecard-luxury-detail"><i>✉</i><span><b>{copy.detailLabels?.RSVP||'RSVP'}:</b> Mwisho wa kuthibitisha: {card.rsvp_deadline}</span></div>}
       </div>
       <div className="ecard-luxury-detail-column">
-        {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b>IBADA:</b> {ceremony}</span></div>}
-        {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>DRESS CODE:</b> {card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
+        {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b>{copy.detailLabels?.IBADA||'IBADA'}:</b> {ceremony}</span></div>}
+        {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>{copy.detailLabels?.['DRESS CODE']||'DRESS CODE'}:</b> {card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
         {contactLines.length>0&&<div className="ecard-luxury-contacts">
-          <b className="ecard-luxury-contacts-title">MAWASILIANO</b>
+          <b className="ecard-luxury-contacts-title">{copy.contactsTitle||'MAWASILIANO'}</b>
           <div className="ecard-luxury-contact-list">
             {[[card?.rsvp_contact_name,card?.rsvp_contact_phone],[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2]].filter(([name,phone])=>name||phone).map(([name,phone],i)=><div className="ecard-luxury-contact" key={i}>
               {name&&<strong>{name}</strong>}
@@ -113,12 +123,12 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
         </div>}
       </div>
     </div>
-    {reception&&<div className="ecard-luxury-venue"><b>MAHALI PA MAPOKEZI</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
-    {!reception&&card?.food_note&&<div className="ecard-luxury-venue"><b>TAARIFA ZA MAPOKEZI</b><span>{card.food_note}</span></div>}
-    <div className="ecard-luxury-message" style={{'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
-    <div className="ecard-luxury-qr" style={{top:layout.qr.top+'%',left:layout.qr.left+'%',width:layout.qr.width+'%'}} onPointerDown={event=>startDrag('qr',event)}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
-    <div className="ecard-luxury-brand" style={{top:layout.brand.top+'%',left:layout.brand.left+'%',width:layout.brand.width+'%'}} onPointerDown={event=>startDrag('brand',event)}><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
-    <div className="ecard-luxury-tagline-drag" style={{top:layout.tagline.top+'%',left:layout.tagline.left+'%',width:layout.tagline.width+'%'}} onPointerDown={event=>startDrag('tagline',event)}>Make your event extraordinary</div>
+    {reception&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'MAHALI PA MAPOKEZI'}</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
+    {!reception&&card?.food_note&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span>{card.food_note}</span></div>}
+    <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
+    <div className="ecard-luxury-qr" {...elementProps('qr')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
+    <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
+    <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
   </article>
 }
 function ECardFloralOrnament({className='',variant='ivory-gold'}){
@@ -160,54 +170,58 @@ function ECardFloralOrnament({className='',variant='ivory-gold'}){
   </svg>
 }
 function buildECardDetailItems(card){return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.location_url?'':card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',(card?.dress_colors||[]).length?'colors':''],['RSVP',card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:''],['CONTACT 1',[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · ')],['CONTACT 2',[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
-function ECardDetails({card,className='',showDate=true}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}>{!label.startsWith('CONTACT')&&<b>{label}</b>}<span>{label==='DRESS CODE'?<>{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i title={color} aria-label={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/></span>)}</>:label==='CONTACT 1'?<>{card?.rsvp_contact_phone&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone}>{card.rsvp_contact_phone}</a>}<strong>{card?.rsvp_contact_name}</strong></>:label==='CONTACT 2'?<>{card?.rsvp_contact_phone_2&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone_2}>{card.rsvp_contact_phone_2}</a>}<strong>{card?.rsvp_contact_name_2}</strong></>:value}</span></p>)}</div>}
+function ECardDetails({card,className='',showDate=true,copy={}}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}>{!label.startsWith('CONTACT')&&<b>{copy.detailLabels?.[label]||label}</b>}<span>{label==='DRESS CODE'?<>{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i title={color} aria-label={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/></span>)}</>:label==='CONTACT 1'?<>{card?.rsvp_contact_phone&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone}>{card.rsvp_contact_phone}</a>}<strong>{card?.rsvp_contact_name}</strong></>:label==='CONTACT 2'?<>{card?.rsvp_contact_phone_2&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone_2}>{card.rsvp_contact_phone_2}</a>}<strong>{card?.rsvp_contact_name_2}</strong></>:value}</span></p>)}</div>}
 
 function ECardFamilyMessage({message}) {
   const value = String(message || '').trim() || DEFAULT_ECARD_MESSAGE
   return <div className="ecard-family-message">{value}</div>
 }
 
-function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId,template:templateOverride,layoutEditor=false,onLayoutChange}) {
+function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId,template:templateOverride,layoutEditor=false,onLayoutChange,onSelectLayoutElement}) {
+  const universalConfig=getECardTemplateConfig(card); const universalLayout=universalConfig.layout||{}; const universalDrag=useRef(null);
+  const universalElementProps=key=>({ 'data-editor-element':key, style:{display:universalConfig.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(universalLayout[key]?.dx||0)+'cqw, '+(Number(universalLayout[key]?.dy||0)*1.4)+'cqw) scale('+Number(universalLayout[key]?.scale||1)+')',transformOrigin:'center center'}, onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);universalDrag.current={key,x:event.clientX,y:event.clientY,dx:Number(universalLayout[key]?.dx||0),dy:Number(universalLayout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
+  const universalMove=event=>{if(!layoutEditor||!universalDrag.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=universalDrag.current;const dx=d.dx+(event.clientX-d.x)/rect.width*100;const dy=d.dy+(event.clientY-d.y)/rect.height*100;onLayoutChange?.(v=>({...v,layout:{...(v.layout||{}),[d.key]:{...(v.layout?.[d.key]||{}),dx,dy}}}));};
+  const universalStop=()=>{universalDrag.current=null;};
   const savedTemplateId=forcedTemplateId || getSavedECardTemplateId(card)
   const templateId=savedTemplateId==='forte-white-gold'?'forte-ivory-gold-rose':savedTemplateId==='forte-cream-blue'?'forte-blue-rose':savedTemplateId
   const savedTemplate=getSavedECardTemplate(card,templateId)
   const template=templateOverride && templateOverride.id===templateId ? templateOverride : savedTemplate
   const style=template?.style || 'ivory-gold'
-  const templateArtwork=template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
+  const templateArtwork=universalConfig.media?.backgroundUrl || template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
-  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange}/>
-  return <article className={['ecard-professional-preview','ecard-style-'+style,exportMode?'ecard-export-mode':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
-    <img className="ecard-template-flower ecard-template-flower-top" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
-    <img className="ecard-template-flower ecard-template-flower-bottom" crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement}/>
+  return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} style={{'--ecard-admin-accent':universalConfig.style?.accent||'#a77b20','--ecard-admin-text':universalConfig.style?.text||'#252018','--ecard-admin-font':universalConfig.style?.font||'Georgia, serif'}} className={['ecard-professional-preview','ecard-admin-styled','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
+    <img className="ecard-template-flower ecard-template-flower-top" {...universalElementProps('background')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+    <img className="ecard-template-flower ecard-template-flower-bottom" {...universalElementProps('background')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <div className="ecard-main-panel">
-      <div className="ecard-main-heading">
-        <div className="ecard-document-title">KADI YA MWALIKO</div>
+      <div className="ecard-main-heading" {...universalElementProps('heading')}>
+        <div className="ecard-document-title">{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
         <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
-        <div className="ecard-invitation-label">INVITATION</div>
+        <div className="ecard-invitation-label">{universalConfig.copy?.invitationLabel||'INVITATION'}</div>
       </div>
       {style==='blue-rose' && (card?.image_url
-        ? <img className="ecard-card-photo ecard-card-photo-blue" src={card.image_url} alt="Picha ya wanandoa au tukio"/>
+        ? <img className="ecard-card-photo ecard-card-photo-blue" {...universalElementProps('image')} src={card.image_url} alt="Picha ya wanandoa au tukio"/>
         : <div className="ecard-photo-placeholder" aria-label="Sehemu ya picha ya wanandoa"><span>♡</span><small>WEKA PICHA YA WANANDOA</small></div>)}
 
-      <div className="ecard-family-copy"><span>Familia ya</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
-      <ECardInvitationCopy card={card} recipientName={displayName}/>
-      {card?.image_url && style!=='blue-rose' && <img className="ecard-card-photo" src={card.image_url} alt="Picha ya tukio"/>}
-      <div className="ecard-date-line">{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
-      <ECardDetails card={card} showDate={false}/>
-      {card?.location_url && <div className="ecard-map-link-section">
-        <div className="ecard-map-link-heading">MAHALI PA TUKIO</div>
+      <div className="ecard-family-copy" {...universalElementProps('family')}><span>{universalConfig.copy?.familyLabel||'Familia ya'}</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
+      <ECardInvitationCopy card={card} recipientName={displayName} editorProps={universalElementProps('invitation')} copy={universalConfig.copy||{}}/>
+      {card?.image_url && style!=='blue-rose' && <img className="ecard-card-photo" {...universalElementProps('image')} src={card.image_url} alt="Picha ya tukio"/>}
+      <div className="ecard-date-line" {...universalElementProps('date')}>{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
+      <div {...universalElementProps('details')}><ECardDetails card={card} showDate={false} copy={universalConfig.copy||{}}/></div>
+      {card?.location_url && <div className="ecard-map-link-section" {...universalElementProps('venue')}>
+        <div className="ecard-map-link-heading">{universalConfig.copy?.venueTitle||'MAHALI PA TUKIO'}</div>
         <div className="ecard-map-venue-name">{card?.venue || 'Taarifa za ukumbi'}</div>
       </div>}
-      <ECardFamilyMessage message={card?.message}/>
-      <section className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
+      <div {...universalElementProps('message')}><ECardFamilyMessage message={card?.message}/></div>
+      <section {...universalElementProps('qr')} className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
         <div className="ecard-card-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div>
         <div className="ecard-card-qr"><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
-        <div className="ecard-card-qr-caption">Onyesha QR hii wakati wa kuingia</div>
-        <div className="ecard-card-brand"><img src="/forteevents-logo.png" alt="ForteEvents"/></div>
+        <div className="ecard-card-qr-caption">{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>
+        <div className="ecard-card-brand" {...universalElementProps('brand')}><img src={universalConfig.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
       </section>
 
-      <div className="ecard-card-footer">ForteEvents · Make your event extraordinary</div>
+      <div className="ecard-card-footer" {...universalElementProps('tagline')}>{universalConfig.copy?.footerText||('ForteEvents · '+(universalConfig.copy?.brandTagline||'Make your event extraordinary'))}</div>
     </div>
   </article>
 }
@@ -221,7 +235,9 @@ async function createECardPng(card, guest = null) {
   const root=createRoot(host)
   try {
     const templateId=getSavedECardTemplateId(card)
-    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+templateId} card={card} templateId={templateId} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
+    const {data:publishedSetting}=await supabase.from('e_card_template_settings').select('config').eq('template_id',templateId).eq('is_published',true).maybeSingle()
+    const exportCard=publishedSetting?.config ? {...card,design:{...getECardDesignData(card),templateConfig:publishedSetting.config}} : card
+    root.render(<ECardArtwork key={'ecard-export-'+(card?.id||card?.slug||'draft')+'-'+templateId} card={exportCard} templateId={templateId} guest={guest} recipientName={guest?.guest_name || 'JINA LA MWALIKWA'} qrUrl={qrPayload} exportMode/>)
     if(document.fonts?.ready) await document.fonts.ready
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))
     let qrImage=null
@@ -616,6 +632,113 @@ function AdminECardTemplates({ onBack, session }) {
   </>
 }
 
+
+function AdminECardTemplateStudio({session,onBack}){
+  const [templates,setTemplates]=useState([]);
+  const [selectedId,setSelectedId]=useState('forte-luxury-floral-gold');
+  const [config,setConfig]=useState({layout:{},copy:{},permissions:{},defaults:{},style:{}});
+  const [selectedElement,setSelectedElement]=useState('qr');
+  const [published,setPublished]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [notice,setNotice]=useState('');
+  const [error,setError]=useState('');
+  const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
+  const elements=[['background','Mandhari ya kadi'],['image','Picha ya tukio'],['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']];
+  const copyFields=[['kicker','Kichwa cha kadi'],['invitationLabel','Neno la Invitation'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['eventLine','Sentensi ya mwaliko (tumia {event}, {occasion}, {couple})'],['coupleName','Maandishi ya majina (tumia {bride}, {groom}, {event})'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['qrCaption','Maelekezo chini ya QR'],['brandTagline','Kauli mbiu ya ForteEvents'],['footerText','Maandishi ya chini ya kadi']];
+  const defaultFields=ECARD_TEMPLATE_FIELDS.filter(([key])=>!['dress_colors','image_url','location_url'].includes(key));
+  const load=async()=>{
+    setLoading(true);setError('');
+    const [uploaded,settings]=await Promise.all([
+      supabase.from('e_card_templates').select('*').order('created_at',{ascending:false}),
+      supabase.from('e_card_template_settings').select('*')
+    ]);
+    if(uploaded.error)setError('Sampuli: '+uploaded.error.message);
+    if(settings.error)setError('Mipangilio: '+settings.error.message);
+    const rows=settings.data||[];
+    const all=[...BUILT_IN_ECARD_TEMPLATES,...(uploaded.data||[])];
+    const merged=all.map(t=>({...t,adminConfig:rows.find(x=>x.template_id===t.id)?.config||{},adminPublished:rows.find(x=>x.template_id===t.id)?.is_published||false}));
+    setTemplates(merged);
+    const current=merged.find(t=>t.id===selectedId)||merged[0];
+    if(current){setSelectedId(current.id);setConfig({layout:{},copy:{},permissions:{},...(current.adminConfig||{})});setPublished(Boolean(current.adminPublished));}
+    setLoading(false);
+  };
+  useEffect(()=>{load()},[]);
+  const choose=id=>{
+    const t=templates.find(x=>x.id===id);if(!t)return;
+    setSelectedId(id);setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});setPublished(Boolean(t.adminPublished));setNotice('');setError('');
+  };
+  const updateLayout=(key,patch)=>setConfig(v=>({...v,layout:{...(v.layout||{}),[key]:{...(v.layout?.[key]||{}),...patch}}}));
+  const handleLayoutChange=updater=>setConfig(v=>updater(v));
+  const updateCopy=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),[key]:value}}));
+  const updatePermission=(key,value)=>setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));
+  const updateDefault=(key,value)=>setConfig(v=>({...v,defaults:{...(v.defaults||{}),[key]:value}}));
+  const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
+  const updateStyle=(key,value)=>setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));
+  const updateMedia=(key,value)=>setConfig(v=>({...v,media:{...(v.media||{}),[key]:value}}));
+  const updateVisibility=(key,value)=>setConfig(v=>({...v,visibility:{...(v.visibility||{}),[key]:value}}));
+  const save=async(publish)=>{
+    setBusy(true);setError('');setNotice('');
+    const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
+    if(saveError)setError('Haikuweza kuhifadhi kiolezo: '+saveError.message);
+    else{setPublished(publish);setTemplates(v=>v.map(t=>t.id===selectedId?{...t,adminConfig:config,adminPublished:publish}:t));setNotice(publish?'Kiolezo kimehifadhiwa na kuchapishwa kwa wateja wote.':'Mpangilio umehifadhiwa kama rasimu; wateja bado hawaoni mabadiliko.');}
+    setBusy(false);
+  };
+  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...(config.defaults||{}),design:{templateId:selectedId,templateSnapshot:selected,templateConfig:config}};
+  return <>
+    <div className="page-header"><div><h1>Studio ya Miundo ya E-card</h1><p>Wewe Admin unapanga kadi kuu; wateja wanapata muundo uliouchapisha.</p></div><button className="secondary-button" onClick={onBack}>Rudi Dashboard</button></div>
+    {loading?<p>Inapakia miundo...</p>:<>
+      {error&&<div className="card ecard-studio-error">{error}</div>}
+      {notice&&<div className="card ecard-studio-notice">{notice}</div>}
+      <div className="card">
+        <label>Chagua kiolezo cha kuhariri</label>
+        <select value={selectedId} onChange={e=>choose(e.target.value)}>{templates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
+        <p>Hali: <strong>{published?'Kimechapishwa kwa wateja':'Rasimu / hakijachapishwa'}</strong></p>
+      </div>
+      <div className="ecard-studio-grid">
+        <div className="card ecard-studio-preview">
+          <h3>Preview ya Admin — buruta vipengele</h3>
+          <ECardArtwork key={'admin-studio-'+selectedId} templateId={selectedId} template={selected} card={previewCard} recipientName="JINA LA MWALIKWA" guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}} qrUrl="https://forteevents.co.tz/admin-preview" layoutEditor onLayoutChange={handleLayoutChange} onSelectLayoutElement={setSelectedElement}/>
+          <p>Chagua kipengele kwenye orodha, kisha kishike na kukivuta kwenye kadi. Mabadiliko yanaonekana papo hapo.</p>
+          <div className="ecard-studio-actions"><button className="secondary-button" type="button" onClick={()=>setConfig(v=>({...v,layout:{}}))}>Rudisha nafasi za mwanzo</button><button className="secondary-button" type="button" onClick={()=>setConfig(v=>({...v,layout:{...(v.layout||{}),[selectedElement]:{...(v.layout?.[selectedElement]||{}),scale:1}}}))}>Rudisha ukubwa</button></div>
+        </div>
+        <div className="card ecard-studio-tools">
+          <h3>Vipengele vya kadi</h3>
+          <label>Chagua kipengele cha kupanga</label>
+          <select value={selectedElement} onChange={e=>setSelectedElement(e.target.value)}>{elements.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
+          <label className="ecard-studio-field"><input type="checkbox" checked={config.visibility?.[selectedElement]!==false} onChange={e=>updateVisibility(selectedElement,e.target.checked)}/> Onyesha kipengele hiki kwenye kadi</label>
+          <label>Ukubwa wa kipengele</label>
+          <input type="range" min="0.5" max="2" step="0.05" value={config.layout?.[selectedElement]?.scale||1} onChange={e=>updateLayout(selectedElement,{scale:Number(e.target.value)})}/>
+          <div className="ecard-studio-coordinates"><label>Usogezaji mlalo (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dx||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dx:Number(e.target.value)||0})}/><label>Usogezaji wima (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dy||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dy:Number(e.target.value)||0})}/></div>
+          <h3>Maandishi ya kudumu ya kiolezo</h3>
+          {copyFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.copy?.[key]||''} onChange={e=>updateCopy(key,e.target.value)} placeholder="Acha wazi kutumia maandishi ya kawaida"/></label>)}
+          <h3>Taarifa za mwanzo za kadi</h3>
+          <p>Andika maneno ya msingi yatakayoonekana kabla mteja hajaanza kuhariri. Sehemu fixed zitabaki na taarifa hizi.</p>
+          {defaultFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.defaults?.[key]||''} onChange={e=>updateDefault(key,e.target.value)} placeholder="Taarifa ya mwanzo (hiari)"/></label>)}
+          <h3>Picha na utambulisho</h3>
+          <label className="ecard-studio-field">Link ya picha ya mandhari (https://)<input value={config.media?.backgroundUrl||''} onChange={e=>updateMedia('backgroundUrl',e.target.value)} placeholder="Acha wazi kutumia picha ya sasa"/></label>
+          <label className="ecard-studio-field">Link ya logo (https://)<input value={config.media?.logoUrl||''} onChange={e=>updateMedia('logoUrl',e.target.value)} placeholder="Acha wazi kutumia logo ya ForteEvents"/></label>
+          <h3>Rangi na fonti ya kiolezo</h3>
+          <label className="ecard-studio-field">Rangi ya msingi <input type="color" value={config.style?.accent||'#a77b20'} onChange={e=>updateStyle('accent',e.target.value)}/></label>
+          <label className="ecard-studio-field">Rangi ya maandishi <input type="color" value={config.style?.text||'#252018'} onChange={e=>updateStyle('text',e.target.value)}/></label>
+          <label className="ecard-studio-field">Fonti <select value={config.style?.font||'Georgia, serif'} onChange={e=>updateStyle('font',e.target.value)}><option value="Georgia, serif">Georgia</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Verdana, sans-serif">Verdana</option><option value="cursive">Cursive</option></select></label>
+          <h3>Majina ya sehemu za taarifa</h3>
+          {['TAREHE','MUDA','IBADA','MAPOKEZI','MAHALI','CHAKULA','DRESS CODE','RSVP'].map(key=><label className="ecard-studio-field" key={key}>{key}<input value={config.copy?.detailLabels?.[key]||key} onChange={e=>updateDetailLabel(key,e.target.value)}/></label>)}
+          <h3>Majina ya sehemu za taarifa</h3>
+          {['TAREHE','MUDA','IBADA','MAPOKEZI','MAHALI','CHAKULA','DRESS CODE','RSVP'].map(key=><label className="ecard-studio-field" key={key}>{key}<input value={config.copy?.detailLabels?.[key]||key} onChange={e=>updateDetailLabel(key,e.target.value)}/></label>)}
+          <h3>Ruhusa za mteja</h3>
+          <p>Weka tiki kwenye taarifa ambazo mteja anaruhusiwa kubadilisha. Zisizo na tiki zitakuwa fixed.</p>
+          <div className="ecard-studio-permissions">{ECARD_TEMPLATE_FIELDS.map(([key,label])=><label key={key}><input type="checkbox" checked={config.permissions?.[key]!==false} onChange={e=>updatePermission(key,e.target.checked)}/>{label}</label>)}</div>
+          <h3>Vipengele visivyoguswa na mteja</h3>
+          <p>QR Code, logo, kauli mbiu na mpangilio wa michoro vinadhibitiwa na Admin; mteja hawezi kuvivuta.</p>
+          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(false)}>{busy?'Inahifadhi...':'Hifadhi rasimu'}</button>
+          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(true)}>Hifadhi na chapisha kwa wateja</button>
+        </div>
+      </div>
+    </>}
+  </>
+}
+
 function AdminECardManagement({ onBack }) {
   const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -729,9 +852,10 @@ function App() {
   const defaultECardDesign = { template:'classic', background:'#fffdf8', accent:'#9a792d', text:'#332b20', font:'Georgia, serif', alignment:'center', titleSize:'32px' }
   const [eCardDesign, setECardDesign] = useState(defaultECardDesign)
   const [selectedTemplateId, setSelectedTemplateId] = useState('forte-ivory-gold-rose')
-  const selectedECardTemplate = [...BUILT_IN_ECARD_TEMPLATES, ...ecardTemplates].find(item => item.id === selectedTemplateId) || BUILT_IN_ECARD_TEMPLATES[0]
-  const [ecardLayoutEditorOpen, setEcardLayoutEditorOpen] = useState(false)
-  const [ecardLayout, setEcardLayout] = useState({qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})
+  const [ecardTemplateSettings,setEcardTemplateSettings]=useState({})
+  const selectedECardTemplateBase = [...BUILT_IN_ECARD_TEMPLATES, ...ecardTemplates].find(item => item.id === selectedTemplateId) || BUILT_IN_ECARD_TEMPLATES[0]
+  const selectedECardTemplate = {...selectedECardTemplateBase,templateConfig:ecardTemplateSettings[selectedTemplateId]?.config||{},templatePublished:Boolean(ecardTemplateSettings[selectedTemplateId]?.is_published)}
+  const canEditTemplateField = key => selectedECardTemplate?.templateConfig?.permissions?.[key] !== false
   const [eCardForm, setECardForm] = useState({
     title: '', occasion: 'Harusi', host_names: '', bride_name: '', groom_name: '', event_date: '',
     event_time: '', venue: '', ceremony_time: '', ceremony_venue: '', reception_time: '', reception_venue: '',
@@ -992,15 +1116,23 @@ function App() {
     let active = true
     const loadTemplates = async () => {
       setEcardTemplatesLoading(true)
-      const { data, error } = await supabase.from('e_card_templates').select('id,name,occasion,description,image_url,theme,design').eq('is_active', true).order('created_at', { ascending: false })
+      const [{data,error},{data:settings,error:settingsError}] = await Promise.all([supabase.from('e_card_templates').select('id,name,occasion,description,image_url,theme,design').eq('is_active', true).order('created_at', { ascending: false }),supabase.from('e_card_template_settings').select('template_id,config,is_published').eq('is_published',true)])
       if (!active) return
       if (error) setECardMessage('Sampuli za E-card hazijapakiwa: ' + error.message)
       else setEcardTemplates(data || [])
+      if(settingsError) setECardMessage('Mipangilio ya kiolezo haijapakiwa: '+settingsError.message)
+      else setEcardTemplateSettings(Object.fromEntries((settings||[]).map(row=>[row.template_id,row])))
       setEcardTemplatesLoading(false)
     }
     loadTemplates()
     return () => { active = false }
   }, [page])
+
+  useEffect(()=>{
+    if(page!=='ecard')return
+    const defaults=ecardTemplateSettings[selectedTemplateId]?.config?.defaults
+    if(defaults&&Object.keys(defaults).length)setECardForm(v=>({...v,...defaults}))
+  },[page,selectedTemplateId,ecardTemplateSettings])
 
   // =========================
   // E-CARD FUNCTIONS
@@ -1017,7 +1149,14 @@ function App() {
       setECardMessage('Imeshindikana kupakia E-card: ' + error.message)
       setECards([])
     } else {
-      setECards(data || [])
+      const {data:publishedSettings}=await supabase.from('e_card_template_settings').select('template_id,config').eq('is_published',true)
+      const settingsById=Object.fromEntries((publishedSettings||[]).map(row=>[row.template_id,row.config]))
+      const cards=(data||[]).map(card=>{
+        const templateId=getSavedECardTemplateId(card)
+        const config=settingsById[templateId]
+        return config ? {...card,design:{...getECardDesignData(card),templateConfig:config}} : card
+      })
+      setECards(cards)
       setECardMessage('')
     }
     setECardsLoading(false)
@@ -1033,8 +1172,6 @@ function App() {
       location_url: '', message: DEFAULT_ECARD_MESSAGE, image_url: '', theme: 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setEcardLayout({qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})
-    setEcardLayoutEditorOpen(false)
     setSelectedTemplateId('forte-ivory-gold-rose')
   }
 
@@ -1053,7 +1190,7 @@ function App() {
     try {
       const payload = {
         ...eCardForm,
-        design: { ...defaultECardDesign, layout: ecardLayout, templateId: selectedECardTemplate?.id || selectedTemplateId, templateSnapshot: { ...selectedECardTemplate, id: selectedECardTemplate?.id || selectedTemplateId, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || selectedECardTemplate?.design?.style || getECardTemplate(selectedTemplateId)?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || selectedECardTemplate?.design?.artwork || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
+        design: { ...defaultECardDesign, templateId: selectedECardTemplate?.id || selectedTemplateId, templateConfig: selectedECardTemplate?.templateConfig || {}, templateSnapshot: { ...selectedECardTemplate, id: selectedECardTemplate?.id || selectedTemplateId, templateConfig:selectedECardTemplate?.templateConfig||{}, name: selectedECardTemplate?.name || getECardTemplate(selectedTemplateId)?.name || 'ForteEvents E-card', occasion: selectedECardTemplate?.occasion || eCardForm.occasion, style: selectedECardTemplate?.style || selectedECardTemplate?.design?.style || getECardTemplate(selectedTemplateId)?.style || 'ivory-gold', artwork: selectedECardTemplate?.artwork || selectedECardTemplate?.image_url || selectedECardTemplate?.design?.artwork || getECardTemplate(selectedTemplateId)?.artwork, aspectRatio: selectedECardTemplate?.aspectRatio || '5 / 7', photoSlot: Boolean(selectedECardTemplate?.photoSlot) } },
         event_time: eCardForm.event_time || null,
         title: eCardForm.title.trim(),
         host_names: eCardForm.host_names.trim(),
@@ -1097,8 +1234,6 @@ function App() {
       message: card.message || DEFAULT_ECARD_MESSAGE, image_url: card.image_url || '', theme: card.theme || 'gold'
     })
     setECardDesign(defaultECardDesign)
-    setEcardLayout(getECardDesignData(card).layout || {qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})
-    setEcardLayoutEditorOpen(false)
     setSelectedTemplateId(getSavedECardTemplateId(card)==='forte-white-gold'?'forte-ivory-gold-rose':getSavedECardTemplateId(card)==='forte-cream-blue'?'forte-blue-rose':getSavedECardTemplateId(card))
     setECardMessage('Badilisha taarifa za kadi kisha hifadhi.')
     setPage('ecard')
@@ -1255,6 +1390,11 @@ function App() {
           .select('guest_name, invite_type, guest_count, token')
           .eq('token', guestToken).eq('card_id', data.id).maybeSingle()
         guest = result.error ? null : result.data
+      }
+      if (!error && data) {
+        const templateId=getSavedECardTemplateId(data)
+        const {data:publishedSetting}=await supabase.from('e_card_template_settings').select('config,is_published').eq('template_id',templateId).eq('is_published',true).maybeSingle()
+        if(publishedSetting?.config) data.design={...getECardDesignData(data),templateConfig:publishedSetting.config}
       }
       if (active) {
         setPublicECard(error ? null : (data ? {...data, guest} : null))
@@ -2468,6 +2608,7 @@ useEffect(() => {
               E-card Management
             </button>
             <button className={adminPage === 'ecard-templates' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-templates')}>E-card Templates</button>
+            <button className={adminPage === 'ecard-studio' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-studio')}>Studio ya E-card</button>
           </div>
 
           <div className="sidebar-bottom">
@@ -2534,6 +2675,9 @@ useEffect(() => {
                 </div>
 
                 <div className="card">
+                  <h3>Studio ya E-card</h3><p>Hariri muonekano wa kadi, maandishi ya kudumu na ruhusa za sehemu ambazo wateja wanaweza kubadilisha.</p><button className="primary-button" onClick={() => setAdminPage('ecard-studio')}>Fungua Studio</button>
+                </div>
+                <div className="card">
                   <h3>System</h3>
                   <p>
                     ForteEvents backend iko online
@@ -2568,6 +2712,7 @@ useEffect(() => {
 )}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'ecard-studio' && <AdminECardTemplateStudio session={session} onBack={() => setAdminPage('dashboard')} />}
         </main>
       </div>
     )
@@ -3329,67 +3474,56 @@ return (
               <h2>Kadi ya mfano — hariri taarifa zake</h2>
               <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
             </div>
-            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} template={selectedECardTemplate} card={{...eCardForm,design:{templateId:selectedTemplateId,layout:ecardLayout,templateSnapshot:selectedECardTemplate}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'} layoutEditor={ecardLayoutEditorOpen && selectedECardTemplate?.style==='luxury-floral-gold'} onLayoutChange={setEcardLayout}/>
-            {selectedECardTemplate?.style==='luxury-floral-gold' && <div className="ecard-layout-editor-panel">
-              <button type="button" className="secondary-button" onClick={()=>setEcardLayoutEditorOpen(v=>!v)}>{ecardLayoutEditorOpen?'Maliza kupanga muonekano':'Panga Muonekano wa Kadi'}</button>
-              {ecardLayoutEditorOpen && <>
-                <p>Shika QR, logo au tagline kwenye kadi, kisha vuta kwa kidole hadi sehemu unayoitaka. Mabadiliko yanaonekana papo hapo.</p>
-                <div className="ecard-layout-controls">
-                  <label>Ukubwa wa QR <input type="range" min="12" max="24" value={ecardLayout.qr.width} onChange={e=>setEcardLayout(v=>({...v,qr:{...v.qr,width:Number(e.target.value)}}))}/></label>
-                  <label>Ukubwa wa logo <input type="range" min="20" max="48" value={ecardLayout.brand.width} onChange={e=>setEcardLayout(v=>({...v,brand:{...v.brand,width:Number(e.target.value)}}))}/></label>
-                  <button type="button" className="secondary-button" onClick={()=>setEcardLayout({qr:{top:80,left:27,width:18},brand:{top:80,left:50,width:34},tagline:{top:94,left:28,width:60}})}>Rudisha mpangilio wa mwanzo</button>
-                </div>
-              </>}
-            </div>}
+            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} template={selectedECardTemplate} card={{...eCardForm,design:{templateId:selectedTemplateId,templateConfig:selectedECardTemplate?.templateConfig||{},templateSnapshot:{...selectedECardTemplate,templateConfig:selectedECardTemplate?.templateConfig||{}}}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
             <form onSubmit={saveECard}>
               <label>Jina la tukio</label>
-              <input value={eCardForm.title} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
+              <input value={eCardForm.title} disabled={!canEditTemplateField('title')} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
               <label>Aina ya tukio</label>
-              <select value={eCardForm.occasion} onChange={e => setECardForm(v => ({...v, occasion:e.target.value}))}>
+              <select value={eCardForm.occasion} disabled={!canEditTemplateField('occasion')} onChange={e => setECardForm(v => ({...v, occasion:e.target.value}))}>
                 <option>Harusi</option><option>Send-off</option><option>Kipaimara</option><option>Graduation</option><option>Birthday</option><option>Kitchen Party</option><option>Shukrani</option><option>Kupongeza</option><option>Kumuaga</option><option>Tukio lingine</option>
               </select>
               <label>Jina la familia inayoalika</label>
-              <input value={eCardForm.host_names} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: Bwana na Bi. Amini Mlashi" />
+              <input value={eCardForm.host_names} disabled={!canEditTemplateField('host_names')} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: Bwana na Bi. Amini Mlashi" />
               <label>Tarehe</label>
-              <input type="date" value={eCardForm.event_date} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
+              <input type="date" value={eCardForm.event_date} disabled={!canEditTemplateField('event_date')} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
               <label>Muda wa tukio</label>
-              <input type="time" value={eCardForm.event_time} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
+              <input type="time" value={eCardForm.event_time} disabled={!canEditTemplateField('event_time')} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
               <label>Jina la bibi harusi</label>
-              <input value={eCardForm.bride_name} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
+              <input value={eCardForm.bride_name} disabled={!canEditTemplateField('bride_name')} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
               <label>Jina la bwana harusi</label>
-              <input value={eCardForm.groom_name} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
+              <input value={eCardForm.groom_name} disabled={!canEditTemplateField('groom_name')} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
               <label>Muda wa ibada</label>
-              <input type="time" value={eCardForm.ceremony_time} onChange={e => setECardForm(v => ({...v, ceremony_time:e.target.value}))} />
+              <input type="time" value={eCardForm.ceremony_time} disabled={!canEditTemplateField('ceremony_time')} onChange={e => setECardForm(v => ({...v, ceremony_time:e.target.value}))} />
               <label>Mahali pa ibada</label>
-              <input value={eCardForm.ceremony_venue} onChange={e => setECardForm(v => ({...v, ceremony_venue:e.target.value}))} />
+              <input value={eCardForm.ceremony_venue} disabled={!canEditTemplateField('ceremony_venue')} onChange={e => setECardForm(v => ({...v, ceremony_venue:e.target.value}))} />
               <label>Muda wa reception</label>
-              <input type="time" value={eCardForm.reception_time} onChange={e => setECardForm(v => ({...v, reception_time:e.target.value}))} />
+              <input type="time" value={eCardForm.reception_time} disabled={!canEditTemplateField('reception_time')} onChange={e => setECardForm(v => ({...v, reception_time:e.target.value}))} />
               <label>Mahali pa reception</label>
-              <input value={eCardForm.reception_venue} onChange={e => setECardForm(v => ({...v, reception_venue:e.target.value}))} />
+              <input value={eCardForm.reception_venue} disabled={!canEditTemplateField('reception_venue')} onChange={e => setECardForm(v => ({...v, reception_venue:e.target.value}))} />
               <label>Ujumbe wa chakula / mapokezi</label>
-              <input value={eCardForm.food_note} onChange={e => setECardForm(v => ({...v, food_note:e.target.value}))} />
+              <input value={eCardForm.food_note} disabled={!canEditTemplateField('food_note')} onChange={e => setECardForm(v => ({...v, food_note:e.target.value}))} />
               <label>Maelezo ya dress code (hiari)</label>
-              <input value={eCardForm.dress_code} onChange={e => setECardForm(v => ({...v, dress_code:e.target.value}))} placeholder="Mfano: Vazi rasmi" />
+              <input value={eCardForm.dress_code} disabled={!canEditTemplateField('dress_code')} onChange={e => setECardForm(v => ({...v, dress_code:e.target.value}))} placeholder="Mfano: Vazi rasmi" />
               <label>Chagua rangi za dress code (hadi 3)</label>
-              <div className="ecard-color-picker">{ECARD_DRESS_PALETTE.map(color => { const active=(eCardForm.dress_colors||[]).includes(color.value); return <button type="button" key={color.value} className={"ecard-color-choice "+(active?'active':'')} onClick={()=>setECardForm(v=>({...v,dress_colors:active?v.dress_colors.filter(x=>x!==color.value):v.dress_colors.length<3?[...v.dress_colors,color.value]:v.dress_colors}))} aria-label={color.label} title={color.label} aria-pressed={active}><i style={{backgroundColor:color.hex}}/><span>{color.label}</span></button>})}</div>
+              <div className="ecard-color-picker">{ECARD_DRESS_PALETTE.map(color => { const active=(eCardForm.dress_colors||[]).includes(color.value); return <button type="button" key={color.value} className={"ecard-color-choice "+(active?'active':'')} disabled={!canEditTemplateField('dress_colors')} onClick={()=>setECardForm(v=>({...v,dress_colors:active?v.dress_colors.filter(x=>x!==color.value):v.dress_colors.length<3?[...v.dress_colors,color.value]:v.dress_colors}))} aria-label={color.label} title={color.label} aria-pressed={active}><i style={{backgroundColor:color.hex}}/><span>{color.label}</span></button>})}</div>
               <p className="ecard-form-hint">Rangi zilizochaguliwa zitaonekana kwenye kadi kama alama za rangi, bila majina marefu.</p>
               <label>Tarehe ya mwisho ya RSVP</label>
-              <input type="date" value={eCardForm.rsvp_deadline} onChange={e => setECardForm(v => ({...v, rsvp_deadline:e.target.value}))} />
+              <input type="date" value={eCardForm.rsvp_deadline} disabled={!canEditTemplateField('rsvp_deadline')} onChange={e => setECardForm(v => ({...v, rsvp_deadline:e.target.value}))} />
               <label>Jina la mawasiliano 1</label>
-              <input value={eCardForm.rsvp_contact_name} onChange={e => setECardForm(v => ({...v, rsvp_contact_name:e.target.value}))} />
+              <input value={eCardForm.rsvp_contact_name} disabled={!canEditTemplateField('rsvp_contact_name')} onChange={e => setECardForm(v => ({...v, rsvp_contact_name:e.target.value}))} />
               <label>Simu ya mawasiliano 1</label>
-              <input value={eCardForm.rsvp_contact_phone} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone:e.target.value}))} />
+              <input value={eCardForm.rsvp_contact_phone} disabled={!canEditTemplateField('rsvp_contact_phone')} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone:e.target.value}))} />
               <label>Jina la mawasiliano 2</label>
-              <input value={eCardForm.rsvp_contact_name_2} onChange={e => setECardForm(v => ({...v, rsvp_contact_name_2:e.target.value}))} />
+              <input value={eCardForm.rsvp_contact_name_2} disabled={!canEditTemplateField('rsvp_contact_name_2')} onChange={e => setECardForm(v => ({...v, rsvp_contact_name_2:e.target.value}))} />
               <label>Simu ya mawasiliano 2</label>
-              <input value={eCardForm.rsvp_contact_phone_2} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone_2:e.target.value}))} />
+              <input value={eCardForm.rsvp_contact_phone_2} disabled={!canEditTemplateField('rsvp_contact_phone_2')} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone_2:e.target.value}))} />
               <label>Mahali / Ukumbi</label>
-              <input value={eCardForm.venue} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
+              <input value={eCardForm.venue} disabled={!canEditTemplateField('venue')} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
               <label>Google Maps location link (hiari)</label>
-              <input type="url" value={eCardForm.location_url} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
+              <input type="url" value={eCardForm.location_url} disabled={!canEditTemplateField('location_url')} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
               <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
               <label>Ujumbe wa Familia</label>
-              <textarea rows="4" value={eCardForm.message} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
+              <textarea rows="4" value={eCardForm.message} disabled={!canEditTemplateField('message')} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
               <p className="ecard-form-hint">Ujumbe huu utaonekana chini ya taarifa za mwaliko. Unaweza kuubadilisha au kuacha mfano huu.</p>
               <label>Pakia picha ya mwaliko (JPG, PNG au WEBP; hadi 5MB)</label>
               <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
@@ -3414,7 +3548,7 @@ return (
               }} />
               {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha iliyochaguliwa" style={{width:'100%',maxWidth:'240px',borderRadius:'8px',marginTop:'8px'}} />}
               <label>Au weka link ya picha (hiari, https://)</label>
-              <input type="url" value={eCardForm.image_url} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
+              <input type="url" value={eCardForm.image_url} disabled={!canEditTemplateField('image_url')} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
               <p className="ecard-helper-note">Maandishi ya heshima na muundo wa mwaliko ni sehemu ya kiolezo rasmi. Jaza taarifa za familia, wahusika, tarehe na maeneo; sehemu za IBADA, MAPOKEZI, CHAKULA na RSVP ni hiari.</p>
               <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
               {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
