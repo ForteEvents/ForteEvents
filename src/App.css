@@ -2729,3 +2729,78 @@ button[type="submit"] {
   border-radius:0!important;
   padding:0 1.5cqw!important;
 }
+
+
+/* E-card text safety: keep customer-entered content inside its assigned zones. */
+.ecard-professional-preview,
+.ecard-professional-preview *,
+.ecard-luxury-floral-card,
+.ecard-luxury-floral-card * {
+  box-sizing: border-box;
+}
+.ecard-professional-preview {
+  min-width: 0;
+}
+.ecard-professional-preview .ecard-main-panel,
+.ecard-professional-preview .ecard-main-panel > *,
+.ecard-professional-preview .ecard-detail-flow,
+.ecard-professional-preview .ecard-detail-line,
+.ecard-professional-preview .ecard-detail-line > span {
+  min-width: 0;
+  max-width: 100%;
+}
+.ecard-professional-preview .ecard-family-copy,
+.ecard-professional-preview .ecard-invitation-copy,
+.ecard-professional-preview .ecard-date-line,
+.ecard-professional-preview .ecard-detail-flow,
+.ecard-professional-preview .ecard-map-link-section,
+.ecard-professional-preview .ecard-family-message,
+.ecard-professional-preview .ecard-card-footer {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+}
+.ecard-professional-preview .ecard-family-copy > strong,
+.ecard-professional-preview .ecard-invitation-recipient,
+.ecard-professional-preview .ecard-invitation-couple,
+.ecard-professional-preview .ecard-event-ribbon,
+.ecard-professional-preview .ecard-detail-line > span,
+.ecard-professional-preview .ecard-map-venue-name {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.ecard-luxury-floral-card .ecard-luxury-family,
+.ecard-luxury-floral-card .ecard-luxury-invite-copy,
+.ecard-luxury-floral-card .ecard-luxury-couple,
+.ecard-luxury-floral-card .ecard-luxury-date,
+.ecard-luxury-floral-card .ecard-luxury-details,
+.ecard-luxury-floral-card .ecard-luxury-venue,
+.ecard-luxury-floral-card .ecard-luxury-message {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.ecard-luxury-floral-card .ecard-luxury-family strong,
+.ecard-luxury-floral-card .ecard-invitation-titles,
+.ecard-luxury-floral-card .ecard-invitation-recipient,
+.ecard-luxury-floral-card .ecard-luxury-couple,
+.ecard-luxury-floral-card .ecard-luxury-date,
+.ecard-luxury-floral-card .ecard-luxury-detail,
+.ecard-luxury-floral-card .ecard-luxury-detail span,
+.ecard-luxury-floral-card .ecard-luxury-contact,
+.ecard-luxury-floral-card .ecard-luxury-venue span,
+.ecard-luxury-floral-card .ecard-luxury-venue small,
+.ecard-luxury-floral-card .ecard-luxury-message {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ecard-luxury-floral-card .ecard-luxury-details,
+.ecard-luxury-floral-card .ecard-luxury-detail-column,
+.ecard-luxury-floral-card .ecard-luxury-contact-list {
+  min-width: 0;
+}
