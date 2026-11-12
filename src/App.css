@@ -2712,3 +2712,20 @@ button[type="submit"] {
 .ecard-layout-editing .ecard-studio-flower{pointer-events:auto;cursor:grab;touch-action:none}
 .ecard-layout-editing .ecard-template-flower{pointer-events:auto!important;cursor:grab!important;touch-action:none}
 .ecard-layout-editing .ecard-template-flower:active,.ecard-layout-editing .ecard-studio-flower:active{cursor:grabbing}
+
+
+/* Remove fixed decorative color bands that obstruct invitation text editing.
+   Keep the text itself plain and movable in preview, public card and PNG export. */
+.ecard-style-luxury-floral-gold .ecard-invitation-couple::before,
+.ecard-style-luxury-floral-gold .ecard-luxury-couple::before{
+  content:none!important;
+  display:none!important;
+}
+.ecard-style-luxury-floral-gold .ecard-date-line,
+.ecard-style-luxury-floral-gold .ecard-luxury-date{
+  background:transparent!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:0 1.5cqw!important;
+}
