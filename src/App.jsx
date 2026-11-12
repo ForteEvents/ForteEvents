@@ -128,7 +128,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     </div>
     {reception&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'MAHALI PA MAPOKEZI'}</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span>{card.food_note}</span></div>}
-    <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(3.05,390/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
+    <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(2.6,300/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
     <div className="ecard-luxury-qr" {...elementProps('qr')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
     <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
     <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
