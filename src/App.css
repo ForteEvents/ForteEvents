@@ -2666,3 +2666,31 @@ button[type="submit"] {
 .ecard-luxury-tagline-drag{position:absolute;z-index:3;text-align:center;color:#8d671d;font-family:Georgia,serif;font-style:italic;font-size:2.05cqw;line-height:1.05;white-space:nowrap;text-shadow:0 .1cqw .25cqw rgba(255,255,255,.45)}
 .ecard-luxury-floral-card .ecard-luxury-brand span{display:none}
 @media(max-width:520px){.ecard-layout-editor-panel{padding:11px}.ecard-layout-controls label{align-items:flex-start;flex-direction:column}.ecard-layout-controls input[type=range]{width:100%}}
+
+
+/* Admin-only E-card template studio */
+.ecard-studio-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:18px;align-items:start}
+.ecard-studio-preview,.ecard-studio-tools{min-width:0}
+.ecard-studio-preview .ecard-luxury-floral-card,.ecard-studio-preview .ecard-professional-preview{max-width:100%}
+.ecard-studio-tools{display:flex;flex-direction:column;gap:10px}
+.ecard-studio-tools h3{margin:12px 0 2px;color:#8d671d}
+.ecard-studio-tools>label,.ecard-studio-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}
+.ecard-studio-tools input[type=range]{width:100%;accent-color:#a77b20}
+.ecard-studio-coordinates{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center}
+.ecard-studio-coordinates input{min-width:0}
+.ecard-studio-permissions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ecard-studio-permissions label{display:flex;gap:7px;align-items:center;font-size:12px;font-weight:400}
+.ecard-studio-permissions input{accent-color:#a77b20}
+.ecard-studio-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ecard-studio-notice{border-left:4px solid #27834a}
+.ecard-studio-error{border-left:4px solid #b42318;color:#b42318}
+.ecard-admin-styled{font-family:var(--ecard-admin-font,Georgia,serif)}
+.ecard-admin-styled .ecard-main-panel{color:var(--ecard-admin-text)}
+.ecard-admin-styled .ecard-document-title,.ecard-admin-styled .ecard-script-title,.ecard-admin-styled .ecard-invitation-label,.ecard-admin-styled .ecard-luxury-kicker,.ecard-admin-styled .ecard-luxury-invitation-label{color:var(--ecard-admin-accent)}
+.ecard-admin-styled .ecard-invitation-titles,.ecard-admin-styled .ecard-invitation-recipient,.ecard-admin-styled .ecard-luxury-family strong,.ecard-admin-styled .ecard-luxury-couple,.ecard-admin-styled .ecard-luxury-date{color:var(--ecard-admin-accent)}
+.ecard-admin-styled .ecard-luxury-detail i,.ecard-admin-styled .ecard-luxury-contacts-title,.ecard-admin-styled .ecard-luxury-venue b{color:var(--ecard-admin-accent)}
+.ecard-admin-styled .ecard-luxury-message,.ecard-admin-styled .ecard-family-message,.ecard-admin-styled .ecard-detail-flow{color:var(--ecard-admin-text)}
+.ecard-layout-editing [data-editor-element]{touch-action:none;cursor:grab;outline:1px dashed rgba(181,138,53,.85);outline-offset:2px}
+.ecard-layout-editing [data-editor-element]:active{cursor:grabbing;outline:2px solid #a77b20}
+@media(max-width:850px){.ecard-studio-grid{grid-template-columns:1fr}.ecard-studio-preview{order:1}.ecard-studio-tools{order:2}}
+@media(max-width:520px){.ecard-studio-permissions{grid-template-columns:1fr}.ecard-studio-coordinates{grid-template-columns:1fr 90px}}
