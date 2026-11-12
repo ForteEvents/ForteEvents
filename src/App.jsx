@@ -714,6 +714,8 @@ function AdminECardTemplateStudio({session,onBack}){
           <label className="ecard-studio-field">Fonti <select value={config.style?.font||'Georgia, serif'} onChange={e=>updateStyle('font',e.target.value)}><option value="Georgia, serif">Georgia</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Verdana, sans-serif">Verdana</option><option value="cursive">Cursive</option></select></label>
           <h3>Majina ya sehemu za taarifa</h3>
           {['TAREHE','MUDA','IBADA','MAPOKEZI','MAHALI','CHAKULA','DRESS CODE','RSVP'].map(key=><label className="ecard-studio-field" key={key}>{key}<input value={config.copy?.detailLabels?.[key]||key} onChange={e=>updateDetailLabel(key,e.target.value)}/></label>)}
+          <h3>Majina ya sehemu za taarifa</h3>
+          {['TAREHE','MUDA','IBADA','MAPOKEZI','MAHALI','CHAKULA','DRESS CODE','RSVP'].map(key=><label className="ecard-studio-field" key={key}>{key}<input value={config.copy?.detailLabels?.[key]||key} onChange={e=>updateDetailLabel(key,e.target.value)}/></label>)}
           <h3>Ruhusa za mteja</h3>
           <p>Weka tiki kwenye taarifa ambazo mteja anaruhusiwa kubadilisha. Zisizo na tiki zitakuwa fixed.</p>
           <div className="ecard-studio-permissions">{ECARD_TEMPLATE_FIELDS.map(([key,label])=><label key={key}><input type="checkbox" checked={config.permissions?.[key]!==false} onChange={e=>updatePermission(key,e.target.checked)}/>{label}</label>)}</div>
