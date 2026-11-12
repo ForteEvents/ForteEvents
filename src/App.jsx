@@ -2565,6 +2565,7 @@ useEffect(() => {
               E-card Management
             </button>
             <button className={adminPage === 'ecard-templates' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-templates')}>E-card Templates</button>
+            <button className={adminPage === 'ecard-studio' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-studio')}>Studio ya E-card</button>
           </div>
 
           <div className="sidebar-bottom">
@@ -2631,6 +2632,9 @@ useEffect(() => {
                 </div>
 
                 <div className="card">
+                  <h3>Studio ya E-card</h3><p>Hariri muonekano wa kadi, maandishi ya kudumu na ruhusa za sehemu ambazo wateja wanaweza kubadilisha.</p><button className="primary-button" onClick={() => setAdminPage('ecard-studio')}>Fungua Studio</button>
+                </div>
+                <div className="card">
                   <h3>System</h3>
                   <p>
                     ForteEvents backend iko online
@@ -2665,6 +2669,7 @@ useEffect(() => {
 )}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'ecard-studio' && <AdminECardTemplateStudio session={session} onBack={() => setAdminPage('dashboard')} />}
         </main>
       </div>
     )
