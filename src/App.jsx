@@ -1192,9 +1192,6 @@ function App() {
       setECardMessage((labels[exceeded[0]] || exceeded[0]) + ' umezidi herufi ' + exceeded[1] + '. Punguza maandishi ili kadi ibaki na mpangilio mzuri.')
       return
     }
-      setECardMessage('Jaza jina la tukio na tarehe.')
-      return
-    }
     if (eCardForm.image_url && !/^https:\/\//i.test(eCardForm.image_url)) {
       setECardMessage('Picha lazima iwe na link salama inayoanza na https://')
       return
