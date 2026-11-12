@@ -681,7 +681,7 @@ function AdminECardTemplateStudio({session,onBack}){
     setBusy(true);setError('');setNotice('');
     const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
     if(saveError)setError('Haikuweza kuhifadhi kiolezo: '+saveError.message);
-    else{setPublished(publish);setNotice(publish?'Kiolezo kimehifadhiwa na kuchapishwa kwa wateja wote.':'Mpangilio umehifadhiwa kama rasimu; wateja bado hawaoni mabadiliko.');await load();}
+    else{setPublished(publish);setTemplates(v=>v.map(t=>t.id===selectedId?{...t,adminConfig:config,adminPublished:publish}:t));setNotice(publish?'Kiolezo kimehifadhiwa na kuchapishwa kwa wateja wote.':'Mpangilio umehifadhiwa kama rasimu; wateja bado hawaoni mabadiliko.');}
     setBusy(false);
   };
   const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...(config.defaults||{}),design:{templateId:selectedId,templateSnapshot:selected,templateConfig:config}};
