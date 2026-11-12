@@ -82,7 +82,7 @@ function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,c
 function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement}){
   const config=getECardTemplateConfig(card); const layout=config.layout||{}; const copy=config.copy||{};
   const dragRef=useRef(null);
-  const elementStyle=(key)=>{const item=layout[key]||{};return {transform:'translate('+Number(item.dx||0)+'cqw, '+(Number(item.dy||0)*1.4)+'cqw) scale('+Number(item.scale||1)+')',transformOrigin:'center center'};};
+  const elementStyle=(key)=>{const item=layout[key]||{};return {display:config.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(item.dx||0)+'cqw, '+(Number(item.dy||0)*1.4)+'cqw) scale('+Number(item.scale||1)+')',transformOrigin:'center center'};};
   const elementProps=(key)=>({ 'data-editor-element':key, style:elementStyle(key), onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);dragRef.current={key,x:event.clientX,y:event.clientY,dx:Number(layout[key]?.dx||0),dy:Number(layout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
   const moveDrag=(event)=>{if(!layoutEditor||!dragRef.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=dragRef.current;const dx=d.dx+(event.clientX-d.x)/rect.width*100;const dy=d.dy+(event.clientY-d.y)/rect.height*100;onLayoutChange?.(v=>({...v,layout:{...(v.layout||{}),[d.key]:{...(v.layout?.[d.key]||{}),dx,dy}}}));};
   const stopDrag=()=>{dragRef.current=null;};
@@ -179,7 +179,7 @@ function ECardFamilyMessage({message}) {
 
 function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,exportMode=false,templateId:forcedTemplateId,template:templateOverride,layoutEditor=false,onLayoutChange,onSelectLayoutElement}) {
   const universalConfig=getECardTemplateConfig(card); const universalLayout=universalConfig.layout||{}; const universalDrag=useRef(null);
-  const universalElementProps=key=>({ 'data-editor-element':key, style:{transform:'translate('+Number(universalLayout[key]?.dx||0)+'cqw, '+(Number(universalLayout[key]?.dy||0)*1.4)+'cqw) scale('+Number(universalLayout[key]?.scale||1)+')',transformOrigin:'center center'}, onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);universalDrag.current={key,x:event.clientX,y:event.clientY,dx:Number(universalLayout[key]?.dx||0),dy:Number(universalLayout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
+  const universalElementProps=key=>({ 'data-editor-element':key, style:{display:universalConfig.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(universalLayout[key]?.dx||0)+'cqw, '+(Number(universalLayout[key]?.dy||0)*1.4)+'cqw) scale('+Number(universalLayout[key]?.scale||1)+')',transformOrigin:'center center'}, onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();event.currentTarget.setPointerCapture?.(event.pointerId);universalDrag.current={key,x:event.clientX,y:event.clientY,dx:Number(universalLayout[key]?.dx||0),dy:Number(universalLayout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
   const universalMove=event=>{if(!layoutEditor||!universalDrag.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=universalDrag.current;const dx=d.dx+(event.clientX-d.x)/rect.width*100;const dy=d.dy+(event.clientY-d.y)/rect.height*100;onLayoutChange?.(v=>({...v,layout:{...(v.layout||{}),[d.key]:{...(v.layout?.[d.key]||{}),dx,dy}}}));};
   const universalStop=()=>{universalDrag.current=null;};
   const savedTemplateId=forcedTemplateId || getSavedECardTemplateId(card)
@@ -677,6 +677,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
   const updateStyle=(key,value)=>setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));
   const updateMedia=(key,value)=>setConfig(v=>({...v,media:{...(v.media||{}),[key]:value}}));
+  const updateVisibility=(key,value)=>setConfig(v=>({...v,visibility:{...(v.visibility||{}),[key]:value}}));
   const save=async(publish)=>{
     setBusy(true);setError('');setNotice('');
     const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
@@ -706,6 +707,7 @@ function AdminECardTemplateStudio({session,onBack}){
           <h3>Vipengele vya kadi</h3>
           <label>Chagua kipengele cha kupanga</label>
           <select value={selectedElement} onChange={e=>setSelectedElement(e.target.value)}>{elements.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
+          <label className="ecard-studio-field"><input type="checkbox" checked={config.visibility?.[selectedElement]!==false} onChange={e=>updateVisibility(selectedElement,e.target.checked)}/> Onyesha kipengele hiki kwenye kadi</label>
           <label>Ukubwa wa kipengele</label>
           <input type="range" min="0.5" max="2" step="0.05" value={config.layout?.[selectedElement]?.scale||1} onChange={e=>updateLayout(selectedElement,{scale:Number(e.target.value)})}/>
           <div className="ecard-studio-coordinates"><label>Usogezaji mlalo (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dx||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dx:Number(e.target.value)||0})}/><label>Usogezaji wima (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dy||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dy:Number(e.target.value)||0})}/></div>
