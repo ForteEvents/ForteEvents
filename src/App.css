@@ -2740,6 +2740,12 @@ button[type="submit"] {
 }
 .ecard-professional-preview {
   min-width: 0;
+  height: auto !important;
+  overflow: visible !important;
+}
+.ecard-professional-preview .ecard-main-panel {
+  height: auto !important;
+  overflow: visible !important;
 }
 .ecard-professional-preview .ecard-main-panel,
 .ecard-professional-preview .ecard-main-panel > *,
