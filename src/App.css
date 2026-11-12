@@ -2810,3 +2810,16 @@ button[type="submit"] {
 .ecard-luxury-floral-card .ecard-luxury-contact-list {
   min-width: 0;
 }
+
+
+/* Live character counts for customer E-card form fields. */
+.ecard-character-count {
+  display: block;
+  width: 100%;
+  margin: -5px 0 12px;
+  color: #766b55;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
