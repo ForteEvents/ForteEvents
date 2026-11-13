@@ -3583,7 +3583,7 @@ return (
                   <ECardArtwork
                     key={'template-thumb-'+item.id}
                     templateId={item.id}
-                    card={{occasion:item.occasion,title:item.name,host_names:'FAMILIA YAKO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',message:DEFAULT_ECARD_MESSAGE,design:{templateId:item.id,templateConfig:ecardTemplateSettings[item.id]?.config||{}}}
+                    card={{occasion:item.occasion,title:item.name,host_names:'FAMILIA YAKO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',message:DEFAULT_ECARD_MESSAGE,design:{templateId:item.id,templateConfig:ecardTemplateSettings[item.id]?.config||{}}}}
                     recipientName="[JINA LA MWALIKWA]"
                     guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}}
                     qrUrl={window.location.origin+'/?ecard-template='+encodeURIComponent(item.id)}
