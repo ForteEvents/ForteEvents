@@ -57,12 +57,12 @@ begin
   if v_staff_id is null then
     raise exception 'Akaunti ya usher haijapatikana. Msaidizi anatakiwa kuwa na akaunti ya ForteEvents kwa barua pepe hiyo.';
   end if;
-  insert into public.e_card_checkin_staff(card_id,owner_user_id,staff_user_id,staff_name,staff_phone)
+  insert into public.e_card_checkin_staff as current_assignment(card_id,owner_user_id,staff_user_id,staff_name,staff_phone)
   values (p_card_id,v_owner,v_staff_id,coalesce(v_name,''),coalesce(trim(p_staff_phone),''))
   on conflict (card_id,staff_user_id) do update
     set staff_name=excluded.staff_name, staff_phone=excluded.staff_phone
-  returning id, public.e_card_checkin_staff.staff_user_id,
-    public.e_card_checkin_staff.staff_name, v_email, public.e_card_checkin_staff.staff_phone
+  returning current_assignment.id, current_assignment.staff_user_id,
+    current_assignment.staff_name, v_email, current_assignment.staff_phone
   into assignment_id, staff_user_id, staff_name, staff_email, staff_phone;
   return next;
 end;
@@ -131,6 +131,8 @@ begin
   order by g.created_at desc;
 end;
 $$;
+
+drop function if exists public.check_in_e_card_guest(uuid);
 
 create or replace function public.check_in_e_card_guest(p_token uuid)
 returns table (
