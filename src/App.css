@@ -2918,3 +2918,25 @@ button[type="submit"] {
   .ecard-style-ivory-gold .ecard-card-brand{width:clamp(116px,31cqw,154px)!important;max-width:58%!important}
   .ecard-style-ivory-gold .ecard-card-brand img{max-height:32px!important}
 }
+
+
+/* Ivory & Gold Roses: larger branding and independently selectable text elements. */
+.ecard-style-ivory-gold .ecard-card-brand{
+  width:clamp(158px,30cqw,218px)!important;
+  max-width:68%!important;
+  margin:8px auto 0!important;
+}
+.ecard-style-ivory-gold .ecard-card-brand img{
+  max-height:52px!important;
+}
+.ecard-style-ivory-gold.ecard-layout-editing [data-editor-element]{
+  cursor:grab;
+  touch-action:none;
+}
+.ecard-style-ivory-gold.ecard-layout-editing [data-editor-element]:active{
+  cursor:grabbing;
+}
+.ecard-style-ivory-gold.ecard-layout-editing [data-editor-element]:hover{
+  outline:1px dashed rgba(181,137,48,.75);
+  outline-offset:2px;
+}
