@@ -85,7 +85,7 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]',copy=
 }
 function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={},editorPropsByPart={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p {...(editorPropsByPart.intro||{})}>{p.intro}</p><strong {...(editorPropsByPart.recipient||{})} className="ecard-invitation-recipient">— {p.recipient} —</strong><p {...(editorPropsByPart.eventLine||{})}>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong {...(editorPropsByPart.coupleName||{})} className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 
-function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement}){
+function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement,onBeginLayoutChange}){
   const guestType=String(guest?.invite_type || 'single').toLowerCase();
   const config=getECardTemplateConfig(card); const layout=config.layout||{}; const copy=config.copy||{};
   const dragRef=useRef(null);
