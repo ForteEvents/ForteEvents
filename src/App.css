@@ -2968,3 +2968,64 @@ button[type="submit"] {
 .ecard-studio-layer small{margin-left:auto;color:#9b5b35}
 .ecard-studio-layer-actions{display:flex;gap:8px;flex-wrap:wrap}
 .ecard-studio-layer-actions button{flex:1;min-width:120px}
+
+
+/* Admin E-card Studio: keep the card preview visible while settings scroll independently. */
+.ecard-studio-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr);
+  gap:18px;
+  align-items:start;
+}
+.ecard-studio-preview{
+  position:sticky;
+  top:12px;
+  align-self:start;
+  min-width:0;
+  max-height:calc(100dvh - 24px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.ecard-studio-tools{
+  min-width:0;
+  max-height:calc(100dvh - 24px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  padding-right:8px;
+}
+.ecard-studio-preview .ecard-luxury-floral-card,
+.ecard-studio-preview .ecard-professional-preview{
+  width:100%;
+  max-width:100%;
+}
+@media(max-width:850px){
+  .ecard-studio-grid{
+    grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+    gap:8px;
+    align-items:start;
+  }
+  .ecard-studio-preview{
+    position:sticky;
+    top:8px;
+    max-height:calc(100dvh - 16px);
+    padding:8px;
+  }
+  .ecard-studio-tools{
+    max-height:calc(100dvh - 16px);
+    padding:8px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .ecard-studio-preview h3,
+  .ecard-studio-tools h3{font-size:13px;line-height:1.3}
+  .ecard-studio-preview>p{font-size:11px;line-height:1.35}
+}
+@media(max-width:520px){
+  .ecard-studio-grid{grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:6px}
+  .ecard-studio-preview,.ecard-studio-tools{border-radius:8px}
+  .ecard-studio-layer-panel{padding:7px;gap:6px}
+  .ecard-studio-layer-list{max-height:220px}
+  .ecard-studio-layer{gap:5px;padding:6px 5px;font-size:10px}
+  .ecard-studio-layer-index{min-width:18px;font-size:9px}
+}
