@@ -89,7 +89,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
   const guestType=String(guest?.invite_type || 'single').toLowerCase();
   const config=getECardTemplateConfig(card); const layout=config.layout||{}; const copy=config.copy||{};
   const dragRef=useRef(null);
-  const elementStyle=(key)=>{const item=layout[key]||{};return {display:config.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(item.dx||0)+'cqw, '+(Number(item.dy||0)*1.4)+'cqw) rotate('+Number(item.rotate||0)+'deg) scale('+Number(item.scale||1)+')',transformOrigin:'center center',fontSize:item.fontSize?item.fontSize+'cqw':undefined,color:item.color||undefined,fontFamily:item.fontFamily&&item.fontFamily!=='inherit'?item.fontFamily:undefined,opacity:item.opacity==null?undefined:Number(item.opacity),width:item.width?item.width+'%':undefined,maxWidth:item.width?item.width+'%':undefined,zIndex:item.zIndex||undefined,border:item.borderWidth?item.borderWidth+'px solid '+(item.borderColor||'#c69a32'):undefined,backgroundColor:item.backgroundColor||undefined};};
+  const elementStyle=(key)=>{const item=layout[key]||{};return {display:config.visibility?.[key]===false?'none':undefined,transform:'translate('+Number(item.dx||0)+'cqw, '+(Number(item.dy||0)*1.4)+'cqw) rotate('+Number(item.rotate||0)+'deg) scale('+Number(item.scale||1)+')',transformOrigin:'center center',fontSize:item.fontSize?item.fontSize+'cqw':undefined,color:item.color||undefined,fontFamily:item.fontFamily&&item.fontFamily!=='inherit'?item.fontFamily:undefined,opacity:item.opacity==null?undefined:Number(item.opacity),width:item.width?item.width+'%':undefined,maxWidth:item.width?item.width+'%':undefined,position:item.zIndex!=null?'relative':undefined,zIndex:item.zIndex??undefined,textAlign:item.textAlign||undefined,fontWeight:item.fontWeight||undefined,letterSpacing:item.letterSpacing?item.letterSpacing+'em':undefined,lineHeight:item.lineHeight||undefined,border:item.borderWidth?item.borderWidth+'px solid '+(item.borderColor||'#c69a32'):undefined,backgroundColor:item.backgroundColor||undefined};};
   const elementProps=(key)=>({ 'data-editor-element':key, 'data-editor-selected':selectedLayoutKey===key?'true':undefined, style:elementStyle(key), onPointerDown:event=>{if(!layoutEditor)return;event.preventDefault();event.stopPropagation();onBeginLayoutChange?.(key);event.currentTarget.setPointerCapture?.(event.pointerId);dragRef.current={key,x:event.clientX,y:event.clientY,dx:Number(layout[key]?.dx||0),dy:Number(layout[key]?.dy||0)};onSelectLayoutElement?.(key);} });
   const moveDrag=(event)=>{if(!layoutEditor||!dragRef.current)return;const rect=event.currentTarget.getBoundingClientRect();const d=dragRef.current;const dx=d.dx+(event.clientX-d.x)/rect.width*100;const dy=d.dy+(event.clientY-d.y)/rect.height*100;onLayoutChange?.(v=>({...v,layout:{...(v.layout||{}),[d.key]:{...(v.layout?.[d.key]||{}),dx,dy}}}));};
   const stopDrag=()=>{dragRef.current=null;};
@@ -705,7 +705,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const [error,setError]=useState('');
   const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
   const elements=selected?.style==='luxury-floral-gold' ? [
-    ['background','Mandhari ya kadi'],['flowerTop','Ua / pambo la juu'],['flowerBottom','Ua / pambo la chini'],
+    ['background','Mandhari ya kadi'],['flowerTop','Ua / pambo la juu'],['flowerBottom','Ua / pambo la chini'],['details','Sehemu nzima ya taarifa'],
     ['kicker','Kichwa: Kadi ya mwaliko'],['occasion','Aina ya tukio'],['familyLabel','Maneno: Familia ya'],['familyName','Jina la familia'],
     ['invitationIntro','Utangulizi wa mwaliko'],['invitationRecipient','Jina la mwalikwa'],['invitationEventLine','Sentensi ya mwaliko'],['invitationCouple','Majina ya wanandoa'],
     ['date','Tarehe'],['detail-time-label','Lebo: Muda'],['detail-time-value','Thamani: Muda'],['detail-venue-label','Lebo: Mahali'],['detail-venue-value','Thamani: Mahali'],['detail-rsvp-label','Lebo: RSVP'],['detail-rsvp-value','Thamani: RSVP'],['detail-ibada-label','Lebo: Ibada'],['detail-ibada-value','Thamani: Ibada'],['detail-dress-label','Lebo: Dress code'],['detail-dress-value','Thamani: Dress code'],['detail-contact-title','Kichwa cha mawasiliano'],['detail-contact-1-name','Jina: Mawasiliano 1'],['detail-contact-1-phone','Simu: Mawasiliano 1'],['detail-contact-2-name','Jina: Mawasiliano 2'],['detail-contact-2-phone','Simu: Mawasiliano 2'],
@@ -737,7 +737,7 @@ function AdminECardTemplateStudio({session,onBack}){
   useEffect(()=>{load()},[]);
   const choose=id=>{
     const t=templates.find(x=>x.id===id);if(!t)return;
-    setSelectedId(id);setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});historyRef.current=[];futureRef.current=[];setHistoryVersion(v=>v+1);setPublished(Boolean(t.adminPublished));setNotice('');setError('');
+    setSelectedId(id);setSelectedElement(t.style==='luxury-floral-gold'?'background':'flowerTop');setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});historyRef.current=[];futureRef.current=[];setHistoryVersion(v=>v+1);setPublished(Boolean(t.adminPublished));setNotice('');setError('');
   };
   const updateLayout=(key,patch)=>{pushHistory();setConfig(v=>({...v,layout:{...(v.layout||{}),[key]:{...(v.layout?.[key]||{}),...patch}}}));};
   const handleLayoutChange=updater=>setConfig(v=>updater(v));
@@ -775,8 +775,13 @@ function AdminECardTemplateStudio({session,onBack}){
         </div>
         <div className="card ecard-studio-tools">
           <h3>Vipengele vya kadi</h3>
-          <label>Chagua kipengele cha kupanga</label>
-          <select value={selectedElement} onChange={e=>setSelectedElement(e.target.value)}>{elements.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
+          <div className="ecard-studio-layer-panel">
+            <h4>Tabaka za kadi (Layers)</h4>
+            <p>Chagua kipengele hapa au kiguse moja kwa moja kwenye preview.</p>
+            <div className="ecard-studio-layer-list" role="listbox" aria-label="Tabaka za kadi">
+              {elements.map(([id,label],index)=><button type="button" role="option" aria-selected={selectedElement===id} className={selectedElement===id?'ecard-studio-layer active':'ecard-studio-layer'} key={id} onClick={()=>setSelectedElement(id)}><span className="ecard-studio-layer-index">{String(index+1).padStart(2,'0')}</span><span>{label}</span>{config.visibility?.[id]===false&&<small>Imefichwa</small>}</button>)}
+            </div>
+          </div>
           <label className="ecard-studio-field"><input type="checkbox" checked={config.visibility?.[selectedElement]!==false} onChange={e=>updateVisibility(selectedElement,e.target.checked)}/> Onyesha kipengele hiki kwenye kadi</label>
           <label>Ukubwa wa kipengele</label>
           <input type="range" min="0.5" max="2.5" step="0.05" value={config.layout?.[selectedElement]?.scale||1} onChange={e=>updateLayout(selectedElement,{scale:Number(e.target.value)})}/>
@@ -784,12 +789,19 @@ function AdminECardTemplateStudio({session,onBack}){
           <label>Ukubwa wa maandishi (cqw)</label><input type="range" min="1" max="12" step="0.1" value={config.layout?.[selectedElement]?.fontSize||3.5} onChange={e=>updateLayout(selectedElement,{fontSize:Number(e.target.value)})}/>
           <label>Rangi ya maandishi</label><input type="color" value={config.layout?.[selectedElement]?.color||'#252018'} onChange={e=>updateLayout(selectedElement,{color:e.target.value})}/>
           <label>Fonti ya kipengele</label><select value={config.layout?.[selectedElement]?.fontFamily||'inherit'} onChange={e=>updateLayout(selectedElement,{fontFamily:e.target.value})}><option value="inherit">Fonti ya template</option><option value="Arial, sans-serif">Arial</option><option value="Verdana, sans-serif">Verdana</option><option value="Georgia, serif">Georgia</option><option value="'Times New Roman', serif">Times New Roman</option><option value="cursive">Cursive</option></select>
+          <label>Unene wa maandishi</label><select value={config.layout?.[selectedElement]?.fontWeight||'inherit'} onChange={e=>updateLayout(selectedElement,{fontWeight:e.target.value==='inherit'?'':e.target.value})}><option value="inherit">Kawaida ya template</option><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semi-bold</option><option value="700">Bold</option><option value="800">Extra bold</option></select>
+          <label>Mpangilio wa maandishi</label><select value={config.layout?.[selectedElement]?.textAlign||'inherit'} onChange={e=>updateLayout(selectedElement,{textAlign:e.target.value==='inherit'?'':e.target.value})}><option value="inherit">Kawaida ya template</option><option value="left">Kushoto</option><option value="center">Katikati</option><option value="right">Kulia</option></select>
+          <label>Umbali wa herufi</label><input type="range" min="-0.1" max="0.5" step="0.01" value={config.layout?.[selectedElement]?.letterSpacing||0} onChange={e=>updateLayout(selectedElement,{letterSpacing:Number(e.target.value)})}/>
           <label>Upana wa kipengele (%)</label><input type="range" min="10" max="100" step="1" value={config.layout?.[selectedElement]?.width||70} onChange={e=>updateLayout(selectedElement,{width:Number(e.target.value)})}/>
           <label>Uwazi / opacity</label><input type="range" min="0.1" max="1" step="0.05" value={config.layout?.[selectedElement]?.opacity??1} onChange={e=>updateLayout(selectedElement,{opacity:Number(e.target.value)})}/>
           <label>Unene wa fremu (px)</label><input type="range" min="0" max="12" step="1" value={config.layout?.[selectedElement]?.borderWidth||0} onChange={e=>updateLayout(selectedElement,{borderWidth:Number(e.target.value),borderColor:config.layout?.[selectedElement]?.borderColor||'#c69a32'})}/>
           <label>Rangi ya fremu</label><input type="color" value={config.layout?.[selectedElement]?.borderColor||'#c69a32'} onChange={e=>updateLayout(selectedElement,{borderColor:e.target.value})}/>
           <label>Rangi ya nyuma ya kipengele</label><input type="color" value={config.layout?.[selectedElement]?.backgroundColor||'#fffdf8'} onChange={e=>updateLayout(selectedElement,{backgroundColor:e.target.value})}/>
-          <label>Mpangilio wa tabaka (z-index)</label><input type="range" min="0" max="30" step="1" value={config.layout?.[selectedElement]?.zIndex||1} onChange={e=>updateLayout(selectedElement,{zIndex:Number(e.target.value)})}/>
+          <label>Mpangilio wa tabaka (z-index)</label><input type="range" min="0" max="30" step="1" value={config.layout?.[selectedElement]?.zIndex??1} onChange={e=>updateLayout(selectedElement,{zIndex:Number(e.target.value)})}/>
+          <div className="ecard-studio-layer-actions">
+            <button type="button" className="secondary-button" onClick={()=>{const top=Math.max(1,...Object.values(config.layout||{}).map(item=>Number(item?.zIndex??1)));updateLayout(selectedElement,{zIndex:top+1})}}>Peleka mbele</button>
+            <button type="button" className="secondary-button" onClick={()=>{const bottom=Math.min(1,...Object.values(config.layout||{}).map(item=>Number(item?.zIndex??1)));updateLayout(selectedElement,{zIndex:bottom-1})}}>Rudisha nyuma</button>
+          </div>
           <div className="ecard-studio-coordinates"><label>Usogezaji mlalo (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dx||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dx:Number(e.target.value)||0})}/><label>Usogezaji wima (%)</label><input type="number" value={Number((config.layout?.[selectedElement]?.dy||0).toFixed(1))} onChange={e=>updateLayout(selectedElement,{dy:Number(e.target.value)||0})}/></div>
           <h3>Maandishi ya kudumu ya kiolezo</h3>
           {copyFields.map(([key,label])=><label className="ecard-studio-field" key={key}>{label}<input value={config.copy?.[key]||''} onChange={e=>updateCopy(key,e.target.value)} placeholder="Acha wazi kutumia maandishi ya kawaida"/></label>)}
@@ -803,8 +815,6 @@ function AdminECardTemplateStudio({session,onBack}){
           <label className="ecard-studio-field">Rangi ya msingi <input type="color" value={config.style?.accent||'#a77b20'} onChange={e=>updateStyle('accent',e.target.value)}/></label>
           <label className="ecard-studio-field">Rangi ya maandishi <input type="color" value={config.style?.text||'#252018'} onChange={e=>updateStyle('text',e.target.value)}/></label>
           <label className="ecard-studio-field">Fonti <select value={config.style?.font||'Georgia, serif'} onChange={e=>updateStyle('font',e.target.value)}><option value="Georgia, serif">Georgia</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Verdana, sans-serif">Verdana</option><option value="cursive">Cursive</option></select></label>
-          <h3>Majina ya sehemu za taarifa</h3>
-          {['TAREHE','MUDA','IBADA','MAPOKEZI','MAHALI','CHAKULA','DRESS CODE','RSVP'].map(key=><label className="ecard-studio-field" key={key}>{key}<input value={config.copy?.detailLabels?.[key]||key} onChange={e=>updateDetailLabel(key,e.target.value)}/></label>)}
           <h3>Majina ya sehemu za taarifa</h3>
           {['TAREHE','MUDA','IBADA','MAPOKEZI','MAHALI','CHAKULA','DRESS CODE','RSVP'].map(key=><label className="ecard-studio-field" key={key}>{key}<input value={config.copy?.detailLabels?.[key]||key} onChange={e=>updateDetailLabel(key,e.target.value)}/></label>)}
           <h3>Ruhusa za mteja</h3>
