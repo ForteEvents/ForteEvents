@@ -244,7 +244,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       <div className="ecard-main-heading">
         <div className="ecard-document-title" {...universalElementProps('kicker')}>{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
         <div className="ecard-script-title" {...universalElementProps('occasion')}>{card?.occasion || 'MWALIKO'}</div>
-        {style!=='ivory-gold'&&<div className="ecard-invitation-label">{universalConfig.copy?.invitationLabel||'INVITATION'}</div>}
+        {style!=='ivory-gold'&&<div className="ecard-invitation-label" {...universalElementProps('invitationLabel')}>{universalConfig.copy?.invitationLabel||'INVITATION'}</div>}
       </div>
       {style==='blue-rose' && (card?.image_url
         ? <img className="ecard-card-photo ecard-card-photo-blue" {...universalElementProps('image')} src={card.image_url} alt="Picha ya wanandoa au tukio"/>
@@ -263,7 +263,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       <section className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
         <div className="ecard-card-qr-type" {...universalElementProps('qrType')}>{guestType==='double'?'DOUBLE':'SINGLE'}</div>
         <div className="ecard-card-qr" {...universalElementProps('qrCode')}><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
-        {style!=='ivory-gold'&&<div className="ecard-card-qr-caption">{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>}
+        {style!=='ivory-gold'&&<div className="ecard-card-qr-caption" {...universalElementProps('qrCaption')}>{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>}
         <div className="ecard-card-brand" {...universalElementProps('brand')}><img src={universalConfig.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
       </section>
 
