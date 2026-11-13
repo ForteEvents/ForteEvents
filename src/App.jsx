@@ -151,6 +151,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     <div className="ecard-luxury-qr"><div className="ecard-luxury-qr-type" {...elementProps('qrType')}>{guestType==='double'?'DOUBLE':'SINGLE'}</div><div {...elementProps('qrCode')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div></div>
     <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
     <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
+  <ECardStudioObjects objects={config.objects||[]} layoutEditor={layoutEditor} selectedObjectId={selectedObjectId} onSelect={onSelectObject} onChange={onObjectsChange} onBeginChange={onBeginObjectChange}/>
   </article>
 }
 function ECardFloralOrnament({className='',variant='ivory-gold',editorProps={}}){
