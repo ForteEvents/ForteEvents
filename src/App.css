@@ -2955,3 +2955,16 @@ button[type="submit"] {
 .ecard-studio-tools select, .ecard-studio-tools input[type="number"] { max-width: 100%; }
 .ecard-studio-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .ecard-studio-actions button:disabled { opacity:.45; cursor:not-allowed; }
+
+
+/* Admin Studio layer manager and per-element typography controls. */
+.ecard-studio-layer-panel{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid #e2d3ad;border-radius:10px;background:#fffdf8}
+.ecard-studio-layer-panel h4{margin:0;color:#8d671d;font-size:14px}
+.ecard-studio-layer-panel p{margin:0;color:#756b58;font-size:12px;line-height:1.4}
+.ecard-studio-layer-list{display:flex;flex-direction:column;gap:5px;max-height:280px;overflow:auto;padding-right:3px}
+.ecard-studio-layer{display:flex;align-items:center;gap:9px;width:100%;min-height:36px;padding:7px 9px;border:1px solid #e7dfce;border-radius:7px;background:#fff;color:#383126;text-align:left;font-size:12px}
+.ecard-studio-layer.active{border-color:#b1842a;background:#fbf4e5;box-shadow:inset 3px 0 #b1842a}
+.ecard-studio-layer-index{min-width:24px;color:#9a855a;font-size:10px;font-variant-numeric:tabular-nums}
+.ecard-studio-layer small{margin-left:auto;color:#9b5b35}
+.ecard-studio-layer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ecard-studio-layer-actions button{flex:1;min-width:120px}
