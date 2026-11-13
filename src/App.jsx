@@ -121,7 +121,18 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
       </div>
       <div className="ecard-luxury-detail-column">
         {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b {...elementProps('detail-ibada-label')}>{copy.detailLabels?.IBADA||'IBADA'}:</b> <span {...elementProps('detail-ibada-value')}>{ceremony}</span></span></div>}
-        {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b {...elementProps('detail-dress-label')}>{copy.detailLabels?.['DRESS CODE']||'DRESS CODE'}:</b> <span {...elementProps('detail-dress-value')}>{card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></span></div>}
+        {(dressColors.length>0||card?.dress_code)&&(
+          <div className="ecard-luxury-detail">
+            <i>♟</i>
+            <span>
+              <b {...elementProps('detail-dress-label')}>{copy.detailLabels?.['DRESS CODE']||'DRESS CODE'}:</b>
+              <span {...elementProps('detail-dress-value')}>
+                {card?.dress_code ? card.dress_code : ''}
+                {dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}
+              </span>
+            </span>
+          </div>
+        )}
         {contactLines.length>0&&<div className="ecard-luxury-contacts">
           <b className="ecard-luxury-contacts-title" {...elementProps('detail-contact-title')}>{copy.contactsTitle||'MAWASILIANO'}</b>
           <div className="ecard-luxury-contact-list">
