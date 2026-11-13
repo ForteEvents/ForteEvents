@@ -83,7 +83,7 @@ function buildECardInvitationParts(card,recipientName='[JINA LA MWALIKWA]',copy=
  if(copy.eventLine)eventLine=String(copy.eventLine).replaceAll('{event}',card?.title||'').replaceAll('{occasion}',card?.occasion||'tukio').replaceAll('{couple}',coupleName);
  return {intro:copy.invitationIntro||'Wanayo furaha kukualika',recipient:recipientName||'[JINA LA MWALIKWA]',eventLine,coupleName};
 }
-function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p>{p.intro}</p><strong className="ecard-invitation-recipient">— {p.recipient} —</strong><p>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
+function ECardInvitationCopy({card,recipientName,className='',hideCouple=false,copy={},editorProps={},editorPropsByPart={}}){const p=buildECardInvitationParts(card,recipientName,copy);return <div {...editorProps} className={['ecard-invitation-copy',className].filter(Boolean).join(' ')}><p {...(editorPropsByPart.intro||{})}>{p.intro}</p><strong {...(editorPropsByPart.recipient||{})} className="ecard-invitation-recipient">— {p.recipient} —</strong><p {...(editorPropsByPart.eventLine||{})}>{p.eventLine}</p>{!hideCouple&&p.coupleName&&<strong {...(editorPropsByPart.coupleName||{})} className="ecard-invitation-couple">— {p.coupleName} —</strong>}</div>}
 
 function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=false,layoutEditor=false,onLayoutChange,selectedLayoutKey,onSelectLayoutElement}){
   const guestType=String(guest?.invite_type || 'single').toLowerCase();
@@ -180,7 +180,7 @@ function ECardFloralOrnament({className='',variant='ivory-gold',editorProps={}})
   </svg>
 }
 function buildECardDetailItems(card){return [['TAREHE',card?.event_date],['MUDA',card?.event_time?'Saa '+card.event_time:''],['IBADA',[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ')],['MAPOKEZI',[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ')],['MAHALI',card?.location_url?'':card?.venue],['CHAKULA',card?.food_note],['DRESS CODE',(card?.dress_colors||[]).length?'colors':''],['RSVP',card?.rsvp_deadline?'Mwisho wa kuthibitisha: '+card.rsvp_deadline:''],['CONTACT 1',[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · ')],['CONTACT 2',[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')]].filter(([,v])=>Boolean(v))}
-function ECardDetails({card,className='',showDate=true,copy={}}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p className="ecard-detail-line" key={label}>{!label.startsWith('CONTACT')&&<b>{copy.detailLabels?.[label]||label}</b>}<span>{label==='DRESS CODE'?<>{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i title={color} aria-label={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/></span>)}</>:label==='CONTACT 1'?<>{card?.rsvp_contact_phone&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone}>{card.rsvp_contact_phone}</a>}<strong>{card?.rsvp_contact_name}</strong></>:label==='CONTACT 2'?<>{card?.rsvp_contact_phone_2&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone_2}>{card.rsvp_contact_phone_2}</a>}<strong>{card?.rsvp_contact_name_2}</strong></>:value}</span></p>)}</div>}
+function ECardDetails({card,className='',showDate=true,copy={},editorPropsFor}){const colors={gold:'#c69a32',cream:'#f2e6c9',white:'#fff',black:'#222',red:'#b52d35',blue:'#3567a8',navy:'#182b4b',pink:'#e8a6b8',green:'#477b53',silver:'#c7cbd1',purple:'#76518e',brown:'#79533a',orange:'#d97927',maroon:'#702b3b',beige:'#d9c6a0',grey:'#888',gray:'#888'};return <div className={['ecard-detail-flow',className].filter(Boolean).join(' ')}>{buildECardDetailItems(card).filter(([label])=>showDate||label!=='TAREHE').map(([label,value])=><p {...(editorPropsFor?.(label)||{})} className="ecard-detail-line" key={label}>{!label.startsWith('CONTACT')&&<b>{copy.detailLabels?.[label]||label}</b>}<span>{label==='DRESS CODE'?<>{(card?.dress_colors||[]).map((color,i)=><span className="ecard-dress-swatch-item" key={color+i}><i title={color} aria-label={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/></span>)}</>:label==='CONTACT 1'?<>{card?.rsvp_contact_phone&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone}>{card.rsvp_contact_phone}</a>}<strong>{card?.rsvp_contact_name}</strong></>:label==='CONTACT 2'?<>{card?.rsvp_contact_phone_2&&<a className="ecard-phone-link" href={'tel:'+card.rsvp_contact_phone_2}>{card.rsvp_contact_phone_2}</a>}<strong>{card?.rsvp_contact_name_2}</strong></>:value}</span></p>)}</div>}
 
 function ECardFamilyMessage({message}) {
   const value = String(message || '').trim() || DEFAULT_ECARD_MESSAGE
@@ -211,28 +211,28 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-br" variant="ivory-gold"/>
     </div>}
     <div className="ecard-main-panel">
-      <div className="ecard-main-heading" {...universalElementProps('heading')}>
-        <div className="ecard-document-title">{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
-        <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
+      <div className="ecard-main-heading">
+        <div className="ecard-document-title" {...universalElementProps('kicker')}>{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
+        <div className="ecard-script-title" {...universalElementProps('occasion')}>{card?.occasion || 'MWALIKO'}</div>
         {style!=='ivory-gold'&&<div className="ecard-invitation-label">{universalConfig.copy?.invitationLabel||'INVITATION'}</div>}
       </div>
       {style==='blue-rose' && (card?.image_url
         ? <img className="ecard-card-photo ecard-card-photo-blue" {...universalElementProps('image')} src={card.image_url} alt="Picha ya wanandoa au tukio"/>
         : <div className="ecard-photo-placeholder" aria-label="Sehemu ya picha ya wanandoa"><span>♡</span><small>WEKA PICHA YA WANANDOA</small></div>)}
 
-      <div className="ecard-family-copy" {...universalElementProps('family')}><span>{universalConfig.copy?.familyLabel||'Familia ya'}</span><strong>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
-      <ECardInvitationCopy card={card} recipientName={displayName} editorProps={universalElementProps('invitation')} copy={universalConfig.copy||{}}/>
+      <div className="ecard-family-copy"><span {...universalElementProps('familyLabel')}>{universalConfig.copy?.familyLabel||'Familia ya'}</span><strong {...universalElementProps('familyName')}>{card?.host_names || 'JINA LA FAMILIA'}</strong></div>
+      <ECardInvitationCopy card={card} recipientName={displayName} copy={universalConfig.copy||{}} editorPropsByPart={{intro:universalElementProps('invitationIntro'),recipient:universalElementProps('invitationRecipient'),eventLine:universalElementProps('invitationEventLine'),coupleName:universalElementProps('invitationCouple')}}/>
       {card?.image_url && style!=='blue-rose' && <img className="ecard-card-photo" {...universalElementProps('image')} src={card.image_url} alt="Picha ya tukio"/>}
       <div className="ecard-date-line" {...universalElementProps('date')}>{card?.event_date ? new Date(card.event_date+'T00:00:00').toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : 'SIKU, TAREHE NA MWAKA'}</div>
-      <div {...universalElementProps('details')}><ECardDetails card={card} showDate={false} copy={universalConfig.copy||{}}/></div>
-      {card?.location_url && <div className="ecard-map-link-section" {...universalElementProps('venue')}>
-        <div className="ecard-map-link-heading">{universalConfig.copy?.venueTitle||'MAHALI PA TUKIO'}</div>
-        <div className="ecard-map-venue-name">{card?.venue || 'Taarifa za ukumbi'}</div>
+      <div><ECardDetails card={card} showDate={false} copy={universalConfig.copy||{}} editorPropsFor={label=>universalElementProps('detail-'+String(label).toLowerCase().replace(/[^a-z0-9]+/g,'-'))}/></div>
+      {card?.location_url && <div className="ecard-map-link-section">
+        <div className="ecard-map-link-heading" {...universalElementProps('venueTitle')}>{universalConfig.copy?.venueTitle||'MAHALI PA TUKIO'}</div>
+        <div className="ecard-map-venue-name" {...universalElementProps('venueName')}>{card?.venue || 'Taarifa za ukumbi'}</div>
       </div>}
       <div {...universalElementProps('message')}><ECardFamilyMessage message={card?.message}/></div>
-      <section {...universalElementProps('qr')} className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
-        <div className="ecard-card-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div>
-        <div className="ecard-card-qr"><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
+      <section className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
+        <div className="ecard-card-qr-type" {...universalElementProps('qrType')}>{guestType==='double'?'DOUBLE':'SINGLE'}</div>
+        <div className="ecard-card-qr" {...universalElementProps('qrCode')}><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
         {style!=='ivory-gold'&&<div className="ecard-card-qr-caption">{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>}
         <div className="ecard-card-brand" {...universalElementProps('brand')}><img src={universalConfig.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
       </section>
@@ -672,7 +672,7 @@ function AdminECardTemplateStudio({session,onBack}){
   const [notice,setNotice]=useState('');
   const [error,setError]=useState('');
   const selected=templates.find(t=>t.id===selectedId)||BUILT_IN_ECARD_TEMPLATES[0];
-  const elements=[['background','Mandhari ya kadi'],['flowerTop','Ua / pambo la juu'],['flowerBottom','Ua / pambo la chini'],['image','Picha ya tukio'],['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']];
+  const elements=selected?.style==='ivory-gold' ? [['flowerTop','Ua / pambo la juu'],['flowerBottom','Ua / pambo la chini'],['kicker','Kichwa: KADI YA MWALIKO'],['occasion','Aina ya tukio'],['familyLabel','Maneno: Familia ya'],['familyName','Jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationRecipient','Jina la mwalikwa'],['invitationEventLine','Sentensi ya mwaliko'],['invitationCouple','Majina ya wanandoa'],['date','Tarehe'],['detail-muda','Taarifa: Muda'],['detail-mahali','Taarifa: Mahali'],['detail-rsvp','Taarifa: RSVP'],['detail-ibada','Taarifa: Ibada'],['detail-dress-code','Taarifa: Dress code'],['detail-contact-1','Mawasiliano: Mtu wa kwanza'],['detail-contact-2','Mawasiliano: Mtu wa pili'],['venueTitle','Kichwa cha mapokezi'],['venueName','Jina la ukumbi'],['message','Ujumbe'],['qrType','Aina ya QR: SINGLE / DOUBLE'],['qrCode','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']] : [['background','Mandhari ya kadi'],['flowerTop','Ua / pambo la juu'],['flowerBottom','Ua / pambo la chini'],['image','Picha ya tukio'],['heading','Kichwa cha juu'],['kicker','Andiko KADI YA MWALIKO'],['occasion','Aina ya tukio'],['family','Familia'],['invitation','Maandishi ya mwaliko'],['couple','Majina ya wanandoa'],['date','Tarehe'],['details','Taarifa za tukio'],['venue','Mapokezi / eneo'],['message','Ujumbe'],['qr','QR Code'],['brand','Logo ya ForteEvents'],['tagline','Kauli mbiu']];
   const copyFields=[['kicker','Kichwa cha kadi'],['invitationLabel','Neno la Invitation'],['familyLabel','Maneno kabla ya jina la familia'],['invitationIntro','Utangulizi wa mwaliko'],['invitationTitles','Vyeo / heshima kwa mwalikwa'],['eventLine','Sentensi ya mwaliko (tumia {event}, {occasion}, {couple})'],['coupleName','Maandishi ya majina (tumia {bride}, {groom}, {event})'],['venueTitle','Kichwa cha mapokezi'],['contactsTitle','Kichwa cha mawasiliano'],['qrCaption','Maelekezo chini ya QR'],['brandTagline','Kauli mbiu ya ForteEvents'],['footerText','Maandishi ya chini ya kadi']];
   const defaultFields=ECARD_TEMPLATE_FIELDS.filter(([key])=>!['dress_colors','image_url','location_url'].includes(key));
   const load=async()=>{
