@@ -2890,3 +2890,31 @@ button[type="submit"] {
   letter-spacing: 0 !important;
   text-shadow: none !important;
 }
+
+
+/* Ivory & Gold Roses: richer floral corners, clean QR area and a balanced ForteEvents wordmark. */
+.ecard-style-ivory-gold .ecard-ivory-rose-corners{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.ecard-style-ivory-gold .ecard-ivory-rose{position:absolute!important;display:block!important;width:24%!important;max-width:24%!important;height:auto!important;opacity:.98!important;filter:drop-shadow(0 2px 3px rgba(111,82,37,.16))!important}
+.ecard-style-ivory-gold .ecard-ivory-rose-tl{left:-1.5%;top:-1.2%;transform:rotate(-4deg)}
+.ecard-style-ivory-gold .ecard-ivory-rose-tr{right:-1.5%;top:-1.2%;transform:scaleX(-1) rotate(-4deg)}
+.ecard-style-ivory-gold .ecard-ivory-rose-bl{left:-1.5%;bottom:-1.2%;transform:rotate(176deg)}
+.ecard-style-ivory-gold .ecard-ivory-rose-br{right:-1.5%;bottom:-1.2%;transform:scaleX(-1) rotate(176deg)}
+.ecard-style-ivory-gold .ecard-main-panel{position:relative!important;z-index:2!important}
+.ecard-style-ivory-gold .ecard-card-qr-caption{display:none!important}
+.ecard-style-ivory-gold .ecard-card-brand{
+  position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;
+  display:block!important;width:clamp(128px,22cqw,176px)!important;max-width:56%!important;
+  height:auto!important;min-width:0!important;margin:7px auto 0!important;padding:3px 8px!important;
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  line-height:0!important;overflow:visible!important;
+}
+.ecard-style-ivory-gold .ecard-card-brand img{
+  display:block!important;width:100%!important;height:auto!important;max-height:38px!important;
+  object-fit:contain!important;object-position:center!important;
+}
+.ecard-style-ivory-gold .ecard-invitation-label{display:none!important}
+@media(max-width:700px){
+  .ecard-style-ivory-gold .ecard-ivory-rose{width:23%!important;max-width:23%!important}
+  .ecard-style-ivory-gold .ecard-card-brand{width:clamp(116px,31cqw,154px)!important;max-width:58%!important}
+  .ecard-style-ivory-gold .ecard-card-brand img{max-height:32px!important}
+}
