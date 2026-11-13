@@ -2940,3 +2940,18 @@ button[type="submit"] {
   outline:1px dashed rgba(181,137,48,.75);
   outline-offset:2px;
 }
+
+
+/* Admin Studio: selected layer and professional editing controls. */
+.ecard-layout-editing [data-editor-element] { cursor: grab; touch-action: none; }
+.ecard-layout-editing [data-editor-element]:active { cursor: grabbing; }
+.ecard-layout-editing [data-editor-selected="true"] {
+  outline: 2px solid rgba(177, 132, 42, .95) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(177, 132, 42, .16);
+}
+.ecard-studio-tools input[type="range"] { width: 100%; accent-color: #b1842a; }
+.ecard-studio-tools input[type="color"] { width: 54px; min-height: 34px; padding: 2px; }
+.ecard-studio-tools select, .ecard-studio-tools input[type="number"] { max-width: 100%; }
+.ecard-studio-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.ecard-studio-actions button:disabled { opacity:.45; cursor:not-allowed; }
