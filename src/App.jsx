@@ -229,7 +229,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   const templateArtwork=universalConfig.media?.backgroundUrl || template?.artwork || template?.image_url || getECardTemplate(templateId)?.artwork
   const guestType=String(guest?.invite_type || 'single').toLowerCase()
   const displayName=guest?.guest_name || recipientName || 'JINA LA MWALIKWA'
-  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} selectedLayoutKey={selectedLayoutKey} onBeginLayoutChange={onBeginLayoutChange} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement}/>
+  if(style==='luxury-floral-gold') return <LuxuryFloralECardArtwork card={card} recipientName={displayName} guest={guest} qrUrl={qrUrl} exportMode={exportMode} layoutEditor={layoutEditor} selectedLayoutKey={selectedLayoutKey} onBeginLayoutChange={onBeginLayoutChange} onLayoutChange={onLayoutChange} onSelectLayoutElement={onSelectLayoutElement} onObjectsChange={onObjectsChange} selectedObjectId={selectedObjectId} onSelectObject={onSelectObject} onBeginObjectChange={onBeginObjectChange}/>
   return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} style={{'--ecard-admin-accent':universalConfig.style?.accent||'#a77b20','--ecard-admin-text':universalConfig.style?.text||'#252018','--ecard-admin-font':universalConfig.style?.font||'Georgia, serif'}} className={['ecard-professional-preview','ecard-admin-styled','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
     <img className="ecard-template-flower ecard-template-flower-top" {...universalElementProps('flowerTop')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <img className="ecard-template-flower ecard-template-flower-bottom" {...universalElementProps('flowerBottom')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
@@ -268,7 +268,8 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
 
       <div className="ecard-card-footer" {...universalElementProps('tagline')}>{universalConfig.copy?.footerText||('ForteEvents · '+(universalConfig.copy?.brandTagline||'Make your event extraordinary'))}</div>
     </div>
-  </article>
+  <ECardStudioObjects objects={universalConfig.objects||[]} layoutEditor={layoutEditor} selectedObjectId={selectedObjectId} onSelect={onSelectObject} onChange={onObjectsChange} onBeginChange={onBeginObjectChange}/>
+    </article>
 }
 
 async function createECardPng(card, guest = null) {
