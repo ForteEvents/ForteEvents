@@ -115,26 +115,26 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     <div className="ecard-luxury-date" {...elementProps('date')}>{dateText}</div>
     <div className="ecard-luxury-details" {...elementProps('details')}>
       <div className="ecard-luxury-detail-column">
-        {card?.event_time&&<div className="ecard-luxury-detail"><i>◷</i><span><b>{copy.detailLabels?.MUDA||'MUDA'}:</b> Saa {card.event_time}</span></div>}
-        {card?.venue&&<div className="ecard-luxury-detail"><i>⌂</i><span><b>{copy.detailLabels?.MAHALI||'MAHALI'}:</b> {card.venue}</span></div>}
-        {card?.rsvp_deadline&&<div className="ecard-luxury-detail"><i>✉</i><span><b>{copy.detailLabels?.RSVP||'RSVP'}:</b> Mwisho wa kuthibitisha: {card.rsvp_deadline}</span></div>}
+        {card?.event_time&&<div className="ecard-luxury-detail"><i>◷</i><span><b {...elementProps('detail-time-label')}>{copy.detailLabels?.MUDA||'MUDA'}:</b> <span {...elementProps('detail-time-value')}>Saa {card.event_time}</span></span></div>}
+        {card?.venue&&<div className="ecard-luxury-detail"><i>⌂</i><span><b {...elementProps('detail-venue-label')}>{copy.detailLabels?.MAHALI||'MAHALI'}:</b> <span {...elementProps('detail-venue-value')}>{card.venue}</span></span></div>}
+        {card?.rsvp_deadline&&<div className="ecard-luxury-detail"><i>✉</i><span><b {...elementProps('detail-rsvp-label')}>{copy.detailLabels?.RSVP||'RSVP'}:</b> <span {...elementProps('detail-rsvp-value')}>Mwisho wa kuthibitisha: {card.rsvp_deadline}</span></span></div>}
       </div>
       <div className="ecard-luxury-detail-column">
-        {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b>{copy.detailLabels?.IBADA||'IBADA'}:</b> {ceremony}</span></div>}
-        {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b>{copy.detailLabels?.['DRESS CODE']||'DRESS CODE'}:</b> {card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></div>}
+        {ceremony&&<div className="ecard-luxury-detail"><i>♟</i><span><b {...elementProps('detail-ibada-label')}>{copy.detailLabels?.IBADA||'IBADA'}:</b> <span {...elementProps('detail-ibada-value')}>{ceremony}</span></span></div>}
+        {(dressColors.length>0||card?.dress_code)&&<div className="ecard-luxury-detail"><i>♟</i><span><b {...elementProps('detail-dress-label')}>{copy.detailLabels?.['DRESS CODE']||'DRESS CODE'}:</b> <span {...elementProps('detail-dress-value')}>{card?.dress_code&&<>{card.dress_code} </>}{dressColors.map((color,i)=><em key={color+i} title={color} style={{backgroundColor:colors[String(color).toLowerCase()]||'#d8c49b'}}/>)}</span></span></div>
         {contactLines.length>0&&<div className="ecard-luxury-contacts">
-          <b className="ecard-luxury-contacts-title">{copy.contactsTitle||'MAWASILIANO'}</b>
+          <b className="ecard-luxury-contacts-title" {...elementProps('detail-contact-title')}>{copy.contactsTitle||'MAWASILIANO'}</b>
           <div className="ecard-luxury-contact-list">
             {[[card?.rsvp_contact_name,card?.rsvp_contact_phone],[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2]].filter(([name,phone])=>name||phone).map(([name,phone],i)=><div className="ecard-luxury-contact" key={i}>
-              {name&&<strong>{name}</strong>}
-              {phone&&<a href={'tel:'+phone}>{phone}</a>}
+              {name&&<strong {...elementProps('detail-contact-'+(i+1)+'-name')}>{name}</strong>}
+              {phone&&<a {...elementProps('detail-contact-'+(i+1)+'-phone')} href={'tel:'+phone}>{phone}</a>}
             </div>)}
           </div>
         </div>}
       </div>
     </div>
-    {reception&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'MAHALI PA MAPOKEZI'}</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
-    {!reception&&card?.food_note&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span>{card.food_note}</span></div>}
+    {reception&&<div className="ecard-luxury-venue"><b {...elementProps('venueTitle')}>{copy.venueTitle||'MAHALI PA MAPOKEZI'}</b><span {...elementProps('venueDetails')}>{reception}</span>{card?.food_note&&<small {...elementProps('foodNote')}>{card.food_note}</small>}</div>}
+    {!reception&&card?.food_note&&<div className="ecard-luxury-venue"><b {...elementProps('venueTitle')}>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span {...elementProps('foodNote')}>{card.food_note}</span></div>}
     <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(2.6,300/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
     <div className="ecard-luxury-qr"><div className="ecard-luxury-qr-type" {...elementProps('qrType')}>{guestType==='double'?'DOUBLE':'SINGLE'}</div><div {...elementProps('qrCode')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div></div>
     <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
