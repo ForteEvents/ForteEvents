@@ -7,6 +7,7 @@ import { supabase } from './supabaseClient'
 import './App.css'
 import { ECARD_TEMPLATES as BUILT_IN_ECARD_TEMPLATES, getECardTemplate } from './ecard/templateRegistry.js'
 import ECardStudioObjects from './ecard/ECardStudioObjects.jsx'
+import ECardCheckin from './ecard/ECardCheckin.jsx'
 
 
 function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
@@ -3534,28 +3535,7 @@ return (
           E-CARD
       ========================= */}
       {page === 'ecard-checkin' && (
-        <div className="card">
-          <h1>Mapokezi ya Wageni — QR Check-in</h1>
-          <p>Chagua tukio, kisha msimamizi ascan QR ya kila mgeni.</p>
-          <label>Chagua kadi / tukio</label>
-          <select value={guestCardId} onChange={e => { setGuestCardId(e.target.value); loadECardGuests(e.target.value); setScanResult('') }}>
-            <option value="">Chagua E-card</option>
-            {eCards.map(card => <option key={card.id} value={card.id}>{card.title}</option>)}
-          </select>
-          <button type="button" className="primary-button" onClick={startECardScanner} disabled={!guestCardId || scannerActive}>{scannerActive ? 'Scanner inafanya kazi...' : 'Washa kamera kuscan QR'}</button>
-          {scannerActive && <button type="button" className="secondary-button" onClick={stopECardScanner}>Zima kamera</button>}
-          <div id="ecard-qr-reader" style={{width:'100%',maxWidth:'420px',marginTop:'12px',display:scannerActive?'block':'none'}} />
-          <label>Au ingiza QR token manually</label>
-          <input value={scanToken} onChange={e => setScanToken(e.target.value)} placeholder="QR token" />
-          <button type="button" className="secondary-button" onClick={() => checkInECardGuest(scanToken)} disabled={!guestCardId}>Thibitisha Kuingia</button>
-          {scanResult && <p role="status" className="message">{scanResult}</p>}
-          <h2>Wageni wa tukio hili ({eCardGuests.length})</h2>
-          {eCardGuests.map(g => <div key={g.id} style={{padding:'10px',borderBottom:'1px solid #ddd'}}>
-            <strong>{g.guest_name}</strong> — {g.invite_type.toUpperCase()} ({g.guest_count})
-            <span> · {g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span>
-            <button type="button" className="secondary-button" onClick={() => setScanToken(g.token)}>Chagua token</button>
-          </div>)}
-        </div>
+        <ECardCheckin supabase={supabase} session={session} />
       )}
 
       {page === 'ecard' && (
