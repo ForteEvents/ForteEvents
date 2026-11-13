@@ -204,11 +204,17 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
   return <article onPointerMove={universalMove} onPointerUp={universalStop} onPointerCancel={universalStop} style={{'--ecard-admin-accent':universalConfig.style?.accent||'#a77b20','--ecard-admin-text':universalConfig.style?.text||'#252018','--ecard-admin-font':universalConfig.style?.font||'Georgia, serif'}} className={['ecard-professional-preview','ecard-admin-styled','ecard-style-'+style,exportMode?'ecard-export-mode':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Kadi rasmi ya mwaliko">
     <img className="ecard-template-flower ecard-template-flower-top" {...universalElementProps('flowerTop')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
     <img className="ecard-template-flower ecard-template-flower-bottom" {...universalElementProps('flowerBottom')} crossOrigin="anonymous" src={templateArtwork} alt="" aria-hidden="true"/>
+    {style==='ivory-gold'&&<div className="ecard-ivory-rose-corners" aria-hidden="true">
+      <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-tl" variant="ivory-gold"/>
+      <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-tr" variant="ivory-gold"/>
+      <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-bl" variant="ivory-gold"/>
+      <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-br" variant="ivory-gold"/>
+    </div>
     <div className="ecard-main-panel">
       <div className="ecard-main-heading" {...universalElementProps('heading')}>
         <div className="ecard-document-title">{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
         <div className="ecard-script-title">{card?.occasion || 'MWALIKO'}</div>
-        <div className="ecard-invitation-label">{universalConfig.copy?.invitationLabel||'INVITATION'}</div>
+        {style!=='ivory-gold'&&<div className="ecard-invitation-label">{universalConfig.copy?.invitationLabel||'INVITATION'}</div>}
       </div>
       {style==='blue-rose' && (card?.image_url
         ? <img className="ecard-card-photo ecard-card-photo-blue" {...universalElementProps('image')} src={card.image_url} alt="Picha ya wanandoa au tukio"/>
@@ -227,7 +233,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       <section {...universalElementProps('qr')} className="ecard-card-qr-section" aria-label="Msimbo wa kuingia">
         <div className="ecard-card-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div>
         <div className="ecard-card-qr"><GuestQr value={qrUrl || window.location.origin+'/?ecard-preview=forteevents'}/></div>
-        <div className="ecard-card-qr-caption">{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>
+        {style!=='ivory-gold'&&<div className="ecard-card-qr-caption">{universalConfig.copy?.qrCaption||'Onyesha QR hii wakati wa kuingia'}</div>}
         <div className="ecard-card-brand" {...universalElementProps('brand')}><img src={universalConfig.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
       </section>
 
