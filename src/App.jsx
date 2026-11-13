@@ -105,13 +105,13 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     <img className="ecard-luxury-background" {...elementProps('background')} src={config.media?.backgroundUrl||"/ecard-templates/luxury-floral-gold-bg.webp"} alt="" crossOrigin="anonymous"/>
     <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-top" variant="ivory-gold" editorProps={flowerEditorProps('flowerTop')}/>
     <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-bottom" variant="ivory-gold" editorProps={flowerEditorProps('flowerBottom')}/>
-    <div className="ecard-luxury-heading" {...elementProps('heading')}>
+    <div className="ecard-luxury-heading">
       <div className="ecard-luxury-kicker" {...elementProps('kicker')}>{copy.kicker||'KADI YA MWALIKO'}</div>
       <div className="ecard-luxury-occasion" {...elementProps('occasion')}>{card?.occasion||'Harusi'}</div>
     </div>
-    <div className="ecard-luxury-family" {...elementProps('family')}><span>{copy.familyLabel||'Familia ya'}</span><strong>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
-    <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple copy={copy} editorProps={elementProps('invitation')}/>
-    {parts.coupleName&&<div className="ecard-luxury-couple" {...elementProps('couple')}>{parts.coupleName}</div>}
+    <div className="ecard-luxury-family"><span {...elementProps('familyLabel')}>{copy.familyLabel||'Familia ya'}</span><strong {...elementProps('familyName')}>{card?.host_names||'JINA LA FAMILIA'}</strong></div>
+    <ECardInvitationCopy card={card} recipientName={guest?.guest_name||recipientName||'JINA LA MWALIKWA'} className="ecard-luxury-invite-copy" hideCouple copy={copy} editorPropsByPart={{intro:elementProps('invitationIntro'),recipient:elementProps('invitationRecipient'),eventLine:elementProps('invitationEventLine')}}/>
+    {parts.coupleName&&<div className="ecard-luxury-couple" {...elementProps('invitationCouple')}>{parts.coupleName}</div>}
     <div className="ecard-luxury-date" {...elementProps('date')}>{dateText}</div>
     <div className="ecard-luxury-details" {...elementProps('details')}>
       <div className="ecard-luxury-detail-column">
@@ -136,7 +136,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
     {reception&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'MAHALI PA MAPOKEZI'}</b><span>{reception}</span>{card?.food_note&&<small>{card.food_note}</small>}</div>}
     {!reception&&card?.food_note&&<div className="ecard-luxury-venue" {...elementProps('venue')}><b>{copy.venueTitle||'TAARIFA ZA MAPOKEZI'}</b><span>{card.food_note}</span></div>}
     <div className="ecard-luxury-message" {...elementProps('message')} style={{...elementStyle('message'),'--ecard-message-size':Math.max(1.65,Math.min(2.6,300/Math.max(125,String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim().length)))+'cqw'}}>{String(card?.message||'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.').trim()}</div>
-    <div className="ecard-luxury-qr" {...elementProps('qr')}><div className="ecard-luxury-qr-type">{guestType==='double'?'DOUBLE':'SINGLE'}</div><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div>
+    <div className="ecard-luxury-qr"><div className="ecard-luxury-qr-type" {...elementProps('qrType')}>{guestType==='double'?'DOUBLE':'SINGLE'}</div><div {...elementProps('qrCode')}><GuestQr value={qrUrl||window.location.origin+'/?ecard-preview=forteevents'}/></div></div>
     <div className="ecard-luxury-brand" {...elementProps('brand')}><img src={config.media?.logoUrl||"/forteevents-logo.png"} alt="ForteEvents"/></div>
     <div className="ecard-luxury-tagline-drag" {...elementProps('tagline')}>{copy.brandTagline||'Make your event extraordinary'}</div>
   </article>
