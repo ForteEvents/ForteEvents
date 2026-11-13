@@ -3029,3 +3029,27 @@ button[type="submit"] {
   .ecard-studio-layer{gap:5px;padding:6px 5px;font-size:10px}
   .ecard-studio-layer-index{min-width:18px;font-size:9px}
 }
+
+
+/* ForteEvents Full Designer: independent text, shape and image layers */
+.ecard-free-objects{position:absolute;inset:0;z-index:30;pointer-events:none;container-type:inline-size}
+.ecard-free-object{position:absolute;box-sizing:border-box;min-width:12px;min-height:10px;pointer-events:auto;touch-action:none;user-select:none;cursor:move;overflow:visible}
+.ecard-free-object-text{width:100%;height:100%;white-space:pre-wrap;overflow-wrap:anywhere;display:flex;align-items:center;justify-content:inherit}
+.ecard-free-object-image{background:transparent}
+.ecard-free-object-image img{width:100%;height:100%;object-fit:contain;pointer-events:none;display:block}
+.ecard-free-object.is-selected{outline:1.5px dashed #bd861b;outline-offset:2px}
+.ecard-free-object-resize{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border:2px solid #fff;background:#bd861b;border-radius:50%;box-shadow:0 0 0 1px #8d671d;cursor:nwse-resize;touch-action:none}
+.ecard-full-designer{border:1px solid #e2d4b7;border-radius:12px;padding:12px;background:#fffdf8}
+.ecard-full-designer>p{font-size:13px;color:#655b4b}
+.ecard-designer-add-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ecard-upload-button{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ecard-upload-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.ecard-studio-object-list{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.ecard-studio-object-list button{border:1px solid #e5dccb;border-radius:7px;background:#fff;padding:8px;text-align:left;color:#3b3327}
+.ecard-studio-object-list button.active{border-color:#bd861b;background:#fff8e8}
+.ecard-studio-object-controls{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #e5dccb;border-radius:8px}
+.ecard-studio-object-controls label{display:flex;flex-direction:column;gap:5px;font-size:13px}
+.ecard-studio-object-controls textarea,.ecard-studio-object-controls select{width:100%;box-sizing:border-box}
+.ecard-studio-object-controls input[type=range]{width:100%}
+.ecard-studio-preview .ecard-luxury-floral-card,.ecard-studio-preview .ecard-professional-preview{position:relative}
+@media(max-width:700px){.ecard-designer-add-actions>*{flex:1 1 100%}.ecard-studio-object-controls{font-size:13px}}
