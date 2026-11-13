@@ -682,7 +682,11 @@ function AdminECardTemplateStudio({session,onBack}){
   const [templates,setTemplates]=useState([]);
   const [selectedId,setSelectedId]=useState('forte-luxury-floral-gold');
   const [config,setConfig]=useState({layout:{},copy:{},permissions:{},defaults:{},style:{}});
-  const [selectedElement,setSelectedElement]=useState('qr');
+  const historyRef=useRef([]); const futureRef=useRef([]); const [historyVersion,setHistoryVersion]=useState(0);
+  const [selectedElement,setSelectedElement]=useState('qrCode');
+  const pushHistory=()=>{historyRef.current=[...historyRef.current.slice(-49),config];futureRef.current=[];setHistoryVersion(v=>v+1);};
+  const undo=()=>{const previous=historyRef.current.pop();if(!previous)return;futureRef.current=[config,...futureRef.current];setConfig(previous);setHistoryVersion(v=>v+1);};
+  const redo=()=>{const next=futureRef.current.shift();if(!next)return;historyRef.current=[...historyRef.current.slice(-49),config];setConfig(next);setHistoryVersion(v=>v+1);};
   const [published,setPublished]=useState(false);
   const [busy,setBusy]=useState(false);
   const [loading,setLoading]=useState(true);
@@ -722,17 +726,17 @@ function AdminECardTemplateStudio({session,onBack}){
   useEffect(()=>{load()},[]);
   const choose=id=>{
     const t=templates.find(x=>x.id===id);if(!t)return;
-    setSelectedId(id);setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});setPublished(Boolean(t.adminPublished));setNotice('');setError('');
+    setSelectedId(id);setConfig({layout:{},copy:{},permissions:{},...(t.adminConfig||{})});historyRef.current=[];futureRef.current=[];setHistoryVersion(v=>v+1);setPublished(Boolean(t.adminPublished));setNotice('');setError('');
   };
-  const updateLayout=(key,patch)=>setConfig(v=>({...v,layout:{...(v.layout||{}),[key]:{...(v.layout?.[key]||{}),...patch}}}));
+  const updateLayout=(key,patch)=>{pushHistory();setConfig(v=>({...v,layout:{...(v.layout||{}),[key]:{...(v.layout?.[key]||{}),...patch}}}));};
   const handleLayoutChange=updater=>setConfig(v=>updater(v));
-  const updateCopy=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),[key]:value}}));
-  const updatePermission=(key,value)=>setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));
-  const updateDefault=(key,value)=>setConfig(v=>({...v,defaults:{...(v.defaults||{}),[key]:value}}));
-  const updateDetailLabel=(key,value)=>setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));
-  const updateStyle=(key,value)=>setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));
-  const updateMedia=(key,value)=>setConfig(v=>({...v,media:{...(v.media||{}),[key]:value}}));
-  const updateVisibility=(key,value)=>setConfig(v=>({...v,visibility:{...(v.visibility||{}),[key]:value}}));
+  const updateCopy=(key,value)=>{pushHistory();setConfig(v=>({...v,copy:{...(v.copy||{}),[key]:value}}));};
+  const updatePermission=(key,value)=>{pushHistory();setConfig(v=>({...v,permissions:{...(v.permissions||{}),[key]:value}}));};
+  const updateDefault=(key,value)=>{pushHistory();setConfig(v=>({...v,defaults:{...(v.defaults||{}),[key]:value}}));};
+  const updateDetailLabel=(key,value)=>{pushHistory();setConfig(v=>({...v,copy:{...(v.copy||{}),detailLabels:{...(v.copy?.detailLabels||{}),[key]:value}}}));};
+  const updateStyle=(key,value)=>{pushHistory();setConfig(v=>({...v,style:{...(v.style||{}),[key]:value}}));};
+  const updateMedia=(key,value)=>{pushHistory();setConfig(v=>({...v,media:{...(v.media||{}),[key]:value}}));};
+  const updateVisibility=(key,value)=>{pushHistory();setConfig(v=>({...v,visibility:{...(v.visibility||{}),[key]:value}}));};
   const save=async(publish)=>{
     setBusy(true);setError('');setNotice('');
     const {error:saveError}=await supabase.from('e_card_template_settings').upsert({template_id:selectedId,config,is_published:publish,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'template_id'});
