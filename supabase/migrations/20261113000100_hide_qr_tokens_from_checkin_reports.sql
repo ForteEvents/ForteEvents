@@ -1,4 +1,6 @@
 -- Do not expose bearer QR tokens in the usher attendance report.
+drop function if exists public.get_e_card_checkin_guests(uuid);
+
 create or replace function public.get_e_card_checkin_guests(p_card_id uuid)
 returns table (
   guest_id uuid, guest_name text, invite_type text, guest_count integer,
