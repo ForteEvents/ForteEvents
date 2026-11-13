@@ -100,7 +100,7 @@ function LuxuryFloralECardArtwork({card,recipientName,guest,qrUrl,exportMode=fal
   const contactLines=[[card?.rsvp_contact_name,card?.rsvp_contact_phone].filter(Boolean).join(' · '),[card?.rsvp_contact_name_2,card?.rsvp_contact_phone_2].filter(Boolean).join(' · ')].filter(Boolean);
   const ceremony=[card?.ceremony_time,card?.ceremony_venue].filter(Boolean).join(' · ');
   const reception=[card?.reception_time,card?.reception_venue].filter(Boolean).join(' · ');
-  const flowerEditorProps=(key)=>({...elementProps(key),style:{...elementStyle(key),transform:elementStyle(key).transform+(key==='flowerBottom'?' rotate(180deg)':''),display:config.visibility?.[key]===true?'block':'none'}});
+  const flowerEditorProps=(key)=>({...elementProps(key),style:{...elementStyle(key),transform:elementStyle(key).transform+(key==='flowerBottom'?' rotate(180deg)':''),display:config.visibility?.[key]===false?'none':'block'}});
   return <article onPointerMove={moveDrag} onPointerUp={stopDrag} onPointerCancel={stopDrag} style={{'--ecard-admin-accent':config.style?.accent||'#a77b20','--ecard-admin-text':config.style?.text||'#252018','--ecard-admin-font':config.style?.font||'Georgia, serif'}} className={['ecard-luxury-floral-card','ecard-admin-styled',exportMode?'ecard-luxury-export':'',layoutEditor?'ecard-layout-editing':''].filter(Boolean).join(' ')} aria-label="Luxury Floral Gold wedding invitation">
     <img className="ecard-luxury-background" {...elementProps('background')} src={config.media?.backgroundUrl||"/ecard-templates/luxury-floral-gold-bg.webp"} alt="" crossOrigin="anonymous"/>
     <ECardFloralOrnament className="ecard-studio-flower ecard-studio-flower-top" variant="ivory-gold" editorProps={flowerEditorProps('flowerTop')}/>
@@ -777,7 +777,7 @@ function AdminECardTemplateStudio({session,onBack}){
           <h3>Vipengele vya kadi</h3>
           <label>Chagua kipengele cha kupanga</label>
           <select value={selectedElement} onChange={e=>setSelectedElement(e.target.value)}>{elements.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select>
-          <label className="ecard-studio-field"><input type="checkbox" checked={selected?.style==='luxury-floral-gold'?config.visibility?.[selectedElement]===true:config.visibility?.[selectedElement]!==false} onChange={e=>updateVisibility(selectedElement,e.target.checked)}/> Onyesha kipengele hiki kwenye kadi</label>
+          <label className="ecard-studio-field"><input type="checkbox" checked={config.visibility?.[selectedElement]!==false} onChange={e=>updateVisibility(selectedElement,e.target.checked)}/> Onyesha kipengele hiki kwenye kadi</label>
           <label>Ukubwa wa kipengele</label>
           <input type="range" min="0.5" max="2.5" step="0.05" value={config.layout?.[selectedElement]?.scale||1} onChange={e=>updateLayout(selectedElement,{scale:Number(e.target.value)})}/>
           <label>Mzunguko (digrii)</label><input type="range" min="-180" max="180" step="1" value={config.layout?.[selectedElement]?.rotate||0} onChange={e=>updateLayout(selectedElement,{rotate:Number(e.target.value)})}/>
