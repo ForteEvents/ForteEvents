@@ -209,7 +209,7 @@ function ECardArtwork({card,recipientName='[JINA LA MWALIKWA]',guest=null,qrUrl,
       <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-tr" variant="ivory-gold"/>
       <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-bl" variant="ivory-gold"/>
       <ECardFloralOrnament className="ecard-ivory-rose ecard-ivory-rose-br" variant="ivory-gold"/>
-    </div>
+    </div>}
     <div className="ecard-main-panel">
       <div className="ecard-main-heading" {...universalElementProps('heading')}>
         <div className="ecard-document-title">{universalConfig.copy?.kicker||'KADI YA MWALIKO'}</div>
