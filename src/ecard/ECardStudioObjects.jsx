@@ -1,7 +1,8 @@
 import { useRef,useState } from 'react'
 
 export default function ECardStudioObjects({objects=[],layoutEditor=false,selectedObjectId=null,onSelect,onChange,onBeginChange}) {
-  const dragRef=useRef(null)\n  const [editingId,setEditingId]=useState(null)
+  const dragRef=useRef(null)
+  const [editingId,setEditingId]=useState(null)
   const update=(id,patch)=>onChange?.(items=>items.map(item=>item.id===id?{...item,...patch}:item))
   const move=event=>{
     const d=dragRef.current;if(!d||!layoutEditor)return
