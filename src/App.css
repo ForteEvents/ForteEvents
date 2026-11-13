@@ -2918,3 +2918,53 @@ button[type="submit"] {
   .ecard-style-ivory-gold .ecard-card-brand{width:clamp(116px,31cqw,154px)!important;max-width:58%!important}
   .ecard-style-ivory-gold .ecard-card-brand img{max-height:32px!important}
 }
+
+
+/* Ivory & Gold Roses: larger branding and independently selectable text elements. */
+.ecard-style-ivory-gold .ecard-card-brand{
+  width:clamp(158px,30cqw,218px)!important;
+  max-width:68%!important;
+  margin:8px auto 0!important;
+}
+.ecard-style-ivory-gold .ecard-card-brand img{
+  max-height:52px!important;
+}
+.ecard-style-ivory-gold.ecard-layout-editing [data-editor-element]{
+  cursor:grab;
+  touch-action:none;
+}
+.ecard-style-ivory-gold.ecard-layout-editing [data-editor-element]:active{
+  cursor:grabbing;
+}
+.ecard-style-ivory-gold.ecard-layout-editing [data-editor-element]:hover{
+  outline:1px dashed rgba(181,137,48,.75);
+  outline-offset:2px;
+}
+
+
+/* Admin Studio: selected layer and professional editing controls. */
+.ecard-layout-editing [data-editor-element] { cursor: grab; touch-action: none; }
+.ecard-layout-editing [data-editor-element]:active { cursor: grabbing; }
+.ecard-layout-editing [data-editor-selected="true"] {
+  outline: 2px solid rgba(177, 132, 42, .95) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(177, 132, 42, .16);
+}
+.ecard-studio-tools input[type="range"] { width: 100%; accent-color: #b1842a; }
+.ecard-studio-tools input[type="color"] { width: 54px; min-height: 34px; padding: 2px; }
+.ecard-studio-tools select, .ecard-studio-tools input[type="number"] { max-width: 100%; }
+.ecard-studio-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.ecard-studio-actions button:disabled { opacity:.45; cursor:not-allowed; }
+
+
+/* Admin Studio layer manager and per-element typography controls. */
+.ecard-studio-layer-panel{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid #e2d3ad;border-radius:10px;background:#fffdf8}
+.ecard-studio-layer-panel h4{margin:0;color:#8d671d;font-size:14px}
+.ecard-studio-layer-panel p{margin:0;color:#756b58;font-size:12px;line-height:1.4}
+.ecard-studio-layer-list{display:flex;flex-direction:column;gap:5px;max-height:280px;overflow:auto;padding-right:3px}
+.ecard-studio-layer{display:flex;align-items:center;gap:9px;width:100%;min-height:36px;padding:7px 9px;border:1px solid #e7dfce;border-radius:7px;background:#fff;color:#383126;text-align:left;font-size:12px}
+.ecard-studio-layer.active{border-color:#b1842a;background:#fbf4e5;box-shadow:inset 3px 0 #b1842a}
+.ecard-studio-layer-index{min-width:24px;color:#9a855a;font-size:10px;font-variant-numeric:tabular-nums}
+.ecard-studio-layer small{margin-left:auto;color:#9b5b35}
+.ecard-studio-layer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ecard-studio-layer-actions button{flex:1;min-width:120px}
