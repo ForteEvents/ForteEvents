@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const OCCASIONS = ['Harusi','Send-off','Kipaimara','Graduation','Birthday','Kitchen Party','Shukrani','Kupongeza','Kumuaga','Tukio lingine']
 
@@ -40,6 +40,16 @@ export default function CustomerECardRequestForm({ supabase, session }) {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [myRequests, setMyRequests] = useState([])
+  const [requestsLoading, setRequestsLoading] = useState(true)
+
+  const loadMyRequests = async () => {
+    const { data, error } = await supabase.from('e_card_requests').select('id,status,event_details,created_at,updated_at').eq('user_id', session.user.id).order('created_at', { ascending: false })
+    if (!error) setMyRequests(data || [])
+    setRequestsLoading(false)
+  }
+
+  useEffect(() => { loadMyRequests() }, [session.user.id])
   const guests = useMemo(() => parseGuestList(form.guest_list_text), [form.guest_list_text])
 
   const change = (key, value) => setForm(current => ({ ...current, [key]: value }))
@@ -81,6 +91,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
     }
     setForm(EMPTY)
     setMessage('Ombi lako limepokelewa na ForteEvents. Timu yetu itashughulikia utengenezaji na usambazaji wa kadi.')
+    await loadMyRequests()
   }
 
   return (
