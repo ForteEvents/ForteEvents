@@ -161,7 +161,8 @@ export default function CustomerECardRequestForm({ supabase, session }) {
           <label>Ujumbe wa familia (hiari)</label>
           <textarea rows="3" value={form.message} onChange={e => change('message', e.target.value)} maxLength={500} />
           <h3>Orodha ya wageni</h3>
-          <p className="ecard-form-hint">Andika mgeni mmoja kwa kila mstari. Mfano: Asha,single au Juma,double. Aina ya double itahifadhi mwaliko wa watu wawili.</p>
+          <p className="ecard-form-hint">Kila mwaliko unagharimu TSh 500 na salio la E-card ni tofauti na salio la SMS. Mwaliko wa double unaruhusu watu wawili kwa QR moja.</p>
+          <p className="ecard-form-hint">Andika mgeni mmoja kwa kila mstari. Mfano: Asha,single au Juma,double.</p>
           <textarea rows="8" value={form.guest_list_text} onChange={e => change('guest_list_text', e.target.value)} placeholder={'Asha,single\nJuma,double'} required />
           <p className="ecard-form-hint">Wageni walioingizwa: {guests.length}</p>
           <button type="submit" className="primary-button" disabled={saving}>{saving ? 'Inatuma ombi...' : 'Tuma ombi la E-card'}</button>
