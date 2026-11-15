@@ -51,7 +51,7 @@ export default function AdminECardRequests({ onBack }) {
     setSelectedTemplates(current => {
       const next = { ...current }
       for (const request of data || []) {
-        if (!next[request.id]) next[request.id] = ids[0] || ''
+        if (!ids.includes(next[request.id])) next[request.id] = ids[0] || ''
       }
       return next
     })
