@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import QRCode from 'qrcode'
 import { supabase } from '../supabaseClient'
 import { ECARD_TEMPLATES } from './templateRegistry.js'
 
@@ -12,6 +13,18 @@ const STATUS_LABELS = {
   rejected: 'Limekataliwa'
 }
 
+function GuestQr({ value, name }) {
+  const [src, setSrc] = useState('')
+  useEffect(() => {
+    let active = true
+    QRCode.toDataURL(value, { errorCorrectionLevel: 'M', margin: 3, width: 240 })
+      .then(url => { if (active) setSrc(url) })
+      .catch(() => { if (active) setSrc('') })
+    return () => { active = false }
+  }, [value])
+  return src ? <img src={src} alt={'QR ya mwaliko wa ' + name} style={{width:'128px',height:'128px',objectFit:'contain'}} /> : <span>Inaandaa QR...</span>
+}
+
 export default function AdminECardRequests({ onBack }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,6 +32,7 @@ export default function AdminECardRequests({ onBack }) {
   const [error, setError] = useState('')
   const [templateIds, setTemplateIds] = useState([])
   const [selectedTemplates, setSelectedTemplates] = useState({})
+  const [guestQrs, setGuestQrs] = useState({})
   const [notice, setNotice] = useState('')
 
   const load = async () => {
@@ -40,6 +54,15 @@ export default function AdminECardRequests({ onBack }) {
       }
       return next
     })
+
+    const fulfilled = (data || []).filter(request => request.generated_card_id)
+    const qrResults = await Promise.all(fulfilled.map(async request => {
+      const { data: guests, error: qrError } = await supabase.rpc('admin_get_e_card_guest_qr', {
+        p_card_id: request.generated_card_id
+      })
+      return [request.id, qrError ? [] : (guests || [])]
+    }))
+    setGuestQrs(Object.fromEntries(qrResults))
     setLoading(false)
   }
 
@@ -76,7 +99,7 @@ export default function AdminECardRequests({ onBack }) {
       setError('Kadi haikutengenezwa: ' + fulfilError.message)
     } else {
       const result = Array.isArray(data) ? data[0] : data
-      setNotice('Kadi imetengenezwa. Wageni: ' + (result?.guest_count ?? 0) + '. Kiungo cha kadi: ?card=' + (result?.card_slug || ''))
+      setNotice('Kadi imetengenezwa. Wageni: ' + (result?.guest_count ?? 0) + '. QR za wageni zimetengenezwa.')
       await load()
     }
     setBusyId('')
@@ -85,7 +108,7 @@ export default function AdminECardRequests({ onBack }) {
   return (
     <section>
       <div className="page-header">
-        <div><h1>Maombi ya E-card</h1><p>ForteEvents inapokea taarifa za tukio na wageni; timu yetu inachagua kiolezo, kutengeneza kadi na QR za wageni.</p></div>
+        <div><h1>Maombi ya E-card</h1><p>ForteEvents inapokea taarifa za tukio; timu yetu inachagua kiolezo, kutengeneza kadi na QR za wageni.</p></div>
         <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
           <button type="button" className="secondary-button" onClick={load}>Refresh</button>
           <button type="button" className="secondary-button" onClick={onBack}>Rudi</button>
@@ -95,6 +118,7 @@ export default function AdminECardRequests({ onBack }) {
         const details = request.event_details || {}
         const guests = Array.isArray(request.guest_list) ? request.guest_list : []
         const templateOptions = templateIds.map(id => ECARD_TEMPLATES.find(item => item.id === id)).filter(Boolean)
+        const generatedGuests = guestQrs[request.id] || []
         return (
           <article className="card" key={request.id} style={{marginBottom:'16px'}}>
             <div style={{display:'flex',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
@@ -114,7 +138,26 @@ export default function AdminECardRequests({ onBack }) {
               <pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify({event_details:details,guest_list:guests},null,2)}</pre>
             </details>
             {request.generated_card_id ? (
-              <p><strong>Kadi imetengenezwa.</strong> Wageni {guests.length}; gharama ya mialiko TSh {(guests.length * 500).toLocaleString('en-US')}.</p>
+              <div>
+                <p><strong>Kadi imetengenezwa.</strong> Wageni {guests.length}; gharama ya mialiko TSh {(guests.length * 500).toLocaleString('en-US')}.</p>
+                <h3>QR za wageni</h3>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:'12px'}}>
+                  {generatedGuests.map(guest => {
+                    const url = window.location.origin + '/?card=' + encodeURIComponent(guest.card_slug) + '&guest=' + encodeURIComponent(guest.token)
+                    const shareText = 'Habari ' + guest.guest_name + ', huu hapa mwaliko wako: ' + url
+                    return (
+                      <div key={guest.token} style={{border:'1px solid #e5dfd2',borderRadius:'10px',padding:'12px',textAlign:'center'}}>
+                        <strong>{guest.guest_name}</strong>
+                        <p>{guest.invite_type === 'double' ? 'Mwaliko wa watu 2' : 'Mwaliko wa mtu 1'}</p>
+                        <GuestQr value={url} name={guest.guest_name} />
+                        <p><a href={url} target="_blank" rel="noreferrer">Fungua mwaliko</a></p>
+                        <p><a href={'https://wa.me/?text=' + encodeURIComponent(shareText)} target="_blank" rel="noreferrer">Shiriki WhatsApp</a></p>
+                      </div>
+                    )
+                  })}
+                </div>
+                {generatedGuests.length === 0 && <p>QR hazijaweza kupakiwa. Bonyeza Refresh kujaribu tena.</p>}
+              </div>
             ) : (
               <div>
                 <label>Kiolezo rasmi cha ForteEvents</label>
