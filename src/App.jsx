@@ -1153,22 +1153,8 @@ function App() {
       return
     }
 
-  if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: data.user.id,
-          full_name: name,
-          phone: phone,
-          email: email,
-          sms_balance: 0,
-          role: 'customer',
-        })
-
-      if (profileError) {
-        console.log('Profile error:', profileError.message)
-      }
-    }
+  // The handle_new_user database trigger creates the customer profile.
+    // Do not upsert role or balances from the browser; those fields are privileged.
 
     if (data.session) {
       setSession(data.session)
