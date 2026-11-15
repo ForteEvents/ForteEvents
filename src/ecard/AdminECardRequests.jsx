@@ -35,7 +35,9 @@ export default function AdminECardRequests({ onBack }) {
     setTemplateIds(ids)
     setSelectedTemplates(current => {
       const next = { ...current }
-      for (const id of ids) if (!next[id]) next[id] = ids[0] || ''
+      for (const request of data || []) {
+        if (!next[request.id]) next[request.id] = ids[0] || ''
+      }
       return next
     })
     setLoading(false)
