@@ -195,7 +195,12 @@ $function$;
 revoke all on function public.get_public_e_card_guest(uuid,uuid) from public;
 grant execute on function public.get_public_e_card_guest(uuid,uuid) to anon, authenticated;
 
--- Remove anonymous execution from authenticated-only E-card wallet/guest operations.
+-- Trigger functions are invoked by their database triggers, not by browser RPC.
+-- They must not be callable directly through the exposed Data API.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+revoke all on function public.create_e_card_wallet_for_new_user() from public, anon, authenticated;
+
+-- Remove direct customer creation of guests/cards from the legacy E-card builder.
 revoke all on function public.create_paid_e_card_guest(uuid,text,text) from public, anon, authenticated;
 revoke all on function public.admin_adjust_e_card_balance(uuid,integer,text) from public, anon;
 grant execute on function public.admin_adjust_e_card_balance(uuid,integer,text) to authenticated;
