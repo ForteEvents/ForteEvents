@@ -205,7 +205,11 @@ revoke all on function public.admin_get_e_card_transactions(uuid) from public, a
 grant execute on function public.admin_get_e_card_transactions(uuid) to authenticated;
 
 -- Return only the guest QR data for admins assigned to the managed fulfilment workflow.
-create or replace function public.admin_get_e_card_guest_qr(p_card_id uuid)
+create or replace function public.admin_get_e_card_guest_qr(
+  p_card_id uuid,
+  p_limit integer default 50,
+  p_offset integer default 0
+)
 returns table(guest_name text, invite_type text, guest_count integer, token uuid, card_slug text)
 language plpgsql
 security definer
@@ -223,9 +227,11 @@ begin
   from public.e_card_guests g
   join public.e_cards c on c.id = g.card_id
   where c.id = p_card_id
-  order by g.created_at, g.guest_name;
+  order by g.created_at, g.guest_name
+  limit greatest(1, least(coalesce(p_limit, 50), 100))
+  offset greatest(coalesce(p_offset, 0), 0);
 end;
 $function$;
 
-revoke all on function public.admin_get_e_card_guest_qr(uuid) from public, anon;
-grant execute on function public.admin_get_e_card_guest_qr(uuid) to authenticated;
+revoke all on function public.admin_get_e_card_guest_qr(uuid,integer,integer) from public, anon;
+grant execute on function public.admin_get_e_card_guest_qr(uuid,integer,integer) to authenticated;
