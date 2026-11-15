@@ -18,6 +18,7 @@ const EMPTY = {
   reception_venue: '',
   venue: '',
   location_url: '',
+  image_url: '',
   food_note: '',
   dress_code: '',
   rsvp_deadline: '',
@@ -71,6 +72,10 @@ export default function CustomerECardRequestForm({ supabase, session }) {
     }
     if (form.location_url && !/^https:\/\//i.test(form.location_url)) {
       setMessage('Link ya ramani lazima ianze na https://')
+      return
+    }
+    if (form.image_url && !/^https:\/\//i.test(form.image_url)) {
+      setMessage('Link ya picha lazima ianze na https://')
       return
     }
 
@@ -138,6 +143,9 @@ export default function CustomerECardRequestForm({ supabase, session }) {
           <input value={form.venue} onChange={e => change('venue', e.target.value)} maxLength={160} />
           <label>Link ya Google Maps (hiari)</label>
           <input type="url" value={form.location_url} onChange={e => change('location_url', e.target.value)} placeholder="https://maps.app.goo.gl/..." />
+          <label>Link ya picha ya tukio / wahusika (hiari)</label>
+          <input type="url" value={form.image_url} onChange={e => change('image_url', e.target.value)} placeholder="https://..." />
+          <p className="ecard-form-hint">Tuma link ya picha ikiwa ungependa ionekane kwenye kadi. Kiolezo na mpangilio wa kadi vitasimamiwa na ForteEvents.</p>
           <label>Maelezo ya chakula / mapokezi (hiari)</label>
           <input value={form.food_note} onChange={e => change('food_note', e.target.value)} maxLength={160} />
           <label>Dress code (hiari)</label>
