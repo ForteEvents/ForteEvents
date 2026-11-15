@@ -54,6 +54,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
   const [requestsLoading, setRequestsLoading] = useState(true)
 
   const loadMyRequests = async () => {
+    setRequestsLoading(true)
     const { data, error } = await supabase.from('e_card_requests').select('id,status,event_details,created_at,updated_at,generated_card_id').eq('user_id', session.user.id).order('created_at', { ascending: false })
     if (!error) setMyRequests(data || [])
     setRequestsLoading(false)
@@ -183,7 +184,10 @@ export default function CustomerECardRequestForm({ supabase, session }) {
         {message && <p className="message" role="status">{message}</p>}
       </div>
       <div className="card">
-        <h2>Maombi yangu ya E-card</h2>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+          <h2>Maombi yangu ya E-card</h2>
+          <button type="button" className="secondary-button" onClick={loadMyRequests}>Refresh</button>
+        </div>
         {requestsLoading ? <p>Inapakia historia ya maombi...</p> : myRequests.length === 0 ? <p>Bado hujatuma ombi la E-card.</p> : myRequests.map(request => (
           <div key={request.id} style={{borderBottom:'1px solid #eee',padding:'12px 0'}}>
             <strong>{request.event_details?.title || 'Tukio bila jina'}</strong>
