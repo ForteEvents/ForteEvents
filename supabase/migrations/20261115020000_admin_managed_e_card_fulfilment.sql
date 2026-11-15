@@ -14,6 +14,12 @@ create policy "Customers view own e-cards"
   on public.e_cards for select to authenticated
   using (auth.uid() = user_id);
 
+-- Public invitation pages must still be able to load published card artwork/details.
+drop policy if exists "Anyone can view published e-cards" on public.e_cards;
+create policy "Anyone can view published e-cards"
+  on public.e_cards for select to anon, authenticated
+  using (is_published = true);
+
 drop policy if exists "Customers manage own e-card guests" on public.e_card_guests;
 drop policy if exists "Customers view own e-card guests" on public.e_card_guests;
 create policy "Customers view own e-card guests"
