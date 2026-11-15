@@ -201,3 +201,29 @@ revoke all on function public.admin_get_e_card_accounts() from public, anon;
 grant execute on function public.admin_get_e_card_accounts() to authenticated;
 revoke all on function public.admin_get_e_card_transactions(uuid) from public, anon;
 grant execute on function public.admin_get_e_card_transactions(uuid) to authenticated;
+
+-- Return only the guest QR data for admins assigned to the managed fulfilment workflow.
+create or replace function public.admin_get_e_card_guest_qr(p_card_id uuid)
+returns table(guest_name text, invite_type text, guest_count integer, token uuid, card_slug text)
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+  ) then
+    raise exception 'Huna ruhusa ya kuona QR za wageni.';
+  end if;
+
+  return query
+  select g.guest_name, g.invite_type, g.guest_count, g.token, c.slug
+  from public.e_card_guests g
+  join public.e_cards c on c.id = g.card_id
+  where c.id = p_card_id
+  order by g.created_at, g.guest_name;
+end;
+$function$;
+
+revoke all on function public.admin_get_e_card_guest_qr(uuid) from public, anon;
+grant execute on function public.admin_get_e_card_guest_qr(uuid) to authenticated;
