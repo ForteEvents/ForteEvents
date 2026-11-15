@@ -8,6 +8,8 @@ import './App.css'
 import { ECARD_TEMPLATES as BUILT_IN_ECARD_TEMPLATES, getECardTemplate } from './ecard/templateRegistry.js'
 import ECardStudioObjects from './ecard/ECardStudioObjects.jsx'
 import ECardCheckin from './ecard/ECardCheckin.jsx'
+import CustomerECardRequestForm from './ecard/CustomerECardRequestForm.jsx'
+import AdminECardRequests from './ecard/AdminECardRequests.jsx'
 
 
 function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
@@ -1151,22 +1153,8 @@ function App() {
       return
     }
 
-  if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: data.user.id,
-          full_name: name,
-          phone: phone,
-          email: email,
-          sms_balance: 0,
-          role: 'customer',
-        })
-
-      if (profileError) {
-        console.log('Profile error:', profileError.message)
-      }
-    }
+  // The handle_new_user database trigger creates the customer profile.
+    // Do not upsert role or balances from the browser; those fields are privileged.
 
     if (data.session) {
       setSession(data.session)
@@ -1515,10 +1503,11 @@ function App() {
         .eq('slug', slug).eq('is_published', true).maybeSingle()
       let guest = null
       if (!error && data && guestToken) {
-        const result = await supabase.from('e_card_guests')
-          .select('guest_name, invite_type, guest_count, token')
-          .eq('token', guestToken).eq('card_id', data.id).maybeSingle()
-        guest = result.error ? null : result.data
+        const result = await supabase.rpc('get_public_e_card_guest', {
+          p_card_id: data.id,
+          p_token: guestToken
+        })
+        guest = result.error ? null : (Array.isArray(result.data) ? result.data[0] : result.data)
       }
       if (!error && data) {
         const templateId=getSavedECardTemplateId(data)
@@ -2733,6 +2722,7 @@ useEffect(() => {
             >
               Customers
             </button>
+            <button className={adminPage === 'ecard-requests' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-requests')}>Maombi ya E-card</button>
             <button className={adminPage === 'ecards' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecards')}>
               E-card Management
             </button>
@@ -2839,6 +2829,7 @@ useEffect(() => {
   onBack={() => setAdminPage('dashboard')}
 />
 )}
+{adminPage === 'ecard-requests' && <AdminECardRequests onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-studio' && <AdminECardTemplateStudio session={session} onBack={() => setAdminPage('dashboard')} />}
@@ -3539,234 +3530,7 @@ return (
       )}
 
       {page === 'ecard' && (
-        <>
-          <div className="page-header">
-            <div><h1>Digital E-card</h1><p>Tengeneza na usambaze mialiko ya kidigitali.</p></div>
-            <button type="button" className="secondary-button" onClick={loadECards}>Refresh</button>
-          </div>
-          <div className="card ecard-template-picker">
-            <div className="ecard-picker-heading"><h2>Chagua kadi unayoipenda</h2><p>Angalia muonekano wa kila sampuli, chagua moja, kisha jaza taarifa zako. Mapambo na mpangilio wa muundo hubaki kama ulivyo.</p></div>
-            {ecardTemplatesLoading ? <p>Inapakia sampuli za ziada...</p> : null}
-            {eCardMessage && eCardMessage.startsWith('Sampuli za E-card hazijapakiwa:') && <p className="ecard-form-hint">{eCardMessage}</p>}
-            <div className="ecard-choice-grid">
-              {BUILT_IN_ECARD_TEMPLATES.filter(item=>ecardTemplateSettings[item.id]?.config?.customerVisible!==false).map(item => <div
-                key={item.id}
-                className={"ecard-choice-card ecard-choice-card-live "+(selectedTemplateId===item.id?'selected':'')}
-                role="button"
-                tabIndex={0}
-                onClick={()=>setSelectedTemplateId(item.id)}
-                onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setSelectedTemplateId(item.id)}}}
-                aria-pressed={selectedTemplateId===item.id}
-                aria-label={"Chagua sampuli "+item.name}
-              >
-                <div className="ecard-choice-preview-window">
-                  <ECardArtwork
-                    key={'template-thumb-'+item.id}
-                    templateId={item.id}
-                    card={{occasion:item.occasion,title:item.name,host_names:'FAMILIA YAKO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',message:DEFAULT_ECARD_MESSAGE,design:{templateId:item.id,templateConfig:ecardTemplateSettings[item.id]?.config||{}}}}
-                    recipientName="[JINA LA MWALIKWA]"
-                    guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}}
-                    qrUrl={window.location.origin+'/?ecard-template='+encodeURIComponent(item.id)}
-                  />
-                </div>
-                <strong>{item.name}</strong><small>{item.description}</small>{selectedTemplateId===item.id&&<em>Imechaguliwa</em>}
-              </div>)}
-              {ecardTemplates.filter(item=>ecardTemplateSettings[item.id]?.config?.customerVisible!==false).map(item => <button type="button" key={item.id} className={"ecard-choice-card "+(selectedTemplateId===item.id?'selected':'')} onClick={()=>setSelectedTemplateId(item.id)} aria-pressed={selectedTemplateId===item.id}>
-                <img className="ecard-choice-uploaded" src={item.image_url} alt={"Sampuli "+item.name}/><strong>{item.name}</strong><small>{item.description || item.occasion}</small>{selectedTemplateId===item.id&&<em>Imechaguliwa</em>}
-              </button>)}
-            </div>
-          </div>
-          <div className="card">
-            <h2>{editingECardId ? 'Hariri E-card' : 'Tengeneza E-card mpya'}</h2>
-            <div className="ecard-sample-first-intro">
-              <h2>Kadi ya mfano — hariri taarifa zake</h2>
-              <p>Hii ndiyo kadi ambayo mteja atatumia. Badilisha taarifa kwenye sehemu zilizo chini; muonekano wa kadi utajisasisha papo hapo.</p>
-            </div>
-            <ECardArtwork key={'live-preview-'+selectedTemplateId} templateId={selectedTemplateId} template={selectedECardTemplate} card={{...eCardForm,design:{templateId:selectedTemplateId,templateConfig:selectedECardTemplate?.templateConfig||{},templateSnapshot:{...selectedECardTemplate,templateConfig:selectedECardTemplate?.templateConfig||{}}}}} recipientName={guestName.trim() || '[JINA LA MWALIKWA]'} guest={{guest_name:guestName.trim() || 'JINA LA MWALIKWA',invite_type:guestType}} qrUrl={window.location.origin + '/?ecard-preview=forteevents'}/>
-            <form onSubmit={saveECard}>
-              <label>Jina la tukio</label>
-              <input value={eCardForm.title} maxLength={45} disabled={!canEditTemplateField('title')} onChange={e => setECardForm(v => ({...v, title:e.target.value}))} placeholder="Mfano: Harusi ya John na Mary" required />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.title || '').length}/45 herufi</small>
-              <label>Aina ya tukio</label>
-              <select value={eCardForm.occasion} disabled={!canEditTemplateField('occasion')} onChange={e => setECardForm(v => ({...v, occasion:e.target.value}))}>
-                <option>Harusi</option><option>Send-off</option><option>Kipaimara</option><option>Graduation</option><option>Birthday</option><option>Kitchen Party</option><option>Shukrani</option><option>Kupongeza</option><option>Kumuaga</option><option>Tukio lingine</option>
-              </select>
-              <label>Jina la familia inayoalika</label>
-              <input value={eCardForm.host_names} maxLength={40} disabled={!canEditTemplateField('host_names')} onChange={e => setECardForm(v => ({...v, host_names:e.target.value}))} placeholder="Mfano: Bwana na Bi. Amini Mlashi" />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.host_names || '').length}/40 herufi</small>
-              <label>Tarehe</label>
-              <input type="date" value={eCardForm.event_date} disabled={!canEditTemplateField('event_date')} onChange={e => setECardForm(v => ({...v, event_date:e.target.value}))} required />
-              <label>Muda wa tukio</label>
-              <input type="time" value={eCardForm.event_time} disabled={!canEditTemplateField('event_time')} onChange={e => setECardForm(v => ({...v, event_time:e.target.value}))} />
-              <label>Jina la bibi harusi</label>
-              <input value={eCardForm.bride_name} maxLength={28} disabled={!canEditTemplateField('bride_name')} onChange={e => setECardForm(v => ({...v, bride_name:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.bride_name || '').length}/28 herufi</small>
-              <label>Jina la bwana harusi</label>
-              <input value={eCardForm.groom_name} maxLength={28} disabled={!canEditTemplateField('groom_name')} onChange={e => setECardForm(v => ({...v, groom_name:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.groom_name || '').length}/28 herufi</small>
-              <label>Muda wa ibada</label>
-              <input type="time" value={eCardForm.ceremony_time} disabled={!canEditTemplateField('ceremony_time')} onChange={e => setECardForm(v => ({...v, ceremony_time:e.target.value}))} />
-              <label>Mahali pa ibada</label>
-              <input value={eCardForm.ceremony_venue} maxLength={55} disabled={!canEditTemplateField('ceremony_venue')} onChange={e => setECardForm(v => ({...v, ceremony_venue:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.ceremony_venue || '').length}/55 herufi</small>
-              <label>Muda wa reception</label>
-              <input type="time" value={eCardForm.reception_time} disabled={!canEditTemplateField('reception_time')} onChange={e => setECardForm(v => ({...v, reception_time:e.target.value}))} />
-              <label>Mahali pa reception</label>
-              <input value={eCardForm.reception_venue} maxLength={55} disabled={!canEditTemplateField('reception_venue')} onChange={e => setECardForm(v => ({...v, reception_venue:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.reception_venue || '').length}/55 herufi</small>
-              <label>Ujumbe wa chakula / mapokezi</label>
-              <input value={eCardForm.food_note} maxLength={70} disabled={!canEditTemplateField('food_note')} onChange={e => setECardForm(v => ({...v, food_note:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.food_note || '').length}/70 herufi</small>
-              <label>Maelezo ya dress code (hiari)</label>
-              <input value={eCardForm.dress_code} maxLength={35} disabled={!canEditTemplateField('dress_code')} onChange={e => setECardForm(v => ({...v, dress_code:e.target.value}))} placeholder="Mfano: Vazi rasmi" />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.dress_code || '').length}/35 herufi</small>
-              <label>Chagua rangi za dress code (hadi 3)</label>
-              <div className="ecard-color-picker">{ECARD_DRESS_PALETTE.map(color => { const active=(eCardForm.dress_colors||[]).includes(color.value); return <button type="button" key={color.value} className={"ecard-color-choice "+(active?'active':'')} disabled={!canEditTemplateField('dress_colors')} onClick={()=>setECardForm(v=>({...v,dress_colors:active?v.dress_colors.filter(x=>x!==color.value):v.dress_colors.length<3?[...v.dress_colors,color.value]:v.dress_colors}))} aria-label={color.label} title={color.label} aria-pressed={active}><i style={{backgroundColor:color.hex}}/><span>{color.label}</span></button>})}</div>
-              <p className="ecard-form-hint">Rangi zilizochaguliwa zitaonekana kwenye kadi kama alama za rangi, bila majina marefu.</p>
-              <label>Tarehe ya mwisho ya RSVP</label>
-              <input type="date" value={eCardForm.rsvp_deadline} disabled={!canEditTemplateField('rsvp_deadline')} onChange={e => setECardForm(v => ({...v, rsvp_deadline:e.target.value}))} />
-              <label>Jina la mawasiliano 1</label>
-              <input value={eCardForm.rsvp_contact_name} maxLength={35} disabled={!canEditTemplateField('rsvp_contact_name')} onChange={e => setECardForm(v => ({...v, rsvp_contact_name:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.rsvp_contact_name || '').length}/35 herufi</small>
-              <label>Simu ya mawasiliano 1</label>
-              <input value={eCardForm.rsvp_contact_phone} maxLength={20} disabled={!canEditTemplateField('rsvp_contact_phone')} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.rsvp_contact_phone || '').length}/20 herufi</small>
-              <label>Jina la mawasiliano 2</label>
-              <input value={eCardForm.rsvp_contact_name_2} maxLength={35} disabled={!canEditTemplateField('rsvp_contact_name_2')} onChange={e => setECardForm(v => ({...v, rsvp_contact_name_2:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.rsvp_contact_name_2 || '').length}/35 herufi</small>
-              <label>Simu ya mawasiliano 2</label>
-              <input value={eCardForm.rsvp_contact_phone_2} maxLength={20} disabled={!canEditTemplateField('rsvp_contact_phone_2')} onChange={e => setECardForm(v => ({...v, rsvp_contact_phone_2:e.target.value}))} />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.rsvp_contact_phone_2 || '').length}/20 herufi</small>
-              <label>Mahali / Ukumbi</label>
-              <input value={eCardForm.venue} maxLength={55} disabled={!canEditTemplateField('venue')} onChange={e => setECardForm(v => ({...v, venue:e.target.value}))} placeholder="Jina la ukumbi na eneo" />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.venue || '').length}/55 herufi</small>
-              <label>Google Maps location link (hiari)</label>
-              <input type="url" value={eCardForm.location_url} disabled={!canEditTemplateField('location_url')} onChange={e => setECardForm(v => ({...v, location_url:e.target.value}))} placeholder="Bandika link ya Google Maps ya ukumbi" />
-              <p style={{fontSize:'13px'}}>Fungua eneo kwenye Google Maps, bonyeza Share, kisha Copy link na ubandike hapa.</p>
-              <label>Ujumbe wa Familia</label>
-              <textarea rows="4" maxLength={120} value={eCardForm.message} disabled={!canEditTemplateField('message')} onChange={e => setECardForm(v => ({...v, message:e.target.value}))} placeholder="Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa. Tunatazamia kusherehekea nawe siku hii ya pekee." />
-              <small className="ecard-character-count" aria-live="polite">{String(eCardForm.message || '').length}/120 herufi</small>
-              <p className="ecard-form-hint">Ujumbe huu utaonekana chini ya taarifa za mwaliko. Unaweza kuubadilisha au kuacha mfano huu.</p>
-              <label>Pakia picha ya mwaliko (JPG, PNG au WEBP; hadi 5MB)</label>
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
-                const file = e.target.files?.[0]
-                if (!file) return
-                if (file.size > 5 * 1024 * 1024) { setECardMessage('Picha isizidi 5MB.'); e.target.value = ''; return }
-                const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-                if (!window.crypto?.randomUUID) {
-                  setECardMessage('Kivinjari hiki hakiwezi kutengeneza jina salama la faili. Tafadhali tumia kivinjari kilichosasishwa.')
-                  return
-                }
-                const path = session.user.id + '/' + window.crypto.randomUUID() + '.' + ext
-                setECardSaving(true)
-                const { error } = await supabase.storage.from('e-card-images').upload(path, file, { upsert: false, contentType: file.type })
-                if (error) setECardMessage('Picha haikupakiwa: ' + error.message)
-                else {
-                  const { data } = supabase.storage.from('e-card-images').getPublicUrl(path)
-                  setECardForm(v => ({...v, image_url:data.publicUrl}))
-                  setECardMessage('Picha imepakiwa.')
-                }
-                setECardSaving(false)
-              }} />
-              {eCardForm.image_url && <img src={eCardForm.image_url} alt="Picha iliyochaguliwa" style={{width:'100%',maxWidth:'240px',borderRadius:'8px',marginTop:'8px'}} />}
-              <label>Au weka link ya picha (hiari, https://)</label>
-              <input type="url" value={eCardForm.image_url} disabled={!canEditTemplateField('image_url')} onChange={e => setECardForm(v => ({...v, image_url:e.target.value}))} placeholder="https://..." />
-              <p className="ecard-helper-note">Maandishi ya heshima na muundo wa mwaliko ni sehemu ya kiolezo rasmi. Jaza taarifa za familia, wahusika, tarehe na maeneo; sehemu za IBADA, MAPOKEZI, CHAKULA na RSVP ni hiari.</p>
-              <button type="submit" className="primary-button" disabled={eCardSaving}>{eCardSaving ? 'Inahifadhi...' : 'Hifadhi E-card'}</button>
-              {editingECardId && <button type="button" className="secondary-button" onClick={resetECardForm}>Acha kuhariri</button>}
-            </form>
-
-{eCardMessage && <p className="message" role="status">{eCardMessage}</p>}
-          </div>
-          <div className="card">
-            <h2>Salio la E-card</h2>
-            <p style={{fontSize:'28px',fontWeight:'700',color:'#9a792d'}}>TSh {Number(eCardWalletBalance).toLocaleString()}</p>
-            <p>Kila mwaliko wenye jina na QR Code unagharimu TSh 500. Wasiliana na ForteEvents ili kuongeza salio baada ya malipo.</p>
-            {eCardWalletLoading && <p>Inapakia salio...</p>}
-          </div>
-          <div className="card" style={{marginTop:'20px'}}>
-            <h2>Ingiza wageni kwa CSV</h2>
-            <p>Andaa faili lenye safu mbili: <strong>name,type</strong>. Mfano: Asha,single au Juma,double. Kila mgeni atakatwa TSh 500 kwenye E-card balance.</p>
-            <input type="file" accept=".csv,text/csv" disabled={!guestCardId || guestBusy} onChange={async e => {
-              const file=e.target.files?.[0]; if(!file) return;
-              const raw=await file.text();
-              const rows=raw.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
-              const parsed=rows.map(line=>line.split(',').map(value=>value.trim().replace(/^"|"$/g,'')));
-              const start=parsed[0]?.[0]?.toLowerCase()==='name' ? 1 : 0;
-              const guests=parsed.slice(start).filter(row=>row[0]).map(row=>({name:row[0],type:(row[1]||'single').toLowerCase()}));
-              if(!guests.length || guests.some(g=>!['single','double'].includes(g.type))) { setECardMessage('CSV haiko sahihi. Tumia name,type na aina single au double.'); e.target.value=''; return; }
-              if(!window.confirm('Una uhakika kuongeza wageni '+guests.length+'? Jumla ya makato ni TSh '+(guests.length*500).toLocaleString()+'.')) {e.target.value='';return;}
-              setGuestBusy(true); let added=0; let failed='';
-              for(const guest of guests) {
-                const {error}=await supabase.rpc('create_paid_e_card_guest',{p_card_id:guestCardId,p_guest_name:guest.name,p_invite_type:guest.type});
-                if(error){failed=error.message;break;} added++;
-              }
-              setGuestBusy(false); await loadECardGuests(guestCardId); await loadECardWallet();
-              setECardMessage('Wageni '+added+' wameongezwa.'+(failed?' Imesimama: '+failed:''));
-              e.target.value='';
-            }} />
-          </div>
-          <div className="card" style={{marginTop:'20px'}}>
-            <h2>Wageni na QR zao</h2>
-            <button type="button" className="secondary-button no-print" onClick={() => window.print()} disabled={!eCardGuests.length}>Chapisha wageni wote / Hifadhi PDF</button>
-            <label>Chagua kadi ya tukio</label>
-            <select value={guestCardId} onChange={e => { setGuestCardId(e.target.value); loadECardGuests(e.target.value) }}>
-              <option value="">Chagua E-card</option>
-              {eCards.map(card => <option key={card.id} value={card.id}>{card.title}</option>)}
-            </select>
-            <form onSubmit={addECardGuest}>
-              <label>Jina la mwalikwa (andika jina pekee; cheo rasmi huongezwa moja kwa moja)</label>
-              <input value={guestName} maxLength={45} onChange={e => setGuestName(e.target.value)} placeholder="Jina la mgeni (hadi herufi 45)" required />
-              <small className="ecard-character-count" aria-live="polite">{String(guestName || '').length}/45 herufi</small>
-              <label>Aina ya kadi</label>
-              <select value={guestType} onChange={e => setGuestType(e.target.value)}><option value="single">SINGLE</option><option value="double">DOUBLE</option></select>
-              <button type="submit" className="primary-button" disabled={!guestCardId || guestBusy}>{guestBusy ? 'Inaongeza...' : 'Ongeza mgeni na QR'}</button>
-            </form>
-            {eCardGuests.map(g => {
-              const card = eCards.find(item => item.id === guestCardId)
-              const guestUrl = g.token
-              return <div key={g.id} className="ecard-guest-print ecard-guest-sheet">
-                <ECardArtwork
-                  card={card}
-                  guest={g}
-                  recipientName={g.guest_name}
-                  qrUrl={guestUrl}
-                />
-                <div className="no-print ecard-guest-actions"><span>{g.checked_in_at ? 'Ameingia' : 'Bado hajaingia'}</span><button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng({...card},g);downloadECardPng(png,'ForteEvents-'+g.guest_name.replace(/[^a-z0-9]/gi,'-')+'.png')}catch(error){setECardMessage(error.message)}}}>Pakua PNG</button><ECardImageShareButton card={card} guest={g} onMessage={setECardMessage} label="Shiriki picha WhatsApp"/><button type="button" className="secondary-button" onClick={()=>window.print()}>Chapisha</button><button type="button" className="danger-button no-print" onClick={() => deleteECardGuest(g)} disabled={guestBusy} aria-label={'Futa mwaliko wa '+g.guest_name}>🗑 Futa mwaliko huu</button></div>
-              </div>
-            })}
-          </div>
-          <div className="card" style={{marginTop:'20px'}}>
-            <h2>Kadi Zangu</h2>
-            {eCardsLoading ? <p>Inapakia...</p> : eCards.length === 0 ? <p>Bado hujatengeneza E-card.</p> : eCards.map(card => (
-              <div key={card.id} style={{border:'1px solid #d6bd78',borderRadius:'10px',padding:'16px',marginBottom:'12px'}}>
-                <h3>{card.title}</h3><p>{card.occasion} · {card.event_date}</p><p><strong>Template:</strong> {getSavedECardTemplate(card)?.name || 'Ivory & Gold Roses'}</p>
-                <p><strong>Hali:</strong> {card.is_published ? 'Imechapishwa' : 'Haijachapishwa'}</p>
-                <button type="button" className="secondary-button" onClick={() => editECard(card)}>Hariri</button>{' '}
-                <button type="button" className="secondary-button" onClick={async()=>{try{const png=await createECardPng(card);downloadECardPng(png,'ForteEvents-'+String(card.title||'mwaliko').replace(/[^a-z0-9]/gi,'-')+'.png');setECardMessage('Kadi imepakuliwa kama PNG.')}catch(error){setECardMessage('Imeshindikana kupakua kadi: '+(error?.message||'Jaribu tena.'))}}}>Pakua PNG</button>{' '}
-                <ECardImageShareButton card={card} onMessage={setECardMessage} label="Shiriki picha WhatsApp"/>{' '}
-                <button type="button" className="secondary-button" onClick={() => toggleECardPublished(card)}>{card.is_published ? 'Ficha link' : 'Chapisha / Washa link'}</button>{' '}
-                <button type="button" className="danger-button" onClick={() => deleteECard(card)} aria-label={'Futa kadi '+card.title}>🗑 Futa kadi</button>
-                {card.is_published && <>
-                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
-                    <button type="button" className="primary-button" onClick={() => shareECard(card, 'link', setECardMessage)}>WhatsApp — Link</button>
-                    <button type="button" className="secondary-button" onClick={() => window.print()}>Chapisha</button>
-                    <button type="button" className="secondary-button" onClick={async () => {
-                      const url = window.location.origin + '/?card=' + encodeURIComponent(card.slug);
-                      try {
-                        await navigator.clipboard.writeText(url);
-                        setECardMessage('Link ya mwaliko imenakiliwa. Unaweza kuibandika WhatsApp au SMS.');
-                      } catch {
-                        setECardMessage('Imeshindikana kunakili link. Tafadhali nakili link inayoonekana hapa chini.');
-                      }
-                    }}>Nakili link</button>
-                  </div>
-                  <p style={{wordBreak:'break-all',marginTop:'10px'}}>Link: <a href={window.location.origin + '/?card=' + encodeURIComponent(card.slug)} target="_blank" rel="noreferrer">{window.location.origin + '/?card=' + card.slug}</a></p>
-                </>}
-              </div>
-            ))}
-          </div>
-        </>
+        <CustomerECardRequestForm supabase={supabase} session={session} />
       )}
 
       {/* =========================
