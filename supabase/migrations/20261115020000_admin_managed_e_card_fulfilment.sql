@@ -8,6 +8,28 @@ create unique index if not exists e_cards_source_request_id_uidx
 alter table public.e_card_requests
   add column if not exists generated_card_id uuid references public.e_cards(id) on delete set null;
 
+-- Bound request payloads at the database boundary as well as in the browser form.
+do $constraints$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.e_card_requests'::regclass
+      and conname = 'e_card_requests_payload_limits'
+  ) then
+    alter table public.e_card_requests
+      add constraint e_card_requests_payload_limits check (
+        length(trim(customer_name)) between 1 and 100
+        and length(trim(customer_phone)) between 5 and 25
+        and jsonb_typeof(event_details) = 'object'
+        and octet_length(event_details::text) <= 20000
+        and jsonb_typeof(guest_list) = 'array'
+        and jsonb_array_length(guest_list) between 1 and 5000
+        and octet_length(guest_list::text) <= 300000
+      );
+  end if;
+end;
+$constraints$;
+
 drop policy if exists "Customers manage own e-cards" on public.e_cards;
 drop policy if exists "Customers view own e-cards" on public.e_cards;
 create policy "Customers view own e-cards"
@@ -94,7 +116,7 @@ begin
 
   for v_guest in select value from jsonb_array_elements(v_request.guest_list)
   loop
-    if length(trim(coalesce(v_guest->>'guest_name',''))) = 0
+    if length(trim(coalesce(v_guest->>'guest_name',''))) not between 1 and 120
        or coalesce(v_guest->>'invite_type','') not in ('single','double') then
       raise exception 'Kuna jina au aina ya mwaliko isiyo sahihi kwenye orodha.';
     end if;
