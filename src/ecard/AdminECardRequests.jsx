@@ -33,6 +33,7 @@ export default function AdminECardRequests({ onBack }) {
   const [templateIds, setTemplateIds] = useState([])
   const [selectedTemplates, setSelectedTemplates] = useState({})
   const [guestQrs, setGuestQrs] = useState({})
+  const [guestPages, setGuestPages] = useState({})
   const [notice, setNotice] = useState('')
 
   const load = async () => {
@@ -58,12 +59,29 @@ export default function AdminECardRequests({ onBack }) {
     const fulfilled = (data || []).filter(request => request.generated_card_id)
     const qrResults = await Promise.all(fulfilled.map(async request => {
       const { data: guests, error: qrError } = await supabase.rpc('admin_get_e_card_guest_qr', {
-        p_card_id: request.generated_card_id
+        p_card_id: request.generated_card_id,
+        p_limit: 50,
+        p_offset: 0
       })
       return [request.id, qrError ? [] : (guests || [])]
     }))
     setGuestQrs(Object.fromEntries(qrResults))
+    setGuestPages(Object.fromEntries(fulfilled.map(request => [request.id, 0])))
     setLoading(false)
+  }
+
+  const loadGuestPage = async (request, page) => {
+    const safePage = Math.max(0, page)
+    const { data, error: qrError } = await supabase.rpc('admin_get_e_card_guest_qr', {
+      p_card_id: request.generated_card_id,
+      p_limit: 50,
+      p_offset: safePage * 50
+    })
+    if (qrError) setError(qrError.message)
+    else {
+      setGuestQrs(current => ({ ...current, [request.id]: data || [] }))
+      setGuestPages(current => ({ ...current, [request.id]: safePage }))
+    }
   }
 
   useEffect(() => { load() }, [])
@@ -119,6 +137,8 @@ export default function AdminECardRequests({ onBack }) {
         const guests = Array.isArray(request.guest_list) ? request.guest_list : []
         const templateOptions = templateIds.map(id => ECARD_TEMPLATES.find(item => item.id === id)).filter(Boolean)
         const generatedGuests = guestQrs[request.id] || []
+        const guestPage = guestPages[request.id] || 0
+        const guestPageCount = Math.max(1, Math.ceil(guests.length / 50))
         return (
           <article className="card" key={request.id} style={{marginBottom:'16px'}}>
             <div style={{display:'flex',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
@@ -141,6 +161,7 @@ export default function AdminECardRequests({ onBack }) {
               <div>
                 <p><strong>Kadi imetengenezwa.</strong> Wageni {guests.length}; gharama ya mialiko TSh {(guests.length * 500).toLocaleString('en-US')}.</p>
                 <h3>QR za wageni</h3>
+                <p>Wageni {guests.length ? guestPage * 50 + 1 : 0}–{Math.min((guestPage + 1) * 50, guests.length)} kati ya {guests.length}. Inaonyesha ukurasa {guestPage + 1} wa {guestPageCount}.</p>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:'12px'}}>
                   {generatedGuests.map(guest => {
                     const url = window.location.origin + '/?card=' + encodeURIComponent(guest.card_slug) + '&guest=' + encodeURIComponent(guest.token)
@@ -157,6 +178,10 @@ export default function AdminECardRequests({ onBack }) {
                   })}
                 </div>
                 {generatedGuests.length === 0 && <p>QR hazijaweza kupakiwa. Bonyeza Refresh kujaribu tena.</p>}
+                {guestPageCount > 1 && <div style={{display:'flex',gap:'8px',alignItems:'center',justifyContent:'center',marginTop:'12px'}}>
+                  <button type="button" className="secondary-button" disabled={guestPage===0} onClick={()=>loadGuestPage(request,guestPage-1)}>Wageni waliotangulia</button>
+                  <button type="button" className="secondary-button" disabled={guestPage+1>=guestPageCount} onClick={()=>loadGuestPage(request,guestPage+1)}>Wageni wanaofuata</button>
+                </div>}
               </div>
             ) : (
               <div>
