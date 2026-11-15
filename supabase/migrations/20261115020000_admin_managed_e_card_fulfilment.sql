@@ -74,8 +74,11 @@ begin
   if v_request.generated_card_id is not null then
     raise exception 'Kadi ya ombi hili tayari imetengenezwa.';
   end if;
+  if v_request.status = 'rejected' then
+    raise exception 'Ombi lililokataliwa haliwezi kutengenezewa kadi.';
+  end if;
 
-  if jsonb_typeof(v_request.guest_list) <> 'array' then
+  if jsonb_typeof(v_request.guest_list) is distinct from 'array' then
     raise exception 'Orodha ya wageni si sahihi.';
   end if;
   v_count := jsonb_array_length(v_request.guest_list);
@@ -193,8 +196,7 @@ revoke all on function public.get_public_e_card_guest(uuid,uuid) from public;
 grant execute on function public.get_public_e_card_guest(uuid,uuid) to anon, authenticated;
 
 -- Remove anonymous execution from authenticated-only E-card wallet/guest operations.
-revoke all on function public.create_paid_e_card_guest(uuid,text,text) from public, anon;
-grant execute on function public.create_paid_e_card_guest(uuid,text,text) to authenticated;
+revoke all on function public.create_paid_e_card_guest(uuid,text,text) from public, anon, authenticated;
 revoke all on function public.admin_adjust_e_card_balance(uuid,integer,text) from public, anon;
 grant execute on function public.admin_adjust_e_card_balance(uuid,integer,text) to authenticated;
 revoke all on function public.admin_get_e_card_accounts() from public, anon;
