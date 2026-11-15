@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 
 const OCCASIONS = ['Harusi','Send-off','Kipaimara','Graduation','Birthday','Kitchen Party','Shukrani','Kupongeza','Kumuaga','Tukio lingine']
+const STATUS_LABELS = {
+  submitted: 'Limepokelewa',
+  reviewing: 'Linakaguliwa',
+  designing: 'Linatengenezwa',
+  ready: 'Kadi iko tayari',
+  dispatched: 'Mialiko imesambazwa',
+  completed: 'Imekamilika',
+  rejected: 'Limekataliwa'
+}
 
 const EMPTY = {
   customer_name: '',
@@ -45,7 +54,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
   const [requestsLoading, setRequestsLoading] = useState(true)
 
   const loadMyRequests = async () => {
-    const { data, error } = await supabase.from('e_card_requests').select('id,status,event_details,created_at,updated_at').eq('user_id', session.user.id).order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('e_card_requests').select('id,status,event_details,created_at,updated_at,generated_card_id').eq('user_id', session.user.id).order('created_at', { ascending: false })
     if (!error) setMyRequests(data || [])
     setRequestsLoading(false)
   }
@@ -64,6 +73,10 @@ export default function CustomerECardRequestForm({ supabase, session }) {
     }
     if (!guests.length) {
       setMessage('Weka angalau jina moja la mgeni kwenye orodha ya wageni.')
+      return
+    }
+    if (guests.length > 5000) {
+      setMessage('Orodha ya ombi moja haiwezi kuzidi wageni 5,000.')
       return
     }
     if (guests.some(guest => !guest.guest_name || !['single','double'].includes(guest.invite_type))) {
@@ -163,11 +176,22 @@ export default function CustomerECardRequestForm({ supabase, session }) {
           <h3>Orodha ya wageni</h3>
           <p className="ecard-form-hint">Kila mwaliko unagharimu TSh 500 na salio la E-card ni tofauti na salio la SMS. Mwaliko wa double unaruhusu watu wawili kwa QR moja.</p>
           <p className="ecard-form-hint">Andika mgeni mmoja kwa kila mstari. Mfano: Asha,single au Juma,double.</p>
-          <textarea rows="8" value={form.guest_list_text} onChange={e => change('guest_list_text', e.target.value)} placeholder={'Asha,single\nJuma,double'} required />
+          <textarea rows="8" maxLength={300000} value={form.guest_list_text} onChange={e => change('guest_list_text', e.target.value)} placeholder={'Asha,single\nJuma,double'} required />
           <p className="ecard-form-hint">Wageni walioingizwa: {guests.length}</p>
           <button type="submit" className="primary-button" disabled={saving}>{saving ? 'Inatuma ombi...' : 'Tuma ombi la E-card'}</button>
         </form>
         {message && <p className="message" role="status">{message}</p>}
+      </div>
+      <div className="card">
+        <h2>Maombi yangu ya E-card</h2>
+        {requestsLoading ? <p>Inapakia historia ya maombi...</p> : myRequests.length === 0 ? <p>Bado hujatuma ombi la E-card.</p> : myRequests.map(request => (
+          <div key={request.id} style={{borderBottom:'1px solid #eee',padding:'12px 0'}}>
+            <strong>{request.event_details?.title || 'Tukio bila jina'}</strong>
+            <p>{request.event_details?.event_date || '-'} · {STATUS_LABELS[request.status] || request.status}</p>
+            {request.generated_card_id && <p>Kadi imetengenezwa na ForteEvents. Timu yetu itaendelea na maandalizi ya usambazaji.</p>}
+            <small>{new Date(request.created_at).toLocaleString('sw-TZ')}</small>
+          </div>
+        ))}
       </div>
     </>
   )
