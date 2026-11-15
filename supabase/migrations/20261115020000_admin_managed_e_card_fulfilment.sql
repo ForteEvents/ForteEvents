@@ -22,8 +22,11 @@ begin
         and length(trim(customer_phone)) between 5 and 25
         and jsonb_typeof(event_details) = 'object'
         and octet_length(event_details::text) <= 20000
-        and jsonb_typeof(guest_list) = 'array'
-        and jsonb_array_length(guest_list) between 1 and 5000
+        and case
+          when jsonb_typeof(guest_list) = 'array'
+            then jsonb_array_length(guest_list) between 1 and 5000
+          else false
+        end
         and octet_length(guest_list::text) <= 300000
       );
   end if;
