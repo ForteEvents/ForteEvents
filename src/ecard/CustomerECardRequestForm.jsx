@@ -81,8 +81,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
       customer_name: form.customer_name.trim(),
       customer_phone: form.customer_phone.trim(),
       event_details: eventDetails,
-      guest_list: guests,
-      status: 'submitted'
+      guest_list: guests
     })
     setSaving(false)
     if (error) {
