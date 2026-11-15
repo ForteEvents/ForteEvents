@@ -1503,10 +1503,11 @@ function App() {
         .eq('slug', slug).eq('is_published', true).maybeSingle()
       let guest = null
       if (!error && data && guestToken) {
-        const result = await supabase.from('e_card_guests')
-          .select('guest_name, invite_type, guest_count, token')
-          .eq('token', guestToken).eq('card_id', data.id).maybeSingle()
-        guest = result.error ? null : result.data
+        const result = await supabase.rpc('get_public_e_card_guest', {
+          p_card_id: data.id,
+          p_token: guestToken
+        })
+        guest = result.error ? null : (Array.isArray(result.data) ? result.data[0] : result.data)
       }
       if (!error && data) {
         const templateId=getSavedECardTemplateId(data)
