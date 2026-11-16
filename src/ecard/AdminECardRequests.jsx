@@ -221,7 +221,7 @@ export default function AdminECardRequests({ onBack }) {
                 <div style={{border:'1px solid #e5dfd2',borderRadius:'10px',padding:'14px',margin:'14px 0'}}>
                   <h3>Usambazaji wa mialiko</h3>
                   <label>Chagua njia ya kutuma</label>
-                  <select value={distributionChannel} onChange={event=>{setDistributionChannel(event.target.value);setDistributionPreview(current=>{const next={...current};delete next[request.id];return next})}}>
+                  <select value={distributionChannel} onChange={event=>{setDistributionChannel(event.target.value);setDistributionPreview({})}}>
                     <option value="whatsapp">WhatsApp pekee</option>
                     <option value="sms">SMS pekee</option>
                     <option value="both">WhatsApp + SMS zote mbili</option>
@@ -263,6 +263,7 @@ export default function AdminECardRequests({ onBack }) {
                         <strong>{guest.guest_name}</strong>
                         <p>{guest.invite_type === 'double' ? 'Mwaliko wa watu 2' : 'Mwaliko wa mtu 1'}</p>
                         <p style={{fontSize:'13px',color:'#665b48'}}>Simu: {guest.whatsapp_phone || 'Namba haijawekwa'}<br />SMS: {guest.sms_delivery_status || 'pending'} · WhatsApp: {guest.whatsapp_delivery_status || 'pending'}</p>
+                        {(guest.sms_delivery_error || guest.whatsapp_delivery_error) && <p style={{fontSize:'12px',color:'#9b3c32',overflowWrap:'anywhere'}}>SMS: {guest.sms_delivery_error || '-'}<br />WhatsApp: {guest.whatsapp_delivery_error || '-'}</p>}
                         <GuestQr value={url} name={guest.guest_name} />
                         <p><a href={url} target="_blank" rel="noreferrer">Fungua mwaliko</a></p>
                         <p><a href={'https://wa.me/' + (guest.whatsapp_phone || '') + '?text=' + encodeURIComponent(shareText)} target="_blank" rel="noreferrer">Fungua WhatsApp kwa mkono</a></p>
