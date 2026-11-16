@@ -20,58 +20,6 @@ function GuestQr({ value, name }) {
     QRCode.toDataURL(value, { errorCorrectionLevel: 'M', margin: 3, width: 240 })
       .then(url => { if (active) setSrc(url) })
       .catch(() => { if (active) setSrc('') })
-    const previewDistribution = async request => {
-    setError('')
-    setNotice('')
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token
-    if (!token) { setError('Session imeisha. Ingia tena.'); return }
-    try {
-      const response = await fetch('https://forteevents.onrender.com/api/admin/ecard/' + encodeURIComponent(request.generated_card_id) + '/distribution-preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ channel: distributionChannel, smsMessage: distributionSmsText, origin: window.location.origin })
-      })
-      const result = await response.json()
-      if (!response.ok || !result.ok) throw new Error(result.error || 'Imeshindikana kuhesabu usambazaji.')
-      setDistributionPreview(current => ({ ...current, [request.id]: result }))
-    } catch (previewError) { setError(previewError.message) }
-  }
-
-  const sendDistribution = async request => {
-    setError('')
-    setNotice('')
-    if ((distributionChannel === 'whatsapp' || distributionChannel === 'both') && !whatsappTemplate.trim()) { setError('Weka jina la WhatsApp template iliyoidhinishwa na Meta.'); return }
-    if ((distributionChannel === 'sms' || distributionChannel === 'both') && !distributionSmsText.trim()) { setError('Andika ujumbe wa SMS.'); return }
-    const preview = distributionPreview[request.id]
-    if (!preview) { setError('Bonyeza Kagua idadi na gharama kwanza.'); return }
-    if ((distributionChannel === 'sms' || distributionChannel === 'both') && !preview.smsBalanceSufficient) {
-      setError('Salio la SMS la mteja halitoshi. Linahitajika credits ' + preview.smsCreditsRequired + ', salio ni ' + preview.smsBalance + '.')
-      return
-    }
-    setDistributionBusy(request.id)
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData?.session?.access_token
-    if (!token) { setDistributionBusy(''); setError('Session imeisha. Ingia tena.'); return }
-    try {
-      const response = await fetch('https://forteevents.onrender.com/api/admin/ecard/' + encodeURIComponent(request.generated_card_id) + '/distribute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({
-          channel: distributionChannel, smsMessage: distributionSmsText,
-          templateName: whatsappTemplate.trim(), language: whatsappLanguage,
-          origin: window.location.origin
-        })
-      })
-      const result = await response.json()
-      if (!response.ok || !result.ok) throw new Error(result.error || 'Usambazaji haujakamilika.')
-      setNotice('Usambazaji umechakatwa. SMS zilizokubaliwa: ' + result.smsAccepted + '; WhatsApp zilizokubaliwa: ' + result.whatsappAccepted + '. Angalia hali za wageni hapa chini.')
-      setDistributionPreview(current => { const next = { ...current }; delete next[request.id]; return next })
-      await load()
-    } catch (sendError) { setError(sendError.message) }
-    setDistributionBusy('')
-  }
-
   return () => { active = false }
   }, [value])
   return src ? <img src={src} alt={'QR ya mwaliko wa ' + name} style={{width:'128px',height:'128px',objectFit:'contain'}} /> : <span>Inaandaa QR...</span>
@@ -179,6 +127,58 @@ export default function AdminECardRequests({ onBack }) {
       await load()
     }
     setBusyId('')
+  }
+
+    const previewDistribution = async request => {
+    setError('')
+    setNotice('')
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token
+    if (!token) { setError('Session imeisha. Ingia tena.'); return }
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/ecard/' + encodeURIComponent(request.generated_card_id) + '/distribution-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ channel: distributionChannel, smsMessage: distributionSmsText, origin: window.location.origin })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Imeshindikana kuhesabu usambazaji.')
+      setDistributionPreview(current => ({ ...current, [request.id]: result }))
+    } catch (previewError) { setError(previewError.message) }
+  }
+
+  const sendDistribution = async request => {
+    setError('')
+    setNotice('')
+    if ((distributionChannel === 'whatsapp' || distributionChannel === 'both') && !whatsappTemplate.trim()) { setError('Weka jina la WhatsApp template iliyoidhinishwa na Meta.'); return }
+    if ((distributionChannel === 'sms' || distributionChannel === 'both') && !distributionSmsText.trim()) { setError('Andika ujumbe wa SMS.'); return }
+    const preview = distributionPreview[request.id]
+    if (!preview) { setError('Bonyeza Kagua idadi na gharama kwanza.'); return }
+    if ((distributionChannel === 'sms' || distributionChannel === 'both') && !preview.smsBalanceSufficient) {
+      setError('Salio la SMS la mteja halitoshi. Linahitajika credits ' + preview.smsCreditsRequired + ', salio ni ' + preview.smsBalance + '.')
+      return
+    }
+    setDistributionBusy(request.id)
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token
+    if (!token) { setDistributionBusy(''); setError('Session imeisha. Ingia tena.'); return }
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/ecard/' + encodeURIComponent(request.generated_card_id) + '/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({
+          channel: distributionChannel, smsMessage: distributionSmsText,
+          templateName: whatsappTemplate.trim(), language: whatsappLanguage,
+          origin: window.location.origin
+        })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Usambazaji haujakamilika.')
+      setNotice('Usambazaji umechakatwa. SMS zilizokubaliwa: ' + result.smsAccepted + '; WhatsApp zilizokubaliwa: ' + result.whatsappAccepted + '. Angalia hali za wageni hapa chini.')
+      setDistributionPreview(current => { const next = { ...current }; delete next[request.id]; return next })
+      await load()
+    } catch (sendError) { setError(sendError.message) }
+    setDistributionBusy('')
   }
 
   return (
