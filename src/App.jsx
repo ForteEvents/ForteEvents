@@ -10,6 +10,7 @@ import ECardStudioObjects from './ecard/ECardStudioObjects.jsx'
 import ECardCheckin from './ecard/ECardCheckin.jsx'
 import CustomerECardRequestForm from './ecard/CustomerECardRequestForm.jsx'
 import AdminECardRequests from './ecard/AdminECardRequests.jsx'
+import AdminWhatsAppTest from './whatsapp/AdminWhatsAppTest.jsx'
 
 
 function GuestQr({ value, alt = 'QR ya mwaliko', style }) {
@@ -2728,6 +2729,7 @@ useEffect(() => {
             </button>
             <button className={adminPage === 'ecard-templates' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-templates')}>E-card Templates</button>
             <button className={adminPage === 'ecard-studio' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-studio')}>Studio ya E-card</button>
+            <button className={adminPage === 'whatsapp' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('whatsapp')}>WhatsApp — Majaribio</button>
           </div>
 
           <div className="sidebar-bottom">
@@ -2833,6 +2835,7 @@ useEffect(() => {
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-studio' && <AdminECardTemplateStudio session={session} onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'whatsapp' && <AdminWhatsAppTest session={session} onBack={() => setAdminPage('dashboard')} />}
         </main>
       </div>
     )
