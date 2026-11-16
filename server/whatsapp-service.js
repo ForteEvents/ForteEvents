@@ -116,10 +116,20 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
                 .join("; ") || "WhatsApp delivery failed.";
             }
 
-            const { error } = await supabaseAdmin
+            let statusUpdate = supabaseAdmin
               .from("whatsapp_messages")
               .update(patch)
               .eq("whatsapp_message_id", item.id);
+
+            // Meta status callbacks can arrive out of order. Do not let a
+            // late "sent" callback overwrite a previously delivered/read state.
+            if (status === "sent") {
+              statusUpdate = statusUpdate.neq("status", "delivered").neq("status", "read");
+            } else if (status === "delivered") {
+              statusUpdate = statusUpdate.neq("status", "read");
+            }
+
+            const { error } = await statusUpdate;
             if (error) console.error("WHATSAPP STATUS UPDATE ERROR:", error.message);
           }
         }
