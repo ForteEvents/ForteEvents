@@ -170,6 +170,23 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
     }
   });
 
+  app.get("/api/whatsapp/admin/messages", requireAdmin, async (req, res) => {
+    try {
+      const parsed = Number.parseInt(req.query.limit, 10);
+      const limit = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 100) : 50;
+      const { data, error } = await supabaseAdmin
+        .from("whatsapp_messages")
+        .select("id, user_id, direction, phone_number, contact_name, message_text, message_type, status, error_message, sent_at, delivered_at, read_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return res.json({ ok: true, messages: data || [] });
+    } catch (error) {
+      console.error("WHATSAPP ADMIN HISTORY ERROR:", error.message);
+      return res.status(500).json({ ok: false, error: "Imeshindikana kupakia historia ya WhatsApp." });
+    }
+  });
+
   // Admin-only, single-recipient test endpoint. Customer billing is intentionally
   // not implemented until WhatsApp pricing and approved template flows are configured.
   app.post("/api/whatsapp/send-test", requireAdmin, async (req, res) => {
