@@ -172,10 +172,16 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
               } else {
                 guestPatch.whatsapp_delivery_error = null;
               }
-              const { error: guestStatusError } = await supabaseAdmin
+              let guestStatusUpdate = supabaseAdmin
                 .from("e_card_guests")
                 .update(guestPatch)
                 .eq("whatsapp_message_id", item.id);
+              if (status === "sent") {
+                guestStatusUpdate = guestStatusUpdate.neq("whatsapp_delivery_status", "delivered").neq("whatsapp_delivery_status", "read");
+              } else if (status === "delivered") {
+                guestStatusUpdate = guestStatusUpdate.neq("whatsapp_delivery_status", "read");
+              }
+              const { error: guestStatusError } = await guestStatusUpdate;
               if (guestStatusError) {
                 console.error("[WHATSAPP WEBHOOK] E-card guest status update failed", {
                   code: guestStatusError.code || null,
