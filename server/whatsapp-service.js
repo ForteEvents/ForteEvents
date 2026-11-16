@@ -16,15 +16,20 @@ function safeEqualHex(left, right) {
   return a.length === b.length && a.length > 0 && crypto.timingSafeEqual(a, b);
 }
 
-function verifyMetaSignature(req) {
-  if (!APP_SECRET || !Buffer.isBuffer(req.rawBody)) return false;
+function checkMetaSignature(req) {
+  if (!APP_SECRET) return { ok: false, reason: "app_secret_missing" };
+  if (!Buffer.isBuffer(req.rawBody)) return { ok: false, reason: "raw_body_missing" };
   const supplied = String(req.headers["x-hub-signature-256"] || "");
-  if (!supplied.startsWith("sha256=")) return false;
+  if (!supplied.startsWith("sha256=")) {
+    return { ok: false, reason: "signature_header_missing_or_malformed" };
+  }
   const expected = crypto
     .createHmac("sha256", APP_SECRET)
     .update(req.rawBody)
     .digest("hex");
-  return safeEqualHex(supplied.slice(7), expected);
+  return safeEqualHex(supplied.slice(7), expected)
+    ? { ok: true, reason: "valid" }
+    : { ok: false, reason: "signature_mismatch" };
 }
 
 function getMessageText(message) {
@@ -57,7 +62,18 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
   });
 
   router.post("/", async (req, res) => {
-    if (!verifyMetaSignature(req)) {
+    console.info("[WHATSAPP WEBHOOK] POST received", {
+      hasRawBody: Buffer.isBuffer(req.rawBody),
+      rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
+      hasSignatureHeader: Boolean(req.headers["x-hub-signature-256"]),
+      contentType: req.headers["content-type"] || null,
+    });
+
+    const signatureCheck = checkMetaSignature(req);
+    if (!signatureCheck.ok) {
+      console.warn("[WHATSAPP WEBHOOK] Signature rejected", {
+        reason: signatureCheck.reason,
+      });
       return res.status(APP_SECRET ? 401 : 503).json({
         ok: false,
         error: APP_SECRET
@@ -68,16 +84,23 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
 
     const body = req.body;
     if (body?.object !== "whatsapp_business_account") {
+      console.warn("[WHATSAPP WEBHOOK] Unexpected payload object", {
+        object: body?.object || null,
+      });
       return res.sendStatus(404);
     }
 
     try {
+      let inboundReceived = 0;
+      let inboundSaved = 0;
+      let statusEventsReceived = 0;
       for (const entry of body.entry ?? []) {
         for (const change of entry.changes ?? []) {
           if (change.field !== "messages") continue;
           const value = change.value ?? {};
 
           for (const message of value.messages ?? []) {
+            inboundReceived += 1;
             const sender = String(message.from || "").replace(/[^0-9]/g, "");
             if (!sender || !message.id) continue;
 
@@ -96,10 +119,18 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
                 updated_at: new Date().toISOString(),
               }, { onConflict: "whatsapp_message_id", ignoreDuplicates: true });
 
-            if (error) console.error("WHATSAPP INBOUND SAVE ERROR:", error.message);
+            if (error) {
+              console.error("[WHATSAPP WEBHOOK] Inbound database save failed", {
+                code: error.code || null,
+                message: error.message,
+              });
+            } else {
+              inboundSaved += 1;
+            }
           }
 
           for (const item of value.statuses ?? []) {
+            statusEventsReceived += 1;
             if (!item.id || !item.status) continue;
             const status = String(item.status).toLowerCase();
             const patch = {
@@ -134,9 +165,16 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
           }
         }
       }
+      console.info("[WHATSAPP WEBHOOK] Processing completed", {
+        inboundReceived,
+        inboundSaved,
+        statusEventsReceived,
+      });
       return res.sendStatus(200);
     } catch (error) {
-      console.error("WHATSAPP WEBHOOK PROCESSING ERROR:", error.message);
+      console.error("[WHATSAPP WEBHOOK] Processing failed", {
+        message: error.message,
+      });
       return res.sendStatus(500);
     }
   });
