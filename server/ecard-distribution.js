@@ -87,6 +87,48 @@ async function sendWhatsApp({ guest, message, url, templateName, language, acces
 }
 
 export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, env }) {
+  app.post("/api/admin/ecard/:cardId/distribution-preview", requireAdmin, async (req, res) => {
+    const cardId = String(req.params.cardId || "");
+    const channel = String(req.body?.channel || "");
+    const origin = String(req.body?.origin || "").trim();
+    const smsMessage = String(req.body?.smsMessage || "").trim();
+    if (!["whatsapp", "sms", "both"].includes(channel)) return res.status(400).json({ ok: false, error: "Chagua njia ya usambazaji." });
+    if (!/^https:\/\//i.test(origin)) return res.status(400).json({ ok: false, error: "Tovuti ya mwaliko si sahihi." });
+    if ((channel === "sms" || channel === "both") && !smsMessage) return res.status(400).json({ ok: false, error: "Andika ujumbe wa SMS." });
+    try {
+      const { data: card, error: cardError } = await supabaseAdmin.from("e_cards")
+        .select("id,user_id,slug,is_published").eq("id", cardId).maybeSingle();
+      if (cardError) throw cardError;
+      if (!card || !card.is_published) return res.status(404).json({ ok: false, error: "Kadi haipo au haijachapishwa." });
+      const { data: guests, error: guestError } = await supabaseAdmin.from("e_card_guests")
+        .select("id,guest_name,token,whatsapp_phone,sms_delivery_status,whatsapp_delivery_status")
+        .eq("card_id", cardId);
+      if (guestError) throw guestError;
+      const eligibleSms = (channel === "sms" || channel === "both")
+        ? (guests || []).filter(g => ["pending", "failed"].includes(g.sms_delivery_status)) : [];
+      const eligibleWa = (channel === "whatsapp" || channel === "both")
+        ? (guests || []).filter(g => ["pending", "failed"].includes(g.whatsapp_delivery_status)) : [];
+      const smsCredits = eligibleSms.reduce((total, guest) => {
+        const url = invitationUrl(origin, { ...guest, card_slug: card.slug });
+        return total + countSmsParts([`Habari ${guest.guest_name},`, smsMessage, url].filter(Boolean).join(" "));
+      }, 0);
+      const { data: profile, error: profileError } = await supabaseAdmin.from("profiles")
+        .select("sms_balance").eq("id", card.user_id).maybeSingle();
+      if (profileError) throw profileError;
+      return res.json({
+        ok: true, totalGuests: guests?.length || 0,
+        eligibleSms: eligibleSms.length, eligibleWhatsApp: eligibleWa.length,
+        smsCreditsRequired: smsCredits, smsBalance: Number(profile?.sms_balance || 0),
+        smsBalanceSufficient: Number(profile?.sms_balance || 0) >= smsCredits,
+        alreadySentSms: (guests || []).filter(g => g.sms_delivery_status === "sent").length,
+        alreadySentWhatsApp: (guests || []).filter(g => ["sent", "delivered", "read"].includes(g.whatsapp_delivery_status)).length
+      });
+    } catch (error) {
+      console.error("[E-CARD DISTRIBUTION PREVIEW] Failed", { message: error.message });
+      return res.status(500).json({ ok: false, error: "Imeshindikana kuandaa muhtasari wa usambazaji." });
+    }
+  });
+
   app.post("/api/admin/ecard/:cardId/distribute", requireAdmin, async (req, res) => {
     const cardId = String(req.params.cardId || "");
     const channel = String(req.body?.channel || "");
