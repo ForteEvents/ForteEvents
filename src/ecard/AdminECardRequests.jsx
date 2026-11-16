@@ -20,7 +20,59 @@ function GuestQr({ value, name }) {
     QRCode.toDataURL(value, { errorCorrectionLevel: 'M', margin: 3, width: 240 })
       .then(url => { if (active) setSrc(url) })
       .catch(() => { if (active) setSrc('') })
-    return () => { active = false }
+    const previewDistribution = async request => {
+    setError('')
+    setNotice('')
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token
+    if (!token) { setError('Session imeisha. Ingia tena.'); return }
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/ecard/' + encodeURIComponent(request.generated_card_id) + '/distribution-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ channel: distributionChannel, smsMessage: distributionSmsText, origin: window.location.origin })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Imeshindikana kuhesabu usambazaji.')
+      setDistributionPreview(current => ({ ...current, [request.id]: result }))
+    } catch (previewError) { setError(previewError.message) }
+  }
+
+  const sendDistribution = async request => {
+    setError('')
+    setNotice('')
+    if ((distributionChannel === 'whatsapp' || distributionChannel === 'both') && !whatsappTemplate.trim()) { setError('Weka jina la WhatsApp template iliyoidhinishwa na Meta.'); return }
+    if ((distributionChannel === 'sms' || distributionChannel === 'both') && !distributionSmsText.trim()) { setError('Andika ujumbe wa SMS.'); return }
+    const preview = distributionPreview[request.id]
+    if (!preview) { setError('Bonyeza Kagua idadi na gharama kwanza.'); return }
+    if ((distributionChannel === 'sms' || distributionChannel === 'both') && !preview.smsBalanceSufficient) {
+      setError('Salio la SMS la mteja halitoshi. Linahitajika credits ' + preview.smsCreditsRequired + ', salio ni ' + preview.smsBalance + '.')
+      return
+    }
+    setDistributionBusy(request.id)
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData?.session?.access_token
+    if (!token) { setDistributionBusy(''); setError('Session imeisha. Ingia tena.'); return }
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/ecard/' + encodeURIComponent(request.generated_card_id) + '/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({
+          channel: distributionChannel, smsMessage: distributionSmsText,
+          templateName: whatsappTemplate.trim(), language: whatsappLanguage,
+          origin: window.location.origin
+        })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Usambazaji haujakamilika.')
+      setNotice('Usambazaji umechakatwa. SMS zilizokubaliwa: ' + result.smsAccepted + '; WhatsApp zilizokubaliwa: ' + result.whatsappAccepted + '. Angalia hali za wageni hapa chini.')
+      setDistributionPreview(current => { const next = { ...current }; delete next[request.id]; return next })
+      await load()
+    } catch (sendError) { setError(sendError.message) }
+    setDistributionBusy('')
+  }
+
+  return () => { active = false }
   }, [value])
   return src ? <img src={src} alt={'QR ya mwaliko wa ' + name} style={{width:'128px',height:'128px',objectFit:'contain'}} /> : <span>Inaandaa QR...</span>
 }
@@ -35,6 +87,12 @@ export default function AdminECardRequests({ onBack }) {
   const [guestQrs, setGuestQrs] = useState({})
   const [guestPages, setGuestPages] = useState({})
   const [notice, setNotice] = useState('')
+  const [distributionChannel, setDistributionChannel] = useState('both')
+  const [distributionSmsText, setDistributionSmsText] = useState('Habari, huu hapa mwaliko wako. Tunakukaribisha kushiriki nasi siku hii ya pekee:')
+  const [whatsappTemplate, setWhatsappTemplate] = useState('')
+  const [whatsappLanguage, setWhatsappLanguage] = useState('sw')
+  const [distributionPreview, setDistributionPreview] = useState({})
+  const [distributionBusy, setDistributionBusy] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -160,6 +218,40 @@ export default function AdminECardRequests({ onBack }) {
             {request.generated_card_id ? (
               <div>
                 <p><strong>Kadi imetengenezwa.</strong> Wageni {guests.length}; gharama ya mialiko TSh {(guests.length * 500).toLocaleString('en-US')}.</p>
+                <div style={{border:'1px solid #e5dfd2',borderRadius:'10px',padding:'14px',margin:'14px 0'}}>
+                  <h3>Usambazaji wa mialiko</h3>
+                  <label>Chagua njia ya kutuma</label>
+                  <select value={distributionChannel} onChange={event=>{setDistributionChannel(event.target.value);setDistributionPreview(current=>{const next={...current};delete next[request.id];return next})}}>
+                    <option value="whatsapp">WhatsApp pekee</option>
+                    <option value="sms">SMS pekee</option>
+                    <option value="both">WhatsApp + SMS zote mbili</option>
+                  </select>
+                  {(distributionChannel === 'sms' || distributionChannel === 'both') && <>
+                    <label>Ujumbe wa SMS (link ya kila mgeni itaongezwa moja kwa moja)</label>
+                    <textarea rows="3" value={distributionSmsText} onChange={event=>{setDistributionSmsText(event.target.value);setDistributionPreview(current=>{const next={...current};delete next[request.id];return next})}} />
+                  </>}
+                  {(distributionChannel === 'whatsapp' || distributionChannel === 'both') && <>
+                    <label>Jina la WhatsApp template iliyoidhinishwa na Meta</label>
+                    <input value={whatsappTemplate} onChange={event=>setWhatsappTemplate(event.target.value)} placeholder="Mfano: ecard_invitation" />
+                    <label>Lugha ya template</label>
+                    <select value={whatsappLanguage} onChange={event=>setWhatsappLanguage(event.target.value)}>
+                      <option value="sw">Swahili (sw)</option><option value="en">English (en)</option><option value="en_US">English US (en_US)</option>
+                    </select>
+                    <p className="ecard-form-hint">Template lazima iwe imeidhinishwa na Meta na iwe na sehemu mbili za body: jina la mgeni na link ya mwaliko, kwa mpangilio huo.</p>
+                  </>}
+                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'12px'}}>
+                    <button type="button" className="secondary-button" onClick={()=>previewDistribution(request)} disabled={distributionBusy===request.id}>Kagua idadi na gharama</button>
+                    <button type="button" className="primary-button" onClick={()=>sendDistribution(request)} disabled={distributionBusy===request.id || !distributionPreview[request.id]}>
+                      {distributionBusy===request.id ? 'Inatuma...' : 'Tuma mialiko'}
+                    </button>
+                  </div>
+                  {distributionPreview[request.id] && <div className="ecard-form-hint" style={{marginTop:'10px'}}>
+                    <strong>Muhtasari wa kutuma:</strong>
+                    <p>Wageni wote: {distributionPreview[request.id].totalGuests}; SMS zitakazojaribiwa: {distributionPreview[request.id].eligibleSms}; WhatsApp zitakazojaribiwa: {distributionPreview[request.id].eligibleWhatsApp}.</p>
+                    <p>SMS credits zinazohitajika: {distributionPreview[request.id].smsCreditsRequired}; salio la mteja: {distributionPreview[request.id].smsBalance}. Gharama ya WhatsApp itategemea bei ya Meta.</p>
+                    <p>Tayari zimetumwa: SMS {distributionPreview[request.id].alreadySentSms}; WhatsApp {distributionPreview[request.id].alreadySentWhatsApp}. Ujumbe uliofanikiwa hautatumwa tena.</p>
+                  </div>}
+                </div>
                 <h3>QR za wageni</h3>
                 <p>Wageni {guests.length ? guestPage * 50 + 1 : 0}–{Math.min((guestPage + 1) * 50, guests.length)} kati ya {guests.length}. Inaonyesha ukurasa {guestPage + 1} wa {guestPageCount}.</p>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:'12px'}}>
@@ -170,10 +262,10 @@ export default function AdminECardRequests({ onBack }) {
                       <div key={guest.token} style={{border:'1px solid #e5dfd2',borderRadius:'10px',padding:'12px',textAlign:'center'}}>
                         <strong>{guest.guest_name}</strong>
                         <p>{guest.invite_type === 'double' ? 'Mwaliko wa watu 2' : 'Mwaliko wa mtu 1'}</p>
-                        <p style={{fontSize:'13px',color:'#665b48'}}>WhatsApp: {guest.whatsapp_phone || 'Namba haijawekwa'}</p>
+                        <p style={{fontSize:'13px',color:'#665b48'}}>Simu: {guest.whatsapp_phone || 'Namba haijawekwa'}<br />SMS: {guest.sms_delivery_status || 'pending'} · WhatsApp: {guest.whatsapp_delivery_status || 'pending'}</p>
                         <GuestQr value={url} name={guest.guest_name} />
                         <p><a href={url} target="_blank" rel="noreferrer">Fungua mwaliko</a></p>
-                        <p><a href={'https://wa.me/' + (guest.whatsapp_phone || '') + '?text=' + encodeURIComponent(shareText)} target="_blank" rel="noreferrer">Tuma WhatsApp kwa mgeni</a></p>
+                        <p><a href={'https://wa.me/' + (guest.whatsapp_phone || '') + '?text=' + encodeURIComponent(shareText)} target="_blank" rel="noreferrer">Fungua WhatsApp kwa mkono</a></p>
                       </div>
                     )
                   })}
