@@ -86,11 +86,11 @@ async function sendWhatsApp({ guest, message, url, templateName, language, acces
   return { ok: true, messageId: result?.messages?.[0]?.id || null };
 }
 
-export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, env }) {
+export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, env }) {\n  const invitationOrigin = String(env.FRONTEND_URL || "https://forteevents-web.onrender.com").replace(/\\/+$/, "");
   app.post("/api/admin/ecard/:cardId/distribution-preview", requireAdmin, async (req, res) => {
     const cardId = String(req.params.cardId || "");
     const channel = String(req.body?.channel || "");
-    const origin = String(req.body?.origin || "").trim();
+    const origin = invitationOrigin;
     const smsMessage = String(req.body?.smsMessage || "").trim();
     if (!["whatsapp", "sms", "both"].includes(channel)) return res.status(400).json({ ok: false, error: "Chagua njia ya usambazaji." });
     if (!/^https:\/\//i.test(origin)) return res.status(400).json({ ok: false, error: "Tovuti ya mwaliko si sahihi." });
@@ -144,7 +144,7 @@ export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, en
     if ((channel === "sms" || channel === "both") && !smsMessage) {
       return res.status(400).json({ ok: false, error: "Andika ujumbe wa SMS kwanza." });
     }
-    if ((channel === "whatsapp" || channel === "both") && !templateName) {
+    if ((channel === "whatsapp" || channel === "both") && !/^[a-z0-9_]{1,512}$/.test(templateName)) {
       return res.status(400).json({ ok: false, error: "Weka jina la WhatsApp template iliyoidhinishwa na Meta." });
     }
     if ((channel === "sms" || channel === "both") && (!env.BEEM_API_KEY || !env.BEEM_SECRET_KEY)) {
