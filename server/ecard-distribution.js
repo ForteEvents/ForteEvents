@@ -86,7 +86,7 @@ async function sendWhatsApp({ guest, message, url, templateName, language, acces
   return { ok: true, messageId: result?.messages?.[0]?.id || null };
 }
 
-export function registerECardDistribution({
+export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, env }) {
   const invitationOrigin = String(env.FRONTEND_URL || "https://forteevents-web.onrender.com").replace(/\/+$/, "");
   app.post("/api/admin/ecard/:cardId/distribution-preview", requireAdmin, async (req, res) => {
     const cardId = String(req.params.cardId || "");
