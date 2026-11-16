@@ -207,8 +207,13 @@ export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, en
             p_user_id: card.user_id,
             p_amount: countSmsParts([`Habari ${guest.guest_name},`, smsMessage, url].join(" "))
           });
-          if (reserveError) throw reserveError;
-          if (balance === null) {
+          if (reserveError) {
+            await supabaseAdmin.from("e_card_guests").update({
+              sms_delivery_status: "failed",
+              sms_delivery_error: "Imeshindikana kuhifadhi SMS credits; hakuna ujumbe uliotumwa."
+            }).eq("id", guest.id).eq("sms_delivery_status", "sending");
+            item.sms = { ok: false, error: "Imeshindikana kuhifadhi SMS credits." };
+          } else if (balance === null) {
             await supabaseAdmin.from("e_card_guests").update({ sms_delivery_status: "pending" }).eq("id", guest.id).eq("sms_delivery_status", "sending");
             item.sms = { ok: false, error: "Salio la SMS la mteja halitoshi." };
           } else {
