@@ -85,7 +85,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
               .from("whatsapp_messages")
               .upsert({
                 user_id: null,
-                direction: "inbound",
+                direction: "incoming",
                 phone_number: sender,
                 contact_name: value.contacts?.[0]?.profile?.name || null,
                 message_text: getMessageText(message),
@@ -217,7 +217,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
         const detail = result?.error?.message || "WhatsApp Cloud API imekataa kutuma ujumbe.";
         await supabaseAdmin.from("whatsapp_messages").insert({
           user_id: req.user.id,
-          direction: "outbound",
+          direction: "outgoing",
           phone_number: to,
           message_text: message,
           message_type: "text",
@@ -236,7 +236,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
         .from("whatsapp_messages")
         .insert({
           user_id: req.user.id,
-          direction: "outbound",
+          direction: "outgoing",
           phone_number: to,
           message_text: message,
           message_type: "text",
