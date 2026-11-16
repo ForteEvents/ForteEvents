@@ -39,7 +39,7 @@ const EMPTY = {
   guest_list_text: ''
 }
 
-function normalizeWhatsAppPhone(value) {
+function normalizeGuestPhone(value) {
   const digits = String(value || '').replace(/\D/g, '')
   if (/^0[67]\d{8}$/.test(digits)) return '255' + digits.slice(1)
   if (/^[67]\d{8}$/.test(digits)) return '255' + digits
@@ -53,7 +53,7 @@ function parseGuestList(value) {
     const [name, phone, type = 'single'] = line.split(/[\t,]/).map(part => part.trim())
     return {
       guest_name: name,
-      whatsapp_phone: normalizeWhatsAppPhone(phone),
+      whatsapp_phone: normalizeGuestPhone(phone),
       invite_type: type.toLowerCase()
     }
   })
@@ -94,7 +94,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
       return
     }
     if (guests.some(guest => !guest.guest_name || !guest.whatsapp_phone || !['single','double'].includes(guest.invite_type))) {
-      setMessage('Orodha ya wageni haiko sahihi. Kila mstari uwe: Jina,namba ya WhatsApp,single au Jina,namba ya WhatsApp,double. Namba iwe sahihi.')
+      setMessage('Orodha ya wageni haiko sahihi. Kila mstari uwe: Jina,namba ya simu,single au Jina,namba ya simu,double. Namba iwe sahihi.')
       return
     }
     if (form.location_url && !/^https:\/\//i.test(form.location_url)) {
@@ -189,7 +189,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
           <textarea rows="3" value={form.message} onChange={e => change('message', e.target.value)} maxLength={500} />
           <h3>Orodha ya wageni</h3>
           <p className="ecard-form-hint">Kila mwaliko unagharimu TSh 500 na salio la E-card ni tofauti na salio la SMS. Mwaliko wa double unaruhusu watu wawili kwa QR moja.</p>
-          <p className="ecard-form-hint">Weka jina, namba ya WhatsApp na aina ya mwaliko. Mfano: Asha,0712345678,single au Juma,255712345678,double. Namba za 07... zitabadilishwa moja kwa moja kuwa 255...</p>
+          <p className="ecard-form-hint">Weka jina, namba ya simu na aina ya mwaliko. Namba inaweza kutumika kwa SMS au WhatsApp kulingana na njia itakayochaguliwa na timu. Mfano: Asha,0712345678,single au Juma,255712345678,double. Namba za 07... zitabadilishwa moja kwa moja kuwa 255...</p>
           <textarea rows="8" maxLength={300000} value={form.guest_list_text} onChange={e => change('guest_list_text', e.target.value)} placeholder={'Asha,0712345678,single\nJuma,255712345678,double'} required />
           <p className="ecard-form-hint">Wageni walioingizwa: {guests.length}</p>
           <button type="submit" className="primary-button" disabled={saving}>{saving ? 'Inatuma ombi...' : 'Tuma ombi la E-card'}</button>

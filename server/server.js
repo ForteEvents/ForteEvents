@@ -2,6 +2,7 @@ import { countSmsParts } from "./sms-utils.js";
 import express from "express";
 import { registerWhatsAppRoutes } from "./whatsapp-service.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
+import { registerECardDistribution } from "./ecard-distribution.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
@@ -1706,6 +1707,7 @@ app.post(
 // WHATSAPP CLOUD API
 // ------------------------------------
 registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabaseAdmin });
+registerECardDistribution({ app, requireAdmin, supabaseAdmin, env: process.env });
 
 // ------------------------------------
 // SERVER START

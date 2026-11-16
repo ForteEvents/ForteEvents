@@ -162,6 +162,33 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
 
             const { error } = await statusUpdate;
             if (error) console.error("WHATSAPP STATUS UPDATE ERROR:", error.message);
+
+            // Keep the E-card guest's own delivery state in sync with Meta callbacks.
+            const guestStatus = ["sent", "delivered", "read", "failed"].includes(status) ? status : null;
+            if (guestStatus) {
+              const guestPatch = { whatsapp_delivery_status: guestStatus };
+              if (status === "failed") {
+                guestPatch.whatsapp_delivery_error = patch.error_message || "WhatsApp delivery failed.";
+              } else {
+                guestPatch.whatsapp_delivery_error = null;
+              }
+              let guestStatusUpdate = supabaseAdmin
+                .from("e_card_guests")
+                .update(guestPatch)
+                .eq("whatsapp_message_id", item.id);
+              if (status === "sent") {
+                guestStatusUpdate = guestStatusUpdate.neq("whatsapp_delivery_status", "delivered").neq("whatsapp_delivery_status", "read");
+              } else if (status === "delivered") {
+                guestStatusUpdate = guestStatusUpdate.neq("whatsapp_delivery_status", "read");
+              }
+              const { error: guestStatusError } = await guestStatusUpdate;
+              if (guestStatusError) {
+                console.error("[WHATSAPP WEBHOOK] E-card guest status update failed", {
+                  code: guestStatusError.code || null,
+                  message: guestStatusError.message,
+                });
+              }
+            }
           }
         }
       }
