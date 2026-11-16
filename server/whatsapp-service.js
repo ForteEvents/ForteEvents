@@ -7,7 +7,7 @@ const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET?.trim();
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
-const API_VERSION = process.env.WHATSAPP_API_VERSION?.trim() || "v23.0";
+const API_VERSION = process.env.WHATSAPP_API_VERSION?.trim() || "v26.0";
 
 function safeEqualHex(left, right) {
   if (!left || !right) return false;
