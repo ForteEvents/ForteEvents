@@ -13,6 +13,17 @@ const STATUS_LABELS = {
   rejected: 'Limekataliwa'
 }
 
+function deliveryLabel(status) {
+  return ({
+    pending: 'Bado haijatumwa',
+    sending: 'Inatuma',
+    sent: 'Imekubaliwa na mtoa huduma',
+    delivered: 'Imefika',
+    read: 'Imesomwa',
+    failed: 'Imeshindwa'
+  })[status] || status || 'Bado haijatumwa'
+}
+
 function GuestQr({ value, name }) {
   const [src, setSrc] = useState('')
   useEffect(() => {
@@ -262,7 +273,7 @@ export default function AdminECardRequests({ onBack }) {
                       <div key={guest.token} style={{border:'1px solid #e5dfd2',borderRadius:'10px',padding:'12px',textAlign:'center'}}>
                         <strong>{guest.guest_name}</strong>
                         <p>{guest.invite_type === 'double' ? 'Mwaliko wa watu 2' : 'Mwaliko wa mtu 1'}</p>
-                        <p style={{fontSize:'13px',color:'#665b48'}}>Simu: {guest.whatsapp_phone || 'Namba haijawekwa'}<br />SMS: {guest.sms_delivery_status || 'pending'} · WhatsApp: {guest.whatsapp_delivery_status || 'pending'}</p>
+                        <p style={{fontSize:'13px',color:'#665b48'}}>Simu: {guest.whatsapp_phone || 'Namba haijawekwa'}<br />SMS: {deliveryLabel(guest.sms_delivery_status)} · WhatsApp: {deliveryLabel(guest.whatsapp_delivery_status)}</p>
                         {(guest.sms_delivery_error || guest.whatsapp_delivery_error) && <p style={{fontSize:'12px',color:'#9b3c32',overflowWrap:'anywhere'}}>SMS: {guest.sms_delivery_error || '-'}<br />WhatsApp: {guest.whatsapp_delivery_error || '-'}</p>}
                         <GuestQr value={url} name={guest.guest_name} />
                         <p><a href={url} target="_blank" rel="noreferrer">Fungua mwaliko</a></p>
