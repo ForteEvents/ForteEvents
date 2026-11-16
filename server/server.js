@@ -53,7 +53,7 @@ app.use("/api/sms/contacts", (req, res, next) => {
   next();
 });
 
-app.use("/api/whatsapp/webhook", whatsappWebhook);
+
 
 // ------------------------------------
 // BEEM CONFIGURATION
@@ -1695,6 +1695,11 @@ app.post(
     }
   }
 );
+
+// ------------------------------------
+// WHATSAPP CLOUD API
+// ------------------------------------
+registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabaseAdmin });
 
 // ------------------------------------
 // SERVER START
