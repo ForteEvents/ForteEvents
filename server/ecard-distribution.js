@@ -135,15 +135,27 @@ export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, en
         const waEligible = needsWhatsApp && ["pending", "failed"].includes(guest.whatsapp_delivery_status);
         if (!smsEligible && !waEligible) continue;
 
-        const patch = {};
-        if (smsEligible) patch.sms_delivery_status = "sending";
-        if (waEligible) patch.whatsapp_delivery_status = "sending";
-        const { data: claimed, error: claimError } = await supabaseAdmin
-          .from("e_card_guests").update(patch).eq("id", guest.id)
-          .eq("card_id", cardId)
-          .select("id").maybeSingle();
-        if (claimError) throw claimError;
-        if (!claimed) continue;
+        let smsClaimed = false;
+        let waClaimed = false;
+        if (smsEligible) {
+          const { data: claimed, error: claimError } = await supabaseAdmin
+            .from("e_card_guests").update({ sms_delivery_status: "sending" })
+            .eq("id", guest.id).eq("card_id", cardId)
+            .in("sms_delivery_status", ["pending", "failed"])
+            .select("id").maybeSingle();
+          if (claimError) throw claimError;
+          smsClaimed = Boolean(claimed);
+        }
+        if (waEligible) {
+          const { data: claimed, error: claimError } = await supabaseAdmin
+            .from("e_card_guests").update({ whatsapp_delivery_status: "sending" })
+            .eq("id", guest.id).eq("card_id", cardId)
+            .in("whatsapp_delivery_status", ["pending", "failed"])
+            .select("id").maybeSingle();
+          if (claimError) throw claimError;
+          waClaimed = Boolean(claimed);
+        }
+        if (!smsClaimed && !waClaimed) continue;
 
         const url = invitationUrl(origin, { ...guest, card_slug: card.slug });
         const item = { guestId: guest.id, guestName: guest.guest_name, sms: null, whatsapp: null };
