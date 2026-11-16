@@ -1378,7 +1378,8 @@ function App() {
 
   const loadECardGuests = async (cardId) => {
     if (!cardId) { setECardGuests([]); return }
-    const { data, error } = await supabase.from('e_card_guests').select('*')
+    const { data, error } = await supabase.from('e_card_guests')
+      .select('id,card_id,user_id,guest_name,invite_type,guest_count,token,checked_in_at,checked_in_by,created_at')
       .eq('card_id', cardId).order('created_at', { ascending: false })
     if (error) { setECardMessage('Imeshindikana kupakia wageni: ' + error.message); return }
     setECardGuests(data || [])
