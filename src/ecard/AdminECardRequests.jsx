@@ -20,7 +20,7 @@ function GuestQr({ value, name }) {
     QRCode.toDataURL(value, { errorCorrectionLevel: 'M', margin: 3, width: 240 })
       .then(url => { if (active) setSrc(url) })
       .catch(() => { if (active) setSrc('') })
-  return () => { active = false }
+    return () => { active = false }
   }, [value])
   return src ? <img src={src} alt={'QR ya mwaliko wa ' + name} style={{width:'128px',height:'128px',objectFit:'contain'}} /> : <span>Inaandaa QR...</span>
 }
@@ -129,7 +129,7 @@ export default function AdminECardRequests({ onBack }) {
     setBusyId('')
   }
 
-    const previewDistribution = async request => {
+  const previewDistribution = async request => {
     setError('')
     setNotice('')
     const { data: sessionData } = await supabase.auth.getSession()
@@ -228,7 +228,7 @@ export default function AdminECardRequests({ onBack }) {
                   </select>
                   {(distributionChannel === 'sms' || distributionChannel === 'both') && <>
                     <label>Ujumbe wa SMS (link ya kila mgeni itaongezwa moja kwa moja)</label>
-                    <textarea rows="3" value={distributionSmsText} onChange={event=>{setDistributionSmsText(event.target.value);setDistributionPreview(current=>{const next={...current};delete next[request.id];return next})}} />
+                    <textarea rows="3" value={distributionSmsText} onChange={event=>{setDistributionSmsText(event.target.value);setDistributionPreview({})}} />
                   </>}
                   {(distributionChannel === 'whatsapp' || distributionChannel === 'both') && <>
                     <label>Jina la WhatsApp template iliyoidhinishwa na Meta</label>
