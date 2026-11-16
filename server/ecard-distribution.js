@@ -179,7 +179,7 @@ export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, en
 
         let smsClaimed = false;
         let waClaimed = false;
-        if (smsEligible) {
+        if (smsClaimed) {
           const { data: claimed, error: claimError } = await supabaseAdmin
             .from("e_card_guests").update({ sms_delivery_status: "sending" })
             .eq("id", guest.id).eq("card_id", cardId)
@@ -188,7 +188,7 @@ export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, en
           if (claimError) throw claimError;
           smsClaimed = Boolean(claimed);
         }
-        if (waEligible) {
+        if (waClaimed) {
           const { data: claimed, error: claimError } = await supabaseAdmin
             .from("e_card_guests").update({ whatsapp_delivery_status: "sending" })
             .eq("id", guest.id).eq("card_id", cardId)
