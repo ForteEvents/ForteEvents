@@ -170,9 +170,10 @@ export default function AdminECardRequests({ onBack }) {
                       <div key={guest.token} style={{border:'1px solid #e5dfd2',borderRadius:'10px',padding:'12px',textAlign:'center'}}>
                         <strong>{guest.guest_name}</strong>
                         <p>{guest.invite_type === 'double' ? 'Mwaliko wa watu 2' : 'Mwaliko wa mtu 1'}</p>
+                        <p style={{fontSize:'13px',color:'#665b48'}}>WhatsApp: {guest.whatsapp_phone || 'Namba haijawekwa'}</p>
                         <GuestQr value={url} name={guest.guest_name} />
                         <p><a href={url} target="_blank" rel="noreferrer">Fungua mwaliko</a></p>
-                        <p><a href={'https://wa.me/?text=' + encodeURIComponent(shareText)} target="_blank" rel="noreferrer">Shiriki WhatsApp</a></p>
+                        <p><a href={'https://wa.me/' + (guest.whatsapp_phone || '') + '?text=' + encodeURIComponent(shareText)} target="_blank" rel="noreferrer">Tuma WhatsApp kwa mgeni</a></p>
                       </div>
                     )
                   })}
