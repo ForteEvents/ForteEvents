@@ -30,7 +30,13 @@ app.use(
   })
 );
 
-app.use(express.json({\n  verify: (req, res, buffer) => {\n    if (req.originalUrl.startsWith("/api/whatsapp/webhook")) {\n      req.rawBody = Buffer.from(buffer);\n    }\n  },\n}));
+app.use(express.json({
+  verify: (req, res, buffer) => {
+    if (req.originalUrl.startsWith("/api/whatsapp/webhook")) {
+      req.rawBody = Buffer.from(buffer);
+    }
+  },
+}));
 
 // Temporary, privacy-safe diagnostics for SMS Contacts only.
 // Runs before requireAuth so 401 responses are visible in Render logs.
