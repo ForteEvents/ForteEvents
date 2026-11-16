@@ -1,6 +1,6 @@
 import { countSmsParts } from "./sms-utils.js";
 import express from "express";
-import whatsappWebhook from "./whatsapp-webhook.js";
+import { registerWhatsAppRoutes } from "./whatsapp-service.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -30,7 +30,13 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buffer) => {
+    if (req.originalUrl.startsWith("/api/whatsapp/webhook")) {
+      req.rawBody = Buffer.from(buffer);
+    }
+  },
+}));
 
 // Temporary, privacy-safe diagnostics for SMS Contacts only.
 // Runs before requireAuth so 401 responses are visible in Render logs.
@@ -53,7 +59,7 @@ app.use("/api/sms/contacts", (req, res, next) => {
   next();
 });
 
-app.use("/api/whatsapp/webhook", whatsappWebhook);
+
 
 // ------------------------------------
 // BEEM CONFIGURATION
@@ -1695,6 +1701,11 @@ app.post(
     }
   }
 );
+
+// ------------------------------------
+// WHATSAPP CLOUD API
+// ------------------------------------
+registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabaseAdmin });
 
 // ------------------------------------
 // SERVER START
