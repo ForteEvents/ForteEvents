@@ -1,6 +1,6 @@
 import { countSmsParts } from "./sms-utils.js";
 import express from "express";
-import whatsappWebhook from "./whatsapp-webhook.js";
+import { registerWhatsAppRoutes } from "./whatsapp-service.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -30,7 +30,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({\n  verify: (req, res, buffer) => {\n    if (req.originalUrl.startsWith("/api/whatsapp/webhook")) {\n      req.rawBody = Buffer.from(buffer);\n    }\n  },\n}));
 
 // Temporary, privacy-safe diagnostics for SMS Contacts only.
 // Runs before requireAuth so 401 responses are visible in Render logs.
