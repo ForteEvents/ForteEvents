@@ -1430,7 +1430,9 @@ function App() {
     const guest = Array.isArray(data) ? data[0] : data
     if (!guest) { setScanResult('QR haijatambulika.'); return }
     setScanToken('')
-    setScanResult('IMEKUBALIWA: ' + guest.guest_name + ' — ' + guest.invite_type.toUpperCase() + ' (' + guest.guest_count + ' watu).')
+    setScanResult(guest.already_checked_in
+      ? 'TAHADHARI: ' + guest.guest_name + ' tayari aliingia. Usirudie kumhesabu.'
+      : 'IMEKUBALIWA: ' + guest.guest_name + ' — ' + guest.invite_type.toUpperCase() + ' (' + guest.guest_count + ' watu).')
     await loadECardGuests(guestCardId)
   }
 
