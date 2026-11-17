@@ -1432,7 +1432,7 @@ function App() {
     setScanToken('')
     setScanResult(guest.already_checked_in
       ? 'TAHADHARI: ' + guest.guest_name + ' tayari aliingia. Usirudie kumhesabu.'
-      : 'IMEKUBALIWA: ' + guest.guest_name + ' — ' + guest.invite_type.toUpperCase() + ' (' + guest.guest_count + ' watu).')
+      : 'IMEKUBALIWA: ' + guest.guest_name + ' — ' + guest.invite_type.toUpperCase() + '.')
     await loadECardGuests(guestCardId)
   }
 
