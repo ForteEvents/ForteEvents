@@ -76,8 +76,28 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
 
     const signatureCheck = checkMetaSignature(req);
     if (!signatureCheck.ok) {
+      const suppliedSignature = String(req.headers["x-hub-signature-256"] || "");
+      const signatureHex = suppliedSignature.startsWith("sha256=")
+        ? suppliedSignature.slice(7)
+        : "";
+      const reserializedBody = req.body && typeof req.body === "object"
+        ? Buffer.from(JSON.stringify(req.body), "utf8")
+        : null;
+      const reserializedExpected = reserializedBody && APP_SECRET
+        ? crypto.createHmac("sha256", APP_SECRET).update(reserializedBody).digest("hex")
+        : null;
       console.warn("[WHATSAPP WEBHOOK] Signature rejected", {
         reason: signatureCheck.reason,
+        signatureHeaderLength: suppliedSignature.length,
+        signatureHexValid: /^[a-f0-9]{64}$/i.test(signatureHex),
+        rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
+        parsedBodyAvailable: Boolean(req.body && typeof req.body === "object"),
+        reserializedBodyMatches: reserializedExpected
+          ? safeEqualHex(signatureHex, reserializedExpected)
+          : null,
+        contentEncoding: req.headers["content-encoding"] || "identity",
+        contentLengthHeader: req.headers["content-length"] || null,
+        transferEncoding: req.headers["transfer-encoding"] || null,
       });
       return res.status(APP_SECRET ? 401 : 503).json({
         ok: false,
