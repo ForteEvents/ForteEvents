@@ -10,6 +10,7 @@ import ECardStudioObjects from './ecard/ECardStudioObjects.jsx'
 import ECardCheckin from './ecard/ECardCheckin.jsx'
 import CustomerECardRequestForm from './ecard/CustomerECardRequestForm.jsx'
 import AdminECardRequests from './ecard/AdminECardRequests.jsx'
+import AdminECardDistribution from './ecard/AdminECardDistribution.jsx'
 import AdminWhatsAppTest from './whatsapp/AdminWhatsAppTest.jsx'
 
 
@@ -2766,6 +2767,7 @@ useEffect(() => {
             <button className={adminPage === 'ecards' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecards')}>
               E-card Management
             </button>
+            <button className={adminPage === 'ecard-distribution' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-distribution')}>Usambazaji wa E-card</button>
             <button className={adminPage === 'ecard-templates' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-templates')}>E-card Templates</button>
             <button className={adminPage === 'ecard-studio' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-studio')}>Studio ya E-card</button>
             <button className={adminPage === 'whatsapp' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('whatsapp')}>WhatsApp — Majaribio</button>
@@ -2873,6 +2875,7 @@ useEffect(() => {
 {adminPage === 'ecard-requests' && <AdminECardRequests onBack={() => setAdminPage('dashboard')} onDesignRequest={request => { setSelectedECardRequest(request); setAdminPage('ecard-studio-request') }} />}
 {adminPage === 'ecard-studio-request' && <AdminECardTemplateStudio session={session} request={selectedECardRequest} onBack={() => setAdminPage('ecard-requests')} onRequestComplete={() => setAdminPage('ecard-requests')} />}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'ecard-distribution' && <AdminECardDistribution session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-studio' && <AdminECardTemplateStudio session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'whatsapp' && <AdminWhatsAppTest session={session} onBack={() => setAdminPage('dashboard')} />}
