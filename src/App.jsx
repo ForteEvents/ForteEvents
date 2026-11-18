@@ -10,7 +10,6 @@ import ECardStudioObjects from './ecard/ECardStudioObjects.jsx'
 import ECardCheckin from './ecard/ECardCheckin.jsx'
 import CustomerECardRequestForm from './ecard/CustomerECardRequestForm.jsx'
 import AdminECardRequests from './ecard/AdminECardRequests.jsx'
-import AdminECardStaff from './ecard/AdminECardStaff.jsx'
 import AdminWhatsAppTest from './whatsapp/AdminWhatsAppTest.jsx'
 
 
