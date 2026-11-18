@@ -872,8 +872,8 @@ function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
           <div className="ecard-studio-permissions">{ECARD_TEMPLATE_FIELDS.map(([key,label])=><label key={key}><input type="checkbox" checked={config.permissions?.[key]!==false} onChange={e=>updatePermission(key,e.target.checked)}/>{label}</label>)}</div>
           <h3>Vipengele visivyoguswa na mteja</h3>
           <p>QR Code, logo, kauli mbiu na mpangilio wa michoro vinadhibitiwa na Admin; mteja hawezi kuvivuta.</p>
-          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(false)}>{busy?'Inahifadhi...':'Hifadhi rasimu'}</button>
-          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(true)}>Hifadhi na chapisha kwa wateja</button>
+          {!request&&<><button className="primary-button" type="button" disabled={busy} onClick={()=>save(false)}>{busy?'Inahifadhi...':'Hifadhi rasimu'}</button>
+          <button className="primary-button" type="button" disabled={busy} onClick={()=>save(true)}>Hifadhi na chapisha kwa wateja</button></>}
         </div>
       </div>
     </>}
