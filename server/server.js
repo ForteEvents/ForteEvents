@@ -31,12 +31,10 @@ app.use(
   })
 );
 
+// WhatsApp webhook must retain the exact incoming bytes for Meta signature checks.
+ // Its raw parser is mounted with the webhook router; exclude it from the global JSON parser.
 app.use(express.json({
-  verify: (req, res, buffer) => {
-    if (req.originalUrl.startsWith("/api/whatsapp/webhook")) {
-      req.rawBody = Buffer.from(buffer);
-    }
-  },
+  type: (req) => !req.originalUrl.startsWith("/api/whatsapp/webhook"),
 }));
 
 // Temporary, privacy-safe diagnostics for SMS Contacts only.

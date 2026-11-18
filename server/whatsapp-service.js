@@ -22,14 +22,14 @@ function safeEqualHex(left, right) {
 
 function checkMetaSignature(req) {
   if (!APP_SECRET) return { ok: false, reason: "app_secret_missing" };
-  if (!Buffer.isBuffer(req.rawBody)) return { ok: false, reason: "raw_body_missing" };
+  if (!Buffer.isBuffer(req.body)) return { ok: false, reason: "raw_body_missing" };
   const supplied = String(req.headers["x-hub-signature-256"] || "");
   if (!supplied.startsWith("sha256=")) {
     return { ok: false, reason: "signature_header_missing_or_malformed" };
   }
   const expected = crypto
     .createHmac("sha256", APP_SECRET)
-    .update(req.rawBody)
+    .update(req.body)
     .digest("hex");
   return safeEqualHex(supplied.slice(7), expected)
     ? { ok: true, reason: "valid" }
@@ -68,8 +68,8 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
   router.post("/", async (req, res) => {
     console.info("[WHATSAPP WEBHOOK] POST received", {
     appSecretFingerprint: APP_SECRET_FINGERPRINT,
-      hasRawBody: Buffer.isBuffer(req.rawBody),
-      rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
+      hasRawBody: Buffer.isBuffer(req.body),
+      rawBodyBytes: Buffer.isBuffer(req.body) ? req.body.length : 0,
       hasSignatureHeader: Boolean(req.headers["x-hub-signature-256"]),
       contentType: req.headers["content-type"] || null,
     });
@@ -80,21 +80,11 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
       const signatureHex = suppliedSignature.startsWith("sha256=")
         ? suppliedSignature.slice(7)
         : "";
-      const reserializedBody = req.body && typeof req.body === "object"
-        ? Buffer.from(JSON.stringify(req.body), "utf8")
-        : null;
-      const reserializedExpected = reserializedBody && APP_SECRET
-        ? crypto.createHmac("sha256", APP_SECRET).update(reserializedBody).digest("hex")
-        : null;
       console.warn("[WHATSAPP WEBHOOK] Signature rejected", {
         reason: signatureCheck.reason,
         signatureHeaderLength: suppliedSignature.length,
         signatureHexValid: /^[a-f0-9]{64}$/i.test(signatureHex),
-        rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
-        parsedBodyAvailable: Boolean(req.body && typeof req.body === "object"),
-        reserializedBodyMatches: reserializedExpected
-          ? safeEqualHex(signatureHex, reserializedExpected)
-          : null,
+        rawBodyBytes: Buffer.isBuffer(req.body) ? req.body.length : 0,
         contentEncoding: req.headers["content-encoding"] || "identity",
         contentLengthHeader: req.headers["content-length"] || null,
         transferEncoding: req.headers["transfer-encoding"] || null,
@@ -107,7 +97,13 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
       });
     }
 
-    const body = req.body;
+    let body;
+    try {
+      body = JSON.parse(req.body.toString("utf8"));
+    } catch {
+      console.warn("[WHATSAPP WEBHOOK] Signed payload was not valid JSON");
+      return res.sendStatus(400);
+    }
     if (body?.object !== "whatsapp_business_account") {
       console.warn("[WHATSAPP WEBHOOK] Unexpected payload object", {
         object: body?.object || null,
@@ -231,6 +227,9 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
     }
   });
 
+  // Parse this endpoint as raw bytes before any JSON parsing. Meta signs the exact
+  // request bytes, so parsing and re-serializing JSON can invalidate the signature.
+  app.use("/api/whatsapp/webhook", express.raw({ type: "application/json", limit: "1mb" }));
   app.use("/api/whatsapp/webhook", router);
 
   app.get("/api/whatsapp/status", requireAuth, (req, res) => {
