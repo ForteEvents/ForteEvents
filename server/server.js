@@ -289,6 +289,25 @@ async function requireAdmin(
   );
 }
 
+// E-CARD STAFF AUTHORIZATION
+async function requireECardStaff(req, res, next) {
+  await requireAuth(req, res, async () => {
+    try {
+      const { data: profile, error } = await supabaseAdmin
+        .from("profiles").select("id, role").eq("id", req.user.id).maybeSingle();
+      if (error) return res.status(500).json({ ok: false, error: "Imeshindikana kukagua ruhusa za E-card." });
+      if (!profile || !["admin", "staff"].includes(profile.role)) {
+        return res.status(403).json({ ok: false, error: "Huna ruhusa ya kufanya kazi za E-card." });
+      }
+      req.profile = profile;
+      next();
+    } catch (error) {
+      console.error("E-CARD STAFF AUTH ERROR:", { message: error.message });
+      return res.status(500).json({ ok: false, error: "Imeshindikana kuthibitisha ruhusa." });
+    }
+  });
+}
+
 // ------------------------------------
 // HOME
 // ------------------------------------
@@ -1705,7 +1724,7 @@ app.post(
 // WHATSAPP CLOUD API
 // ------------------------------------
 registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabaseAdmin });
-registerECardDistribution({ app, requireAdmin, supabaseAdmin, env: process.env });
+registerECardDistribution({ app, requireAdmin: requireECardStaff, supabaseAdmin, env: process.env });
 
 // ------------------------------------
 // SERVER START
