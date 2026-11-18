@@ -739,8 +739,23 @@ function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
     const all=[...BUILT_IN_ECARD_TEMPLATES,...(uploaded.data||[])];
     const merged=all.map(t=>({...t,adminConfig:rows.find(x=>x.template_id===t.id)?.config||{},adminPublished:rows.find(x=>x.template_id===t.id)?.is_published||false}));
     setTemplates(merged);
-    const current=merged.find(t=>t.id===(request?.selectedTemplateId || selectedId))||merged[0];
-    if(current){setSelectedId(current.id);setConfig({layout:{},copy:{},permissions:{},...(current.adminConfig||{})});setPublished(Boolean(current.adminPublished));}
+    const blankBaseId='forte-luxury-floral-gold';
+    const blankKeys=['background','flowerTop','flowerBottom','details','kicker','occasion','familyLabel','familyName','invitationIntro','invitationRecipient','invitationEventLine','invitationCouple','date','detail-time-label','detail-time-value','detail-venue-label','detail-venue-value','detail-rsvp-label','detail-rsvp-value','detail-ibada-label','detail-ibada-value','detail-dress-label','detail-dress-value','detail-contact-title','detail-contact-1-name','detail-contact-1-phone','detail-contact-2-name','detail-contact-2-phone','venueTitle','venueDetails','foodNote','message','qrType','brand','tagline','image','invitationLabel','detail-muda-label','detail-muda-value','detail-mahali-label','detail-mahali-value','detail-mapokezi-label','detail-mapokezi-value','detail-chakula-label','detail-chakula-value','detail-dress-code-label','detail-dress-code-value','venueName'];
+    const current=request
+      ? merged.find(t=>t.id===blankBaseId)||merged[0]
+      : merged.find(t=>t.id===selectedId)||merged[0];
+    if(current){
+      setSelectedId(current.id);
+      if(request){
+        const visibility=Object.fromEntries(blankKeys.map(key=>[key,false]));
+        visibility.qrCode=true;
+        setConfig({layout:{},copy:{},permissions:{},defaults:{},style:{accent:'#b58a35',text:'#252018',font:'Georgia, serif'},visibility,objects:[]});
+        setPublished(false);
+      }else{
+        setConfig({layout:{},copy:{},permissions:{},...(current.adminConfig||{})});
+        setPublished(Boolean(current.adminPublished));
+      }
+    }
     setLoading(false);
   };
   useEffect(()=>{load()},[]);
@@ -792,12 +807,13 @@ function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
     {loading?<p>Inapakia miundo...</p>:<>
       {error&&<div className="card ecard-studio-error">{error}</div>}
       {notice&&<div className="card ecard-studio-notice">{notice}</div>}
-      <div className="card">
+      {!request && <div className="card">
         <label>Chagua kiolezo cha kuhariri</label>
         <select value={selectedId} onChange={e=>choose(e.target.value)}>{templates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
         <p>Hali: <strong>{published?'Kimechapishwa kwa wateja':'Rasimu / hakijachapishwa'}</strong></p>
         <label className="ecard-studio-field"><input type="checkbox" checked={config.customerVisible!==false} onChange={e=>{pushHistory();setConfig(v=>({...v,customerVisible:e.target.checked}));}}/> Template hii ionekane kwa wateja</label>
-      </div>
+      </div>}
+      {request && <div className="card"><strong>Muundo mpya — ukurasa tupu</strong><p>Hakuna kiolezo kilicholazimishwa. Tengeneza kadi kuanzia mwanzo kwa kuongeza maandishi, picha, maua na fremu. QR binafsi ya mgeni itaendelea kuwepo.</p></div>}
       <div className="ecard-studio-grid">
         <div className="card ecard-studio-preview">
           <h3>Preview ya Admin — buruta vipengele</h3>
@@ -824,6 +840,7 @@ function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
               <label><input type="checkbox" checked={item.visible!==false} onChange={e=>updateStudioObject(item.id,{visible:e.target.checked})}/> Onyesha kipengele</label><button type="button" className="secondary-button" onClick={deleteStudioObject}>Futa kipengele hiki</button>
             </div>:<p>Chagua kipengele kwenye kadi au orodha ili kukihariri.</p>})()}
           </section>
+          {!request && <>
           <h3>Vipengele vya kadi</h3>
           <div className="ecard-studio-layer-panel">
             <h4>Tabaka za kadi (Layers)</h4>
@@ -873,6 +890,7 @@ function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
           <div className="ecard-studio-permissions">{ECARD_TEMPLATE_FIELDS.map(([key,label])=><label key={key}><input type="checkbox" checked={config.permissions?.[key]!==false} onChange={e=>updatePermission(key,e.target.checked)}/>{label}</label>)}</div>
           <h3>Vipengele visivyoguswa na mteja</h3>
           <p>QR Code, logo, kauli mbiu na mpangilio wa michoro vinadhibitiwa na Admin; mteja hawezi kuvivuta.</p>
+          </>}
           {!request&&<><button className="primary-button" type="button" disabled={busy} onClick={()=>save(false)}>{busy?'Inahifadhi...':'Hifadhi rasimu'}</button>
           <button className="primary-button" type="button" disabled={busy} onClick={()=>save(true)}>Hifadhi na chapisha kwa wateja</button></>}
         </div>
