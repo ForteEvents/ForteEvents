@@ -31,7 +31,7 @@ async function sendSms({ guest, message, url, userId, supabaseAdmin, beemApiKey,
       encoding: 0,
       schedule_time: "",
       message: body,
-      recipients: [{ recipient_id: String(guest.id), dest_addr: phone }]
+      recipients: [{ recipient_id: 1, dest_addr: phone }]
     })
   });
   const raw = await response.text();
@@ -257,11 +257,39 @@ export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, en
               apiVersion: env.WHATSAPP_API_VERSION || "v26.0"
             });
             if (sent.ok) {
-              await supabaseAdmin.from("e_card_guests").update({
+              const sentAt = new Date().toISOString();
+              const historyMessage = `Kadi ya mwaliko: ${url}`;
+              const { error: historyError } = await supabaseAdmin.from("whatsapp_messages").insert({
+                user_id: card.user_id,
+                direction: "outgoing",
+                phone_number: normalizeDestination(guest.whatsapp_phone),
+                contact_name: guest.guest_name,
+                message_text: historyMessage,
+                message_type: "template",
+                whatsapp_message_id: sent.messageId,
+                status: "sent",
+                sent_at: sentAt,
+                updated_at: sentAt
+              });
+              if (historyError) {
+                console.error("[E-CARD DISTRIBUTION] WhatsApp history insert failed", {
+                  code: historyError.code || null,
+                  message: historyError.message
+                });
+              }
+              const { error: guestUpdateError } = await supabaseAdmin.from("e_card_guests").update({
                 whatsapp_delivery_status: "sent", whatsapp_delivery_error: null,
-                whatsapp_message_id: sent.messageId, whatsapp_sent_at: new Date().toISOString()
+                whatsapp_message_id: sent.messageId, whatsapp_sent_at: sentAt
               }).eq("id", guest.id);
-              item.whatsapp = { ok: true };
+              if (guestUpdateError) {
+                console.error("[E-CARD DISTRIBUTION] Guest WhatsApp status update failed", {
+                  code: guestUpdateError.code || null,
+                  message: guestUpdateError.message
+                });
+                item.whatsapp = { ok: true, warning: "Ujumbe umekubaliwa lakini hali ya mgeni haikuhifadhiwa." };
+              } else {
+                item.whatsapp = { ok: true };
+              }
             } else {
               await supabaseAdmin.from("e_card_guests").update({
                 whatsapp_delivery_status: "failed", whatsapp_delivery_error: sent.error
