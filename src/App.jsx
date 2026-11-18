@@ -2800,7 +2800,9 @@ useEffect(() => {
           <div className="sidebar-bottom"><button className="nav-button logout-button" onClick={logout}>Logout</button></div>
         </aside>
         <main className="main-content">
-          <AdminECardRequests onBack={() => setAdminPage('ecard-requests')} onDesignRequest={request => { setSelectedECardRequest(request); setAdminPage('ecard-studio-request') }} />
+          {adminPage === 'ecard-studio-request'
+            ? <AdminECardTemplateStudio session={session} request={selectedECardRequest} onBack={() => setAdminPage('ecard-requests')} onRequestComplete={() => setAdminPage('ecard-requests')} />
+            : <AdminECardRequests onBack={() => setAdminPage('ecard-requests')} onDesignRequest={request => { setSelectedECardRequest(request); setAdminPage('ecard-studio-request') }} />}
         </main>
       </div>
     )
