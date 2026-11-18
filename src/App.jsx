@@ -696,7 +696,7 @@ function AdminECardTemplates({ onBack, session }) {
 }
 
 
-function AdminECardTemplateStudio({session,onBack}){
+function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
   const [templates,setTemplates]=useState([]);
   const [selectedId,setSelectedId]=useState('forte-luxury-floral-gold');
   const [config,setConfig]=useState({layout:{},copy:{},permissions:{},defaults:{},style:{}});
@@ -738,7 +738,7 @@ function AdminECardTemplateStudio({session,onBack}){
     const all=[...BUILT_IN_ECARD_TEMPLATES,...(uploaded.data||[])];
     const merged=all.map(t=>({...t,adminConfig:rows.find(x=>x.template_id===t.id)?.config||{},adminPublished:rows.find(x=>x.template_id===t.id)?.is_published||false}));
     setTemplates(merged);
-    const current=merged.find(t=>t.id===selectedId)||merged[0];
+    const current=merged.find(t=>t.id===(request?.selectedTemplateId || selectedId))||merged[0];
     if(current){setSelectedId(current.id);setConfig({layout:{},copy:{},permissions:{},...(current.adminConfig||{})});setPublished(Boolean(current.adminPublished));}
     setLoading(false);
   };
@@ -769,9 +769,25 @@ function AdminECardTemplateStudio({session,onBack}){
     else{setPublished(publish);setTemplates(v=>v.map(t=>t.id===selectedId?{...t,adminConfig:config,adminPublished:publish}:t));setNotice(publish?'Kiolezo kimehifadhiwa na kuchapishwa kwa wateja wote.':'Mpangilio umehifadhiwa kama rasimu; wateja bado hawaoni mabadiliko.');}
     setBusy(false);
   };
-  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...(config.defaults||{}),design:{templateId:selectedId,templateSnapshot:selected,templateConfig:config}};
+  const requestDetails=request?.event_details||{};
+  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...requestDetails,...(config.defaults||{}),design:{templateId:selectedId,templateSnapshot:{...selected,templateConfig:config},templateConfig:config}};
+  const requestGuestName=request?.guest_list?.[0]?.guest_name||'JINA LA MWALIKWA';
+  const fulfilRequestWithDesign=async()=>{
+    if(!request?.id)return;
+    if(!window.confirm('Unathibitisha muundo huu na kutengeneza kadi kwa ombi la '+(request.customer_name||'mteja')+'? Mfumo utakata TSh 500 kwa kila mgeni kwenye salio la E-card la mteja.'))return;
+    setBusy(true);setError('');setNotice('');
+    try{
+      const snapshot={...selected,id:selectedId,templateConfig:config,design:{...(selected?.design||{}),...config}};
+      const {data,error:fulfilError}=await supabase.rpc('admin_fulfill_e_card_request_with_design',{p_request_id:request.id,p_template_id:selectedId,p_template_snapshot:snapshot,p_template_config:config});
+      if(fulfilError)throw fulfilError;
+      const result=Array.isArray(data)?data[0]:data;
+      setNotice('Kadi ya ombi hili imetengenezwa. Wageni: '+(result?.guest_count??request.guest_list?.length??0)+'. QR binafsi za wageni zimetengenezwa.');
+      onRequestComplete?.(result);
+    }catch(e){setError('Kadi haikutengenezwa: '+e.message)}
+    finally{setBusy(false)}
+  };
   return <>
-    <div className="page-header"><div><h1>Studio ya Miundo ya E-card</h1><p>Wewe Admin unapanga kadi kuu; wateja wanapata muundo uliouchapisha.</p></div><button className="secondary-button" onClick={onBack}>Rudi Dashboard</button></div>
+    <div className="page-header"><div><h1>{request?'Studio ya ombi la mteja':'Studio ya Miundo ya E-card'}</h1><p>{request?'Tengeneza muundo maalumu wa '+(request.customer_name||'mteja')+'; kadi itahifadhi muundo huu bila kubadilisha violezo vya wateja wengine.':'Hariri violezo vya ForteEvents na hifadhi muundo wa jumla.'}</p></div><button className="secondary-button" onClick={onBack}>Rudi {request?'kwenye maombi':'Dashboard'}</button></div>
     {loading?<p>Inapakia miundo...</p>:<>
       {error&&<div className="card ecard-studio-error">{error}</div>}
       {notice&&<div className="card ecard-studio-notice">{notice}</div>}
@@ -784,9 +800,9 @@ function AdminECardTemplateStudio({session,onBack}){
       <div className="ecard-studio-grid">
         <div className="card ecard-studio-preview">
           <h3>Preview ya Admin — buruta vipengele</h3>
-          <ECardArtwork key={'admin-studio-'+selectedId} templateId={selectedId} template={selected} card={previewCard} recipientName="JINA LA MWALIKWA" guest={{guest_name:'JINA LA MWALIKWA',invite_type:'single'}} qrUrl="https://forteevents.co.tz/admin-preview" layoutEditor selectedLayoutKey={selectedElement} onBeginLayoutChange={pushHistory} onLayoutChange={handleLayoutChange} onSelectLayoutElement={setSelectedElement} onObjectsChange={updateStudioObjects} selectedObjectId={selectedStudioObject} onSelectObject={setSelectedStudioObject} onBeginObjectChange={pushHistory}/>
+          <ECardArtwork key={'admin-studio-'+selectedId} templateId={selectedId} template={selected} card={previewCard} recipientName="JINA LA MWALIKWA" guest={{guest_name:requestGuestName,invite_type:request?.guest_list?.[0]?.invite_type||'single'}} qrUrl="https://forteevents.co.tz/admin-preview" layoutEditor selectedLayoutKey={selectedElement} onBeginLayoutChange={pushHistory} onLayoutChange={handleLayoutChange} onSelectLayoutElement={setSelectedElement} onObjectsChange={updateStudioObjects} selectedObjectId={selectedStudioObject} onSelectObject={setSelectedStudioObject} onBeginObjectChange={pushHistory}/>
           <p>Chagua kipengele kwenye orodha, kisha kishike na kukivuta kwenye kadi. Mabadiliko yanaonekana papo hapo.</p>
-          <div className="ecard-studio-actions"><button className="secondary-button" type="button" disabled={!historyRef.current.length} onClick={undo}>↶ Undo</button><button className="secondary-button" type="button" disabled={!futureRef.current.length} onClick={redo}>Redo ↷</button><button className="secondary-button" type="button" onClick={()=>{pushHistory();setConfig(v=>({...v,layout:{}}));}}>Rudisha nafasi zote</button><button className="secondary-button" type="button" onClick={()=>updateLayout(selectedElement,{scale:1,rotate:0,dx:0,dy:0})}>Rudisha kipengele</button></div>
+          <div className="ecard-studio-actions">{request&&<button className="primary-button" type="button" disabled={busy} onClick={fulfilRequestWithDesign}>{busy?'Inatengeneza kadi...':'Hifadhi muundo na tengeneza kadi ya mteja'}</button>}<button className="secondary-button" type="button" disabled={!historyRef.current.length} onClick={undo}>↶ Undo</button><button className="secondary-button" type="button" disabled={!futureRef.current.length} onClick={redo}>Redo ↷</button><button className="secondary-button" type="button" onClick={()=>{pushHistory();setConfig(v=>({...v,layout:{}}));}}>Rudisha nafasi zote</button><button className="secondary-button" type="button" onClick={()=>updateLayout(selectedElement,{scale:1,rotate:0,dx:0,dy:0})}>Rudisha kipengele</button></div>
         </div>
         <div className="card ecard-studio-tools">
           <section className="ecard-full-designer">
@@ -1093,6 +1109,7 @@ function App() {
   }, [page, scrollToFlyer])
 
   const [adminPage, setAdminPage] = useState('dashboard')
+  const [selectedECardRequest, setSelectedECardRequest] = useState(null)
 
   // =========================
   // EVENT STATES
@@ -2783,7 +2800,7 @@ useEffect(() => {
           <div className="sidebar-bottom"><button className="nav-button logout-button" onClick={logout}>Logout</button></div>
         </aside>
         <main className="main-content">
-          <AdminECardRequests onBack={() => setAdminPage('ecard-requests')} />
+          <AdminECardRequests onBack={() => setAdminPage('ecard-requests')} onDesignRequest={request => { setSelectedECardRequest(request); setAdminPage('ecard-studio-request') }} />
         </main>
       </div>
     )
@@ -2936,7 +2953,8 @@ useEffect(() => {
   onBack={() => setAdminPage('dashboard')}
 />
 )}
-{adminPage === 'ecard-requests' && <AdminECardRequests onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'ecard-requests' && <AdminECardRequests onBack={() => setAdminPage('dashboard')} onDesignRequest={request => { setSelectedECardRequest(request); setAdminPage('ecard-studio-request') }} />}
+{adminPage === 'ecard-studio-request' && <AdminECardTemplateStudio session={session} request={selectedECardRequest} onBack={() => setAdminPage('ecard-requests')} onRequestComplete={() => setAdminPage('ecard-requests')} />}
 {adminPage === 'ecard-staff' && <AdminECardStaff session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
