@@ -63,7 +63,7 @@ export default function AdminECardRequests({ onBack, onDesignRequest }) {
     if (loadError) setError(loadError.message)
     else setRequests(data || [])
     if (templateError) setError(current => current || templateError.message)
-    const ids = (published || []).map(row => row.template_id).filter(id => ECARD_TEMPLATES.some(item => item.id === id))
+    const ids = [...new Set([...(published || []).map(row => row.template_id), ...ECARD_TEMPLATES.map(item => item.id)])].filter(id => ECARD_TEMPLATES.some(item => item.id === id))
     setTemplateIds(ids)
     setSelectedTemplates(current => {
       const next = { ...current }
