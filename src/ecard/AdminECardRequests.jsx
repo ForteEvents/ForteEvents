@@ -36,7 +36,7 @@ function GuestQr({ value, name }) {
   return src ? <img src={src} alt={'QR ya mwaliko wa ' + name} style={{width:'128px',height:'128px',objectFit:'contain'}} /> : <span>Inaandaa QR...</span>
 }
 
-export default function AdminECardRequests({ onBack }) {
+export default function AdminECardRequests({ onBack, onDesignRequest }) {
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
@@ -295,8 +295,8 @@ export default function AdminECardRequests({ onBack }) {
                   {templateOptions.map(template=><option key={template.id} value={template.id}>{template.name}</option>)}
                 </select>
                 <p className="ecard-form-hint">Gharama ya kutengeneza QR na mialiko: TSh {(guests.length * 500).toLocaleString('en-US')} kwa wageni {guests.length}. Mfumo utakata salio la E-card la mteja kwa TSh 500 kwa kila mwaliko.</p>
-                <button type="button" className="primary-button" onClick={()=>fulfilRequest(request)} disabled={busyId===request.id || templateOptions.length===0}>
-                  {busyId===request.id ? 'Inatengeneza kadi...' : 'Tengeneza kadi na QR za wageni'}
+                <button type="button" className="primary-button" onClick={()=>onDesignRequest?.({...request, selectedTemplateId:selectedTemplates[request.id] || templateIds[0] || ''})} disabled={busyId===request.id || templateOptions.length===0}>
+                  Fungua ombi kwenye Studio ya kutengeneza kadi
                 </button>
               </div>
             )}
