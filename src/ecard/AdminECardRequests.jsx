@@ -106,10 +106,11 @@ export default function AdminECardRequests({ onBack, onDesignRequest }) {
   const updateStatus = async (request, status) => {
     setBusyId(request.id)
     setError('')
-    const { error: updateError } = await supabase
-      .from('e_card_requests')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', request.id)
+    const { error: updateError } = await supabase.rpc('ecard_staff_update_request', {
+      p_request_id: request.id,
+      p_status: status,
+      p_admin_notes: null
+    })
     if (updateError) setError(updateError.message)
     else setRequests(items => items.map(item => item.id === request.id ? { ...item, status } : item))
     setBusyId('')
