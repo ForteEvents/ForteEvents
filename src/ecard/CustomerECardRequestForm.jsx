@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import CustomerECardDistribution from './CustomerECardDistribution.jsx'
 
 const OCCASIONS = ['Harusi','Send-off','Kipaimara','Graduation','Birthday','Kitchen Party','Shukrani','Kupongeza','Kumuaga','Tukio lingine']
 const STATUS_LABELS = {
@@ -127,6 +128,7 @@ export default function CustomerECardRequestForm({ supabase, session }) {
 
   return (
     <>
+      <CustomerECardDistribution supabase={supabase} session={session} />
       <div className="page-header">
         <div>
           <h1>Omba huduma ya E-card</h1>
