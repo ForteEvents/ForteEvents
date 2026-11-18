@@ -68,8 +68,8 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
   router.post("/", async (req, res) => {
     console.info("[WHATSAPP WEBHOOK] POST received", {
     appSecretFingerprint: APP_SECRET_FINGERPRINT,
-      hasRawBody: Buffer.isBuffer(req.rawBody),
-      rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
+      hasRawBody: Buffer.isBuffer(req.body),
+      rawBodyBytes: Buffer.isBuffer(req.body) ? req.body.length : 0,
       hasSignatureHeader: Boolean(req.headers["x-hub-signature-256"]),
       contentType: req.headers["content-type"] || null,
     });
@@ -80,9 +80,8 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
       const signatureHex = suppliedSignature.startsWith("sha256=")
         ? suppliedSignature.slice(7)
         : "";
-      const reserializedBody = req.body && typeof req.body === "object"
-        ? Buffer.from(JSON.stringify(req.body), "utf8")
-        : null;
+      const parsedForDiagnostic = null;
+      const reserializedBody = null;
       const reserializedExpected = reserializedBody && APP_SECRET
         ? crypto.createHmac("sha256", APP_SECRET).update(reserializedBody).digest("hex")
         : null;
@@ -90,7 +89,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
         reason: signatureCheck.reason,
         signatureHeaderLength: suppliedSignature.length,
         signatureHexValid: /^[a-f0-9]{64}$/i.test(signatureHex),
-        rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
+        rawBodyBytes: Buffer.isBuffer(req.body) ? req.body.length : 0,
         parsedBodyAvailable: Boolean(req.body && typeof req.body === "object"),
         reserializedBodyMatches: reserializedExpected
           ? safeEqualHex(signatureHex, reserializedExpected)
