@@ -22,14 +22,14 @@ function safeEqualHex(left, right) {
 
 function checkMetaSignature(req) {
   if (!APP_SECRET) return { ok: false, reason: "app_secret_missing" };
-  if (!Buffer.isBuffer(req.rawBody)) return { ok: false, reason: "raw_body_missing" };
+  if (!Buffer.isBuffer(req.body)) return { ok: false, reason: "raw_body_missing" };
   const supplied = String(req.headers["x-hub-signature-256"] || "");
   if (!supplied.startsWith("sha256=")) {
     return { ok: false, reason: "signature_header_missing_or_malformed" };
   }
   const expected = crypto
     .createHmac("sha256", APP_SECRET)
-    .update(req.rawBody)
+    .update(req.body)
     .digest("hex");
   return safeEqualHex(supplied.slice(7), expected)
     ? { ok: true, reason: "valid" }
@@ -107,7 +107,13 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
       });
     }
 
-    const body = req.body;
+    let body;
+    try {
+      body = JSON.parse(req.body.toString("utf8"));
+    } catch {
+      console.warn("[WHATSAPP WEBHOOK] Signed payload was not valid JSON");
+      return res.sendStatus(400);
+    }
     if (body?.object !== "whatsapp_business_account") {
       console.warn("[WHATSAPP WEBHOOK] Unexpected payload object", {
         object: body?.object || null,
@@ -231,6 +237,9 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
     }
   });
 
+  // Parse this endpoint as raw bytes before any JSON parsing. Meta signs the exact
+  // request bytes, so parsing and re-serializing JSON can invalidate the signature.
+  app.use("/api/whatsapp/webhook", express.raw({ type: "application/json", limit: "1mb" }));
   app.use("/api/whatsapp/webhook", router);
 
   app.get("/api/whatsapp/status", requireAuth, (req, res) => {
