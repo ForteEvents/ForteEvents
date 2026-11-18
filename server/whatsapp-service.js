@@ -5,6 +5,10 @@ const router = express.Router();
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET?.trim();
+// Short, one-way diagnostic fingerprint. Never log or expose the secret itself.
+const APP_SECRET_FINGERPRINT = APP_SECRET
+  ? crypto.createHash("sha256").update(APP_SECRET, "utf8").digest("hex").slice(0, 12)
+  : null;
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
 const API_VERSION = process.env.WHATSAPP_API_VERSION?.trim() || "v26.0";
@@ -63,6 +67,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
 
   router.post("/", async (req, res) => {
     console.info("[WHATSAPP WEBHOOK] POST received", {
+    appSecretFingerprint: APP_SECRET_FINGERPRINT,
       hasRawBody: Buffer.isBuffer(req.rawBody),
       rawBodyBytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : 0,
       hasSignatureHeader: Boolean(req.headers["x-hub-signature-256"]),
