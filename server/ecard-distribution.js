@@ -83,7 +83,11 @@ async function sendWhatsApp({ guest, message, url, templateName, language, acces
   if (!response.ok) {
     return { ok: false, error: String(result?.error?.message || "Meta imekataa ujumbe wa WhatsApp.").slice(0, 900) };
   }
-  return { ok: true, messageId: result?.messages?.[0]?.id || null };
+  const messageId = result?.messages?.[0]?.id || null;
+  if (!messageId) {
+    return { ok: false, error: "Meta imepokea ombi bila kurudisha WhatsApp message ID; hali ya ujumbe haijathibitishwa." };
+  }
+  return { ok: true, messageId };
 }
 
 export function registerECardDistribution({ app, requireAdmin, supabaseAdmin, env }) {
