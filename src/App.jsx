@@ -865,71 +865,89 @@ function AdminECardTemplateStudio({session,onBack}){
 }
 
 function AdminECardManagement({ onBack }) {
-  const [accounts, setAccounts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [selected, setSelected] = useState(null)
-  const [transactions, setTransactions] = useState([])
-  const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('Malipo ya E-card yaliyopokelewa')
-  const [busy, setBusy] = useState(false)
-  const loadAccounts = async () => {
-    setLoading(true); setError('')
-    const { data, error: rpcError } = await supabase.rpc('admin_get_e_card_accounts')
-    if (rpcError) setError('Imeshindikana kupakia taarifa za E-card: ' + rpcError.message)
-    else setAccounts(data || [])
+  const [accounts,setAccounts]=useState([])
+  const [cards,setCards]=useState([])
+  const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
+  const [selected,setSelected]=useState(null)
+  const [transactions,setTransactions]=useState([])
+  const [amount,setAmount]=useState('')
+  const [description,setDescription]=useState('Malipo ya E-card yaliyopokelewa')
+  const [busy,setBusy]=useState(false)
+  const loadAccounts=async()=>{
+    setLoading(true);setError('')
+    const [a,k]=await Promise.all([supabase.rpc('admin_get_e_card_accounts'),supabase.rpc('admin_get_e_cards')])
+    if(a.error)setError('Imeshindikana kupakia akaunti: '+a.error.message);else setAccounts(a.data||[])
+    if(k.error)setError('Imeshindikana kupakia kadi: '+k.error.message);else setCards(k.data||[])
     setLoading(false)
   }
-  const loadTransactions = async account => {
-    setSelected(account); setTransactions([]); setError('')
-    const { data, error: rpcError } = await supabase.rpc('admin_get_e_card_transactions', { p_user_id: account.user_id })
-    if (rpcError) setError('Historia haikupatikana: ' + rpcError.message)
-    else setTransactions(data || [])
+  const loadTransactions=async account=>{
+    setSelected(account);setTransactions([]);setError('')
+    const {data,error}=await supabase.rpc('admin_get_e_card_transactions',{p_user_id:account.user_id})
+    if(error)setError('Historia haikupatikana: '+error.message);else setTransactions(data||[])
   }
-  useEffect(() => { loadAccounts() }, [])
-  const addCredits = async () => {
-    const value = Number(amount)
-    if (!selected || !Number.isInteger(value) || value <= 0) return window.alert('Weka kiasi sahihi cha E-card credits kwa TSh.')
+  useEffect(()=>{loadAccounts()},[])
+  const addCredits=async()=>{
+    const value=Number(amount)
+    if(!selected||!Number.isInteger(value)||value<=0)return window.alert('Weka kiasi sahihi cha E-card credits kwa TSh.')
     setBusy(true)
-    const { data, error: rpcError } = await supabase.rpc('admin_adjust_e_card_balance', {
-      p_user_id: selected.user_id, p_amount: value, p_description: description.trim() || 'E-card top-up'
-    })
-    if (rpcError) window.alert('Imeshindikana kuongeza credits: ' + rpcError.message)
-    else {
-      window.alert('E-card credits zimeongezwa. Salio jipya: TSh ' + Number(data).toLocaleString())
-      setAmount('')
-      await loadAccounts()
-      const updated = { ...selected, e_card_balance: data }
-      setSelected(updated)
-      const result = await supabase.rpc('admin_get_e_card_transactions', { p_user_id: updated.user_id })
-      if (!result.error) setTransactions(result.data || [])
+    const {data,error}=await supabase.rpc('admin_adjust_e_card_balance',{p_user_id:selected.user_id,p_amount:value,p_description:description.trim()||'E-card top-up'})
+    if(error)window.alert('Imeshindikana kuongeza credits: '+error.message)
+    else{
+      window.alert('E-card credits zimeongezwa. Salio jipya: TSh '+Number(data).toLocaleString())
+      setAmount('');await loadAccounts()
+      const updated={...selected,e_card_balance:data};setSelected(updated)
+      const result=await supabase.rpc('admin_get_e_card_transactions',{p_user_id:updated.user_id})
+      if(!result.error)setTransactions(result.data||[])
     }
     setBusy(false)
   }
-  if (loading) return <div className="card"><p>Inapakia akaunti za E-card...</p></div>
+  const guestLink=(card,guest)=>{
+    const url=new URL('https://forteevents-web.onrender.com/')
+    url.searchParams.set('card',card.slug);url.searchParams.set('guest',guest.token)
+    return url.toString()
+  }
+  const sendWhatsApp=(card,guest)=>{
+    if(!guest.whatsapp_phone)return
+    const phone=String(guest.whatsapp_phone).replace(/\D/g,'')
+    const message=`Habari ${guest.guest_name}, unakaribishwa kwenye ${card.title||card.occasion||'tukio letu'}. Fungua kadi yako hapa: ${guestLink(card,guest)}`
+    window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank','noopener,noreferrer')
+  }
+  if(loading)return <div className="card"><p>Inapakia akaunti na kadi za E-card...</p></div>
   return <>
-    <div className="page-header"><div><h1>Usimamizi wa E-card</h1><p>Angalia salio, mialiko na ongeza credits za E-card kwa wateja.</p></div><button className="secondary-button" onClick={loadAccounts}>Refresh</button></div>
-    {error && <div className="card"><p style={{color:'#b00020'}}>{error}</p></div>}
+    <div className="page-header"><div><h1>Usimamizi wa E-card</h1><p>Angalia akaunti, kadi za wateja, mialiko na ongeza credits.</p></div><button className="secondary-button" onClick={loadAccounts}>Refresh</button></div>
+    {error&&<div className="card"><p style={{color:'#b00020'}}>{error}</p></div>}
     <div className="card" style={{overflowX:'auto'}}>
       <h2>Akaunti za E-card</h2>
       <table style={{width:'100%',minWidth:'680px',borderCollapse:'collapse'}}>
         <thead><tr><th>Mteja</th><th>Salio (TSh)</th><th>E-cards</th><th>Mialiko</th><th>Check-in</th><th>Kitendo</th></tr></thead>
-        <tbody>{accounts.map(account => <tr key={account.user_id}>
-          <td>{account.full_name || account.email || 'Customer'}<br/><small>{account.email || ''}</small></td>
-          <td>{Number(account.e_card_balance || 0).toLocaleString()}</td><td>{account.cards_count || 0}</td><td>{account.invitations_count || 0}</td><td>{account.checked_in_count || 0}</td>
-          <td><button className="primary-button" onClick={() => loadTransactions(account)}>Simamia E-card</button></td>
+        <tbody>{accounts.map(account=><tr key={account.user_id}>
+          <td>{account.full_name||account.email||'Customer'}<br/><small>{account.email||''}</small></td>
+          <td>{Number(account.e_card_balance||0).toLocaleString()}</td><td>{account.cards_count||0}</td><td>{account.invitations_count||0}</td><td>{account.checked_in_count||0}</td>
+          <td><button className="primary-button" onClick={()=>loadTransactions(account)}>Simamia E-card</button></td>
         </tr>)}</tbody>
       </table>
-      {accounts.length === 0 && <p>Hakuna akaunti za E-card zilizopatikana.</p>}
+      {accounts.length===0&&<p>Hakuna akaunti za E-card zilizopatikana.</p>}
     </div>
-    {selected && <div className="card">
-      <h2>Ongeza credits: {selected.full_name || selected.email || 'Customer'}</h2>
-      <p>Salio la sasa: <strong>TSh {Number(selected.e_card_balance || 0).toLocaleString()}</strong></p>
-      <label>Kiasi cha kuongeza (TSh)</label><input type="number" min="1" step="1" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Mfano: 10000" />
-      <label>Maelezo / kumbukumbu ya malipo</label><input value={description} onChange={e => setDescription(e.target.value)} />
-      <button className="primary-button" disabled={busy || !amount} onClick={addCredits}>{busy ? 'Inaongeza...' : 'Ongeza E-card credits'}</button>
+    <div className="card" style={{overflowX:'auto'}}>
+      <h2>Kadi za wateja</h2><p>Kadi zote zilizotengenezwa na wageni wake.</p>
+      {cards.length===0?<p>Bado hakuna kadi zilizotengenezwa.</p>:cards.map(card=><div key={card.card_id} style={{padding:'14px 0',borderTop:'1px solid #e8e1d5'}}>
+        <strong>{card.title||card.occasion||'Kadi ya mwaliko'}</strong>
+        <div style={{fontSize:13,margin:'4px 0 8px'}}>{card.customer_name} · {card.customer_email||''} · {card.event_date||'Tarehe haijawekwa'} · {card.is_published?'Imechapishwa':'Haijachapishwa'}</div>
+        {(card.guests||[]).length===0?<p>Hakuna wageni waliounganishwa na kadi hii.</p>:card.guests.map(guest=><div key={guest.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',padding:'9px 0',borderTop:'1px solid #f1eee8'}}>
+          <div><strong>{guest.guest_name}</strong><div style={{fontSize:12,color:'#746b5d'}}>{guest.whatsapp_phone||'Hakuna namba'} · {guest.whatsapp_delivery_status||'pending'}</div></div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><a className="secondary-button" href={guestLink(card,guest)} target="_blank" rel="noreferrer">Fungua kadi</a><button className="primary-button" disabled={!guest.whatsapp_phone||!card.is_published} onClick={()=>sendWhatsApp(card,guest)}>Tuma WhatsApp</button></div>
+        </div>)}
+      </div>)}
+    </div>
+    {selected&&<div className="card">
+      <h2>Ongeza credits: {selected.full_name||selected.email||'Customer'}</h2>
+      <p>Salio la sasa: <strong>TSh {Number(selected.e_card_balance||0).toLocaleString()}</strong></p>
+      <label>Kiasi cha kuongeza (TSh)</label><input type="number" min="1" step="1" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Mfano: 10000"/>
+      <label>Maelezo / kumbukumbu ya malipo</label><input value={description} onChange={e=>setDescription(e.target.value)}/>
+      <button className="primary-button" disabled={busy||!amount} onClick={addCredits}>{busy?'Inaongeza...':'Ongeza E-card credits'}</button>
       <h3>Historia ya E-card</h3>
-      {transactions.length === 0 ? <p>Bado hakuna miamala.</p> : <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Aina</th><th>Kiasi</th><th>Maelezo</th></tr></thead><tbody>{transactions.map(t => <tr key={t.id}><td>{new Date(t.created_at).toLocaleString()}</td><td>{t.transaction_type}</td><td>{t.amount > 0 ? '+' : ''}{Number(t.amount).toLocaleString()}</td><td>{t.description}</td></tr>)}</tbody></table></div>}
+      {transactions.length===0?<p>Bado hakuna miamala.</p>:<div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Aina</th><th>Kiasi</th><th>Maelezo</th></tr></thead><tbody>{transactions.map(t=><tr key={t.id}><td>{new Date(t.created_at).toLocaleString()}</td><td>{t.transaction_type}</td><td>{t.amount>0?'+':''}{Number(t.amount).toLocaleString()}</td><td>{t.description}</td></tr>)}</tbody></table></div>}
     </div>}
     <button className="secondary-button" onClick={onBack}>Rudi Dashboard</button>
   </>
