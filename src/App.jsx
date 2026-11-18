@@ -770,7 +770,7 @@ function AdminECardTemplateStudio({session,onBack,request,onRequestComplete}){
     setBusy(false);
   };
   const requestDetails=request?.event_details||{};
-  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...requestDetails,...(config.defaults||{}),design:{templateId:selectedId,templateSnapshot:{...selected,templateConfig:config},templateConfig:config}};
+  const previewCard={occasion:selected?.occasion||'Harusi',title:'JINA LA TUKIO',host_names:'FAMILIA YA MFANO',bride_name:'JINA LA BIBI HARUSI',groom_name:'JINA LA BWANA HARUSI',event_date:'2027-06-20',event_time:'10:00',venue:'UKUMBI WA MFANO',message:'Karibu sana, uwepo wako kwetu ni furaha na heshima kubwa.',...(config.defaults||{}),...requestDetails,design:{templateId:selectedId,templateSnapshot:{...selected,templateConfig:config},templateConfig:config}};
   const requestGuestName=request?.guest_list?.[0]?.guest_name||'JINA LA MWALIKWA';
   const fulfilRequestWithDesign=async()=>{
     if(!request?.id)return;
