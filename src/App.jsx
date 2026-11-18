@@ -10,6 +10,7 @@ import ECardStudioObjects from './ecard/ECardStudioObjects.jsx'
 import ECardCheckin from './ecard/ECardCheckin.jsx'
 import CustomerECardRequestForm from './ecard/CustomerECardRequestForm.jsx'
 import AdminECardRequests from './ecard/AdminECardRequests.jsx'
+import AdminECardStaff from './ecard/AdminECardStaff.jsx'
 import AdminWhatsAppTest from './whatsapp/AdminWhatsAppTest.jsx'
 
 
@@ -952,6 +953,72 @@ function AdminECardManagement({ onBack }) {
     <button className="secondary-button" onClick={onBack}>Rudi Dashboard</button>
   </>
 }
+
+function AdminECardStaff({ session, onBack }) {
+  const [staff, setStaff] = useState([])
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+
+  const request = async (path, options = {}) => {
+    const response = await fetch('https://forteevents.onrender.com' + path, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token, ...(options.headers || {}) }
+    })
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Ombi halikukamilika.')
+    return result
+  }
+  const load = async () => {
+    setLoading(true); setError('')
+    try { const result = await request('/api/admin/ecard-staff'); setStaff(result.staff || []) }
+    catch (e) { setError(e.message) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { load() }, [])
+  const invite = async e => {
+    e.preventDefault(); setError(''); setNotice('')
+    if (!fullName.trim() || !email.trim()) { setError('Jaza jina na email ya mfanyakazi.'); return }
+    setBusy(true)
+    try {
+      const result = await request('/api/admin/ecard-staff/invite', { method: 'POST', body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), phone: phone.trim() }) })
+      setNotice(result.message || 'Mwaliko umetumwa.')
+      setFullName(''); setEmail(''); setPhone(''); await load()
+    } catch (e) { setError(e.message) }
+    finally { setBusy(false) }
+  }
+  const revoke = async person => {
+    if (!window.confirm('Una uhakika wa kuondoa ruhusa za E-card kwa ' + person.full_name + '?')) return
+    setBusy(true); setError(''); setNotice('')
+    try { const result = await request('/api/admin/ecard-staff/' + encodeURIComponent(person.id) + '/revoke', { method: 'POST' }); setNotice(result.message || 'Ruhusa zimeondolewa.'); await load() }
+    catch (e) { setError(e.message) }
+    finally { setBusy(false) }
+  }
+  return <>
+    <div className="page-header"><div><h1>Timu ya ForteEvents Studio</h1><p>Alika wafanyakazi watakaoshughulikia maombi ya E-card pekee.</p></div><button className="secondary-button" onClick={onBack}>Rudi Dashboard</button></div>
+    {error && <div className="card"><p style={{color:'#a32626'}}>{error}</p></div>}
+    {notice && <div className="card"><p>{notice}</p></div>}
+    <div className="card">
+      <h2>Alika mfanyakazi</h2>
+      <p>Fomu itatuma mwaliko wa kujiunga kwenye email. Mfanyakazi ataweka nenosiri lake kupitia kiungo cha Supabase.</p>
+      <form onSubmit={invite}>
+        <label>Jina kamili</label><input value={fullName} onChange={e=>setFullName(e.target.value)} required maxLength={100} placeholder="Jina la mfanyakazi" />
+        <label>Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="mfanyakazi@example.com" />
+        <label>Namba ya simu (hiari)</label><input value={phone} onChange={e=>setPhone(e.target.value)} maxLength={25} placeholder="2557..." />
+        <button type="submit" className="primary-button" disabled={busy}>{busy?'Inatuma mwaliko...':'Tuma mwaliko'}</button>
+      </form>
+    </div>
+    <div className="card">
+      <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center'}}><h2>Wafanyakazi wenye ruhusa</h2><button className="secondary-button" onClick={load} disabled={loading}>Refresh</button></div>
+      {loading?<p>Inapakia...</p>:staff.length===0?<p>Bado hujaongeza mfanyakazi.</p>:staff.map(person=><div key={person.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap',borderTop:'1px solid #eee',padding:'12px 0'}}><div><strong>{person.full_name||'Mfanyakazi'}</strong><div>{person.email||'-'} · {person.phone||'Simu haijawekwa'}</div></div><button type="button" className="secondary-button" disabled={busy} onClick={()=>revoke(person)}>Ondoa ruhusa</button></div>)}
+    </div>
+  </>
+}
+
 
 function App() {
   const [session, setSession] = useState(null)
@@ -2706,6 +2773,23 @@ useEffect(() => {
   // ==========================================================
   // ADMIN DASHBOARD
   // ==========================================================
+  if (profile?.role === 'staff') {
+    return (
+      <div className="app-shell">
+        <aside className="sidebar">
+          <div className="sidebar-logo"><img src="/forteevents-logo.png" alt="ForteEvents" className="dashboard-logo" /></div>
+          <div className="sidebar-nav">
+            <button className="nav-button active" onClick={() => setAdminPage('ecard-requests')}>Maombi ya E-card</button>
+          </div>
+          <div className="sidebar-bottom"><button className="nav-button logout-button" onClick={logout}>Logout</button></div>
+        </aside>
+        <main className="main-content">
+          <AdminECardRequests onBack={() => setAdminPage('ecard-requests')} />
+        </main>
+      </div>
+    )
+  }
+
   if (profile?.role === 'admin') {
     return (
       <div className="app-shell">
@@ -2745,6 +2829,7 @@ useEffect(() => {
               Customers
             </button>
             <button className={adminPage === 'ecard-requests' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-requests')}>Maombi ya E-card</button>
+            <button className={adminPage === 'ecard-staff' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecard-staff')}>Timu ya Studio</button>
             <button className={adminPage === 'ecards' ? 'nav-button active' : 'nav-button'} onClick={() => setAdminPage('ecards')}>
               E-card Management
             </button>
@@ -2853,6 +2938,7 @@ useEffect(() => {
 />
 )}
 {adminPage === 'ecard-requests' && <AdminECardRequests onBack={() => setAdminPage('dashboard')} />}
+{adminPage === 'ecard-staff' && <AdminECardStaff session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecards' && <AdminECardManagement onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-templates' && <AdminECardTemplates session={session} onBack={() => setAdminPage('dashboard')} />}
 {adminPage === 'ecard-studio' && <AdminECardTemplateStudio session={session} onBack={() => setAdminPage('dashboard')} />}
