@@ -4,7 +4,8 @@ import express from "express";
 const router = express.Router();
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
-const APP_SECRET = process.env.WHATSAPP_APP_SECRET?.trim();
+const APP_SECRET_RAW = process.env.WHATSAPP_APP_SECRET || "";
+const APP_SECRET = APP_SECRET_RAW.trim();
 // Short, one-way diagnostic fingerprint. Never log or expose the secret itself.
 const APP_SECRET_FINGERPRINT = APP_SECRET
   ? crypto.createHash("sha256").update(APP_SECRET, "utf8").digest("hex").slice(0, 12)
@@ -20,6 +21,52 @@ function safeEqualHex(left, right) {
   return a.length === b.length && a.length > 0 && crypto.timingSafeEqual(a, b);
 }
 
+function hmacHex(key, rawBody) {
+  return crypto.createHmac("sha256", key).update(rawBody).digest("hex");
+}
+
+// Diagnostic only: test common environment-variable representation mistakes.
+// These results are booleans; neither secrets nor digest values are logged.
+function diagnoseSignatureKey(suppliedHex, rawBody) {
+  const candidates = {
+    trimmedUtf8: Buffer.from(APP_SECRET, "utf8"),
+  };
+
+  if (APP_SECRET_RAW !== APP_SECRET) {
+    candidates.rawUtf8 = Buffer.from(APP_SECRET_RAW, "utf8");
+  }
+  if (/^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i.test(APP_SECRET)) {
+    candidates.hexDecoded = Buffer.from(APP_SECRET, "hex");
+  }
+  if (/^[A-Za-z0-9+/]+={0,2}$/.test(APP_SECRET) && APP_SECRET.length % 4 === 0) {
+    const decoded = Buffer.from(APP_SECRET, "base64");
+    if (decoded.length > 0 && decoded.toString("base64") === APP_SECRET) {
+      candidates.base64Decoded = decoded;
+    }
+  }
+  if (
+    APP_SECRET.length >= 2 &&
+    ((APP_SECRET.startsWith('"') && APP_SECRET.endsWith('"')) ||
+      (APP_SECRET.startsWith("'") && APP_SECRET.endsWith("'")))
+  ) {
+    candidates.outerQuotesRemoved = Buffer.from(APP_SECRET.slice(1, -1), "utf8");
+  }
+
+  const matches = {};
+  for (const [name, key] of Object.entries(candidates)) {
+    const candidate = hmacHex(key, rawBody);
+    matches[name] = safeEqualHex(suppliedHex, candidate);
+  }
+  return {
+    secretRawByteLength: Buffer.byteLength(APP_SECRET_RAW, "utf8"),
+    secretTrimmedByteLength: Buffer.byteLength(APP_SECRET, "utf8"),
+    secretHasOuterQuotes:
+      (APP_SECRET.startsWith('"') && APP_SECRET.endsWith('"')) ||
+      (APP_SECRET.startsWith("'") && APP_SECRET.endsWith("'")),
+    candidateKeyMatches: matches,
+  };
+}
+
 function checkMetaSignature(req) {
   if (!APP_SECRET) return { ok: false, reason: "app_secret_missing" };
   if (!Buffer.isBuffer(req.body)) return { ok: false, reason: "raw_body_missing" };
@@ -27,13 +74,19 @@ function checkMetaSignature(req) {
   if (!supplied.startsWith("sha256=")) {
     return { ok: false, reason: "signature_header_missing_or_malformed" };
   }
-  const expected = crypto
-    .createHmac("sha256", APP_SECRET)
-    .update(req.body)
-    .digest("hex");
-  return safeEqualHex(supplied.slice(7), expected)
-    ? { ok: true, reason: "valid" }
-    : { ok: false, reason: "signature_mismatch" };
+  const suppliedHex = supplied.slice(7);
+  if (!/^[a-f0-9]{64}$/i.test(suppliedHex)) {
+    return { ok: false, reason: "signature_header_missing_or_malformed" };
+  }
+  const expected = hmacHex(Buffer.from(APP_SECRET, "utf8"), req.body);
+  if (safeEqualHex(suppliedHex, expected)) {
+    return { ok: true, reason: "valid" };
+  }
+  return {
+    ok: false,
+    reason: "signature_mismatch",
+    diagnostics: diagnoseSignatureKey(suppliedHex, req.body),
+  };
 }
 
 function getMessageText(message) {
@@ -88,6 +141,7 @@ export function registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabas
         contentEncoding: req.headers["content-encoding"] || "identity",
         contentLengthHeader: req.headers["content-length"] || null,
         transferEncoding: req.headers["transfer-encoding"] || null,
+        ...(signatureCheck.diagnostics || {}),
       });
       return res.status(APP_SECRET ? 401 : 503).json({
         ok: false,
