@@ -289,25 +289,6 @@ async function requireAdmin(
   );
 }
 
-// E-CARD STAFF AUTHORIZATION
-async function requireECardStaff(req, res, next) {
-  await requireAuth(req, res, async () => {
-    try {
-      const { data: profile, error } = await supabaseAdmin
-        .from("profiles").select("id, role").eq("id", req.user.id).maybeSingle();
-      if (error) return res.status(500).json({ ok: false, error: "Imeshindikana kukagua ruhusa za E-card." });
-      if (!profile || !["admin", "staff"].includes(profile.role)) {
-        return res.status(403).json({ ok: false, error: "Huna ruhusa ya kufanya kazi za E-card." });
-      }
-      req.profile = profile;
-      next();
-    } catch (error) {
-      console.error("E-CARD STAFF AUTH ERROR:", { message: error.message });
-      return res.status(500).json({ ok: false, error: "Imeshindikana kuthibitisha ruhusa." });
-    }
-  });
-}
-
 // ------------------------------------
 // HOME
 // ------------------------------------
@@ -917,68 +898,6 @@ app.get(
     }
   }
 );
-
-// ------------------------------------
-// ADMIN: E-CARD STAFF ACCOUNTS
-// ------------------------------------
-app.get("/api/admin/ecard-staff", requireAdmin, async (req, res) => {
-  try {
-    const { data, error } = await supabaseAdmin.from("profiles")
-      .select("id, full_name, email, phone, role, created_at")
-      .eq("role", "staff").order("created_at", { ascending: false });
-    if (error) throw error;
-    return res.json({ ok: true, staff: data || [] });
-  } catch (error) {
-    console.error("E-CARD STAFF LIST ERROR:", { message: error.message });
-    return res.status(500).json({ ok: false, error: "Imeshindikana kupakia wafanyakazi." });
-  }
-});
-
-app.post("/api/admin/ecard-staff/invite", requireAdmin, async (req, res) => {
-  const email = String(req.body?.email || "").trim().toLowerCase();
-  const fullName = String(req.body?.fullName || "").trim();
-  const phone = String(req.body?.phone || "").trim();
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || !fullName || fullName.length > 100) {
-    return res.status(400).json({ ok: false, error: "Weka jina na email sahihi ya mfanyakazi." });
-  }
-  if (phone.length > 25) return res.status(400).json({ ok: false, error: "Namba ya simu si sahihi." });
-  try {
-    const { data: invited, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: fullName, account_type: "ecard_staff" }
-    });
-    if (inviteError) throw inviteError;
-    const invitedUser = invited?.user;
-    if (!invitedUser?.id) throw new Error("Invite haikurudisha user ID.");
-    const { error: profileError } = await supabaseAdmin.from("profiles").upsert({
-      id: invitedUser.id, full_name: fullName, email, phone: phone || null, role: "staff"
-    }, { onConflict: "id" });
-    if (profileError) throw profileError;
-    return res.status(201).json({ ok: true, message: "Mwaliko umetumwa kwa email ya mfanyakazi.", staff: { id: invitedUser.id, full_name: fullName, email, phone, role: "staff" } });
-  } catch (error) {
-    console.error("E-CARD STAFF INVITE ERROR:", { message: error.message });
-    return res.status(400).json({ ok: false, error: String(error.message || "Imeshindikana kumwalika mfanyakazi.").slice(0, 300) });
-  }
-});
-
-app.post("/api/admin/ecard-staff/:staffId/revoke", requireAdmin, async (req, res) => {
-  const staffId = String(req.params.staffId || "");
-  if (!/^[0-9a-f-]{36}$/i.test(staffId) || staffId === req.user.id) {
-    return res.status(400).json({ ok: false, error: "Akaunti ya mfanyakazi si sahihi." });
-  }
-  try {
-    const { data: target, error: lookupError } = await supabaseAdmin.from("profiles")
-      .select("id, role").eq("id", staffId).maybeSingle();
-    if (lookupError) throw lookupError;
-    if (!target || target.role !== "staff") return res.status(404).json({ ok: false, error: "Mfanyakazi hakupatikana." });
-    const { error: updateError } = await supabaseAdmin.from("profiles")
-      .update({ role: "customer", updated_at: new Date().toISOString() }).eq("id", staffId);
-    if (updateError) throw updateError;
-    return res.json({ ok: true, message: "Ruhusa za kazi za E-card zimeondolewa." });
-  } catch (error) {
-    console.error("E-CARD STAFF REVOKE ERROR:", { message: error.message });
-    return res.status(500).json({ ok: false, error: "Imeshindikana kuondoa ruhusa za mfanyakazi." });
-  }
-});
 
 // ------------------------------------
 // ADMIN: ADD CUSTOMER CREDITS
@@ -1786,7 +1705,7 @@ app.post(
 // WHATSAPP CLOUD API
 // ------------------------------------
 registerWhatsAppRoutes({ app, requireAuth, requireAdmin, supabaseAdmin });
-registerECardDistribution({ app, requireAdmin: requireECardStaff, supabaseAdmin, env: process.env });
+registerECardDistribution({ app, requireAdmin, supabaseAdmin, env: process.env });
 
 // ------------------------------------
 // SERVER START
