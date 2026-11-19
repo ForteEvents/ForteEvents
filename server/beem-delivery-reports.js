@@ -1,7 +1,8 @@
 const BEEM_DLR_URL = "https://dlrapi.beem.africa/public/v1/delivery-reports";
 const MINIMUM_REPORT_AGE_MS = 5 * 60 * 1000;
-const DEFAULT_BATCH_SIZE = 25;
-const MAX_BATCH_SIZE = 100;
+const DEFAULT_BATCH_SIZE = 5;
+const MAX_BATCH_SIZE = 5;
+const MAX_CONCURRENT_LOOKUPS = 5;
 
 function normalizeDestination(value) {
   return String(value || "").trim().replace(/^\+/, "").replace(/^00/, "");
@@ -42,6 +43,11 @@ export function registerBeemDeliveryReportRoutes({
       return res.status(503).json({ ok: false, error: "Beem credentials hazijawekwa." });
     }
 
+    const userId = String(req.body?.userId || "").trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+      return res.status(400).json({ ok: false, error: "Customer ID si sahihi." });
+    }
+
     const requestedLimit = Number(req.body?.limit || DEFAULT_BATCH_SIZE);
     const limit = Number.isFinite(requestedLimit)
       ? Math.min(MAX_BATCH_SIZE, Math.max(1, Math.floor(requestedLimit)))
@@ -54,7 +60,8 @@ export function registerBeemDeliveryReportRoutes({
     try {
       const { data: rows, error: selectError } = await supabaseAdmin
         .from("sms_history")
-        .select("id, recipient, status, sent_at, beem_request_id, beem_status, beem_status_checked_at")
+        .select("id, user_id, recipient, status, sent_at, beem_request_id, beem_status, beem_status_checked_at")
+        .eq("user_id", userId)
         .eq("status", "sent")
         .not("beem_request_id", "is", null)
         .lt("sent_at", eligibleSentAt)
@@ -76,108 +83,104 @@ export function registerBeemDeliveryReportRoutes({
 
       const basic = Buffer.from(`${beemApiKey}:${beemSecretKey}`, "utf8").toString("base64");
 
-      for (const row of rows || []) {
-        const checkedAt = new Date().toISOString();
+      // Keep the provider load bounded. A maximum of five per-recipient
+      // lookups are made in parallel; this endpoint never sends SMS.
+      for (let offset = 0; offset < (rows || []).length; offset += MAX_CONCURRENT_LOOKUPS) {
+        const batch = rows.slice(offset, offset + MAX_CONCURRENT_LOOKUPS);
 
-        try {
-          const url = new URL(BEEM_DLR_URL);
-          url.searchParams.set("dest_addr", normalizeDestination(row.recipient));
-          url.searchParams.set("request_id", String(row.beem_request_id));
+        await Promise.all(batch.map(async (row) => {
+          const checkedAt = new Date().toISOString();
 
-          const response = await fetch(url, {
-            method: "GET",
-            headers: {
-              Authorization: `Basic ${basic}`,
-              Accept: "application/json",
-            },
-            signal: AbortSignal.timeout(15000),
-          });
-
-          if (!response.ok) {
-            summary.errors += 1;
-            // 404 can mean an unmatched request ID/destination. Keep the message
-            // eligible for a later check; never infer delivery failure from it.
-            await supabaseAdmin
+          const recordCheckTime = async () => {
+            const { error } = await supabaseAdmin
               .from("sms_history")
               .update({ beem_status_checked_at: checkedAt })
               .eq("id", row.id)
+              .eq("user_id", userId)
               .eq("status", "sent")
               .or("beem_status.is.null,beem_status.eq.PENDING");
-            if (response.status === 401) break;
-            continue;
-          }
-
-          let payload;
-          try {
-            payload = await response.json();
-          } catch {
-            summary.errors += 1;
-            await supabaseAdmin
-              .from("sms_history")
-              .update({ beem_status_checked_at: checkedAt })
-              .eq("id", row.id)
-              .eq("status", "sent")
-              .or("beem_status.is.null,beem_status.eq.PENDING");
-            continue;
-          }
-
-          const report = parseBeemDeliveryReport(
-            payload,
-            row.beem_request_id,
-            row.recipient
-          );
-
-          if (!report) {
-            summary.unavailable += 1;
-            await supabaseAdmin
-              .from("sms_history")
-              .update({ beem_status_checked_at: checkedAt })
-              .eq("id", row.id)
-              .eq("status", "sent")
-              .or("beem_status.is.null,beem_status.eq.PENDING");
-            continue;
-          }
-
-          const update = {
-            beem_status: report.status,
-            beem_status_checked_at: checkedAt,
+            if (error) summary.errors += 1;
           };
 
-          if (report.status === "DELIVERED") {
-            update.status = "delivered";
-            summary.delivered += 1;
-          } else if (report.status === "UNDELIVERED") {
-            update.status = "failed";
-            summary.undelivered += 1;
-          } else {
-            summary.pending += 1;
-          }
+          try {
+            const url = new URL(BEEM_DLR_URL);
+            url.searchParams.set("dest_addr", normalizeDestination(row.recipient));
+            url.searchParams.set("request_id", String(row.beem_request_id));
 
-          const { error: updateError } = await supabaseAdmin
-            .from("sms_history")
-            .update(update)
-            .eq("id", row.id)
-            .eq("status", "sent")
-            .or("beem_status.is.null,beem_status.eq.PENDING");
+            const response = await fetch(url, {
+              method: "GET",
+              headers: {
+                Authorization: `Basic ${basic}`,
+                Accept: "application/json",
+              },
+              signal: AbortSignal.timeout(15000),
+            });
 
-          if (updateError) {
-            summary.errors += 1;
-          } else {
+            if (!response.ok) {
+              summary.errors += 1;
+              // 404 is not proof of undelivered; keep the row eligible later.
+              await recordCheckTime();
+              return;
+            }
+
+            let payload;
+            try {
+              payload = await response.json();
+            } catch {
+              summary.errors += 1;
+              await recordCheckTime();
+              return;
+            }
+
+            const report = parseBeemDeliveryReport(
+              payload,
+              row.beem_request_id,
+              row.recipient
+            );
+
+            if (!report) {
+              summary.unavailable += 1;
+              await recordCheckTime();
+              return;
+            }
+
+            const update = {
+              beem_status: report.status,
+              beem_status_checked_at: checkedAt,
+            };
+
+            if (report.status === "DELIVERED") {
+              update.status = "delivered";
+            } else if (report.status === "UNDELIVERED") {
+              update.status = "failed";
+            }
+
+            const { error: updateError } = await supabaseAdmin
+              .from("sms_history")
+              .update(update)
+              .eq("id", row.id)
+              .eq("user_id", userId)
+              .eq("status", "sent")
+              .or("beem_status.is.null,beem_status.eq.PENDING");
+
+            if (updateError) {
+              summary.errors += 1;
+              return;
+            }
+
             summary.checked += 1;
+            if (report.status === "DELIVERED") summary.delivered += 1;
+            else if (report.status === "UNDELIVERED") summary.undelivered += 1;
+            else summary.pending += 1;
+          } catch (error) {
+            summary.errors += 1;
+            console.error("BEEM DELIVERY REPORT CHECK ERROR:", {
+              rowId: row.id,
+              message: error?.message || "Unknown error",
+            });
+            await recordCheckTime();
           }
-        } catch (error) {
-          summary.errors += 1;
-          console.error("BEEM DELIVERY REPORT CHECK ERROR:", {
-            rowId: row.id,
-            message: error?.message || "Unknown error",
-          });
-          await supabaseAdmin
-            .from("sms_history")
-            .update({ beem_status_checked_at: checkedAt })
-            .eq("id", row.id)
-            .eq("status", "sent")
-            .or("beem_status.is.null,beem_status.eq.PENDING");
-        }
+        }));
       }
 
       return res.json({
