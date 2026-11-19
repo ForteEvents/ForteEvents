@@ -773,11 +773,7 @@ app.delete(
 // ------------------------------------
 // SMS HISTORY
 // ------------------------------------
-// Kwa sasa history ya zamani inabaki memory.
-// Tutaiunganisha na sms_history ya Supabase
-// baada ya kuthibitisha columns zake.
-
-let smsHistory = [];
+// SMS history is persisted in Supabase; legacy records remain readable.
 
 app.get(
   "/api/sms/history",
@@ -1109,7 +1105,7 @@ app.get(
       } = await supabaseAdmin
         .from("sms_history")
         .select(
-          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at"
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_status, beem_status_checked_at, forteevents_message_id"
         )
         .eq(
           "user_id",
