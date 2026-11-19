@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseBeemDeliveryReport } from "./beem-delivery-reports.js";
+import { parseBeemDeliveryReport, registerBeemDeliveryReportRoutes } from "./beem-delivery-reports.js";
 
 test("accepts a matching delivered report for request ID and destination", () => {
   assert.deepEqual(
