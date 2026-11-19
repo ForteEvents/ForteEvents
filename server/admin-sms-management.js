@@ -59,7 +59,7 @@ export function registerAdminSmsManagementRoutes({
       }
       const { data, error, count } = await query;
       if (error) throw error;
-      const userIds = [...new Set((data || []).map(row => row.user_id).filter(Boolean))];
+      const userIds = [...new Set((data || []).flatMap(row => [row.user_id, row.resend_by]).filter(Boolean))];
       let profiles = [];
       if (userIds.length) {
         const result = await supabaseAdmin.from("profiles").select("id,full_name,email").in("id", userIds);
@@ -69,7 +69,7 @@ export function registerAdminSmsManagementRoutes({
       const byId = new Map(profiles.map(profile => [profile.id, profile]));
       return res.json({
         ok: true, total: count || 0,
-        history: (data || []).map(row => ({ ...row, customer: byId.get(row.user_id) || null }))
+        history: (data || []).map(row => ({ ...row, customer: byId.get(row.user_id) || null, resend_admin: row.resend_by ? (byId.get(row.resend_by) || null) : null }))
       });
     } catch (error) {
       console.error("ADMIN SMS HISTORY ERROR:", error?.message || error);
