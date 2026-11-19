@@ -10,6 +10,10 @@ create unique index if not exists sms_history_one_resend_per_attempt
 create index if not exists sms_history_admin_status_sent_at
   on public.sms_history (status, sent_at desc);
 
+create index if not exists sms_history_resend_by_idx
+  on public.sms_history (resend_by)
+  where resend_by is not null;
+
 comment on column public.sms_history.resend_of_id is
   'Original SMS attempt that this Admin-initiated resend follows.';
 comment on column public.sms_history.resend_by is
