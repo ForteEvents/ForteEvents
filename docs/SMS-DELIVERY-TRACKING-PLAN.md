@@ -67,7 +67,10 @@ Official documentation:
 - Polling never sends SMS, never retries, never changes customer credits, and never changes legacy rows without request IDs. It avoids overwriting terminal rows through conditional updates.
 - Updated the send-history insert to save Beem's exact `request_id` and a unique ForteEvents attempt UUID for new attempts. The current sending request, recipient loop, and credit logic remain unchanged.
 - Added an additive SQL migration at `supabase/migrations/20261119000100_beem_sms_delivery_tracking.sql`. It has not been applied to production.
-- Added parser unit tests and a branch CI workflow to run tests, JavaScript syntax checks, and the frontend build.
+- Added parser unit tests and a branch CI workflow to run tests, JavaScript syntax checks, and the frontend build. The first CI attempt exposed an existing package-lock mismatch with package.json; the workflow now follows the repository's established `npm install` approach rather than `npm ci`.
 - The live database was inspected read-only: 264 SMS history rows; 0 populated `beem_message_id` values; 256 rows with a `sent` or `pending` status. No rows were modified.
 - The branch remains isolated from `main`. No production migration, Render deploy, SMS send/retry, credit adjustment, or Beem configuration change has occurred.
-- Remaining before merge: run CI, review poller query behavior and status transitions, apply the additive migration only after review, verify with a controlled test recipient, and then add the admin/customer UI.
+- Added customer and admin SMS history labels for Submitted to Beem, Pending, Delivered, and Undelivered, including last-check time when available.
+- Added an admin button to trigger a bounded delivery-report check for up to 100 eligible messages and display a summary; the route is admin-only.
+- Draft PR: https://github.com/ForteEvents/ForteEvents/pull/102. It is not merged.
+- Remaining before merge: finish CI on the latest commit, review the poller query and transitions, apply the additive migration only after review, verify with a controlled test recipient, and check the admin UI end-to-end.
