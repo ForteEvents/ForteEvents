@@ -120,7 +120,7 @@ export default function AdminSmsManagement({ session, onBack }) {
           <table style={{ width: '100%', minWidth: 900, borderCollapse: 'collapse' }}>
             <thead><tr><th>Tarehe</th><th>Mteja</th><th>Mpokeaji</th><th>Ujumbe</th><th>SMS</th><th>Hali</th><th>Kitendo</th></tr></thead>
             <tbody>{history.map(row => {
-              const canResend = row.status === 'failed' && row.beem_status === 'UNDELIVERED'
+              const canResend = row.status === 'failed' && row.beem_status === 'UNDELIVERED' && !row.resend_attempted
               return <tr key={row.id}>
                 <td>{row.sent_at ? new Date(row.sent_at).toLocaleString() : '-'}{row.resend_of_id && <div style={{ fontSize: 11, color: '#8a6d1d' }}>Resend na Admin: {row.resend_admin?.full_name || 'Admin'}</div>}</td>
                 <td>{row.customer?.full_name || row.customer?.email || 'Customer'}</td>
@@ -128,7 +128,7 @@ export default function AdminSmsManagement({ session, onBack }) {
                 <td style={{ maxWidth: 260, whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{row.message}</td>
                 <td>{row.sms_count}</td>
                 <td>{deliveryLabel(row)}{row.beem_status_checked_at && <div style={{ fontSize: 11, color: '#777' }}>Ukaguzi: {new Date(row.beem_status_checked_at).toLocaleString()}</div>}</td>
-                <td>{canResend ? <button className="primary-button" disabled={busyId === row.id} onClick={() => resend(row)}>{busyId === row.id ? 'Inatuma...' : 'Resend (bure)'}</button> : row.resend_of_id ? 'Jaribio la resend' : row.beem_status === 'PENDING' ? 'Subiri / kagua tena' : '—'}</td>
+                <td>{canResend ? <button className="primary-button" disabled={busyId === row.id} onClick={() => resend(row)}>{busyId === row.id ? 'Inatuma...' : 'Resend (bure)'}</button> : row.resend_of_id ? 'Jaribio la resend' : row.resend_attempted ? 'Resend tayari ilifanyika' : row.beem_status === 'PENDING' ? 'Subiri / kagua tena' : '—'}</td>
               </tr>
             })}</tbody>
           </table>
