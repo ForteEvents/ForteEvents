@@ -504,7 +504,7 @@ function AdminCustomers({ session, onBack }) {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ limit: 100 })
+        body: JSON.stringify({ userId: selectedCustomer.id, limit: 5 })
       })
       const result = await response.json()
       if (!response.ok || !result.ok) throw new Error(result.error || 'Ukaguzi wa delivery reports umeshindikana.')
@@ -604,10 +604,10 @@ function AdminCustomers({ session, onBack }) {
       <div className="card">
         <h2>SMS History</h2>
         <button className="secondary-button" onClick={checkSmsDeliveryReports} disabled={deliveryCheckLoading}>
-          {deliveryCheckLoading ? 'Inakagua delivery reports...' : 'Kagua delivery reports (hadi SMS 100)'}
+          {deliveryCheckLoading ? 'Inakagua delivery reports...' : 'Kagua delivery reports (SMS 5)'}
         </button>
         {deliveryCheckMessage && <p>{deliveryCheckMessage}</p>}
-        <p style={{fontSize:'13px',color:'#777'}}>Ukaguzi unahusu SMS mpya zenye Beem Request ID na zilizopita angalau dakika 5. SMS za zamani zisizo na Request ID hazitaguswa.</p>
+        <p style={{fontSize:'13px',color:'#777'}}>Ukaguzi huu unahusu SMS 5 za mteja huyu tu, zenye Beem Request ID na zilizopita angalau dakika 5. SMS za zamani zisizo na Request ID hazitaguswa.</p>
         {historyLoading && <p>Inapakia SMS history...</p>}
         {historyError && <p style={{color:'#b00020'}}>{historyError}</p>}
         {!historyLoading && smsHistory.length === 0 && <p>Hakuna SMS history kwa mteja huyu.</p>}
