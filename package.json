@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "server": "node server/server.js",
     "scheduled-sms": "node server/scheduled-sms-worker.js",
-    "test": "node --test server/beem-delivery-reports.test.js"
+    "test": "node --test server/beem-delivery-reports.test.js server/admin-sms-management.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.1",
