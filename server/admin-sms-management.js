@@ -4,6 +4,10 @@ const DLR_URL = "https://dlrapi.beem.africa/public/v1/delivery-reports";
 const SEND_URL = "https://apisms.beem.africa/v1/send";
 const MIN_AGE_MS = 5 * 60 * 1000;
 
+export function isSafeAdminResendCandidate(row) {
+  return row?.status === "failed" && row?.beem_status === "UNDELIVERED";
+}
+
 function normalizePhone(value) {
   return String(value || "").trim().replace(/^\+/, "").replace(/^00/, "");
 }
@@ -96,7 +100,7 @@ export function registerAdminSmsManagementRoutes({
         .select("id,user_id,recipient,status,sent_at,beem_request_id,beem_status,beem_status_checked_at")
         .eq("status", "sent").not("beem_request_id", "is", null)
         .lt("sent_at", cutoff)
-        .or("beem_status.is.null,beem_status.eq.PENDING")
+        .or(`and(beem_status.is.null,beem_status_checked_at.is.null),and(beem_status.eq.PENDING,beem_status_checked_at.is.null),and(beem_status.is.null,beem_status_checked_at.lt.${new Date(Date.now() - MIN_AGE_MS).toISOString()}),and(beem_status.eq.PENDING,beem_status_checked_at.lt.${new Date(Date.now() - MIN_AGE_MS).toISOString()})`)
         .order("sent_at", { ascending: true }).limit(limit);
       if (error) throw error;
       const summary = { checked: 0, delivered: 0, pending: 0, undelivered: 0, errors: 0 };
@@ -148,7 +152,7 @@ export function registerAdminSmsManagementRoutes({
         .eq("id", messageId).maybeSingle();
       if (originalError) throw originalError;
       if (!original) return res.status(404).json({ ok: false, error: "SMS haijapatikana." });
-      if (original.status !== "failed" || original.beem_status !== "UNDELIVERED") {
+      if (!isSafeAdminResendCandidate(original)) {
         return res.status(409).json({ ok: false, error: "Resend inaruhusiwa tu baada ya Beem kuthibitisha UNDELIVERED." });
       }
       const retryId = randomUUID();
