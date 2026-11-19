@@ -11,8 +11,9 @@ function normalizeDestination(value) {
 export function parseBeemDeliveryReport(payload, expectedRequestId, expectedDestination) {
   if (!Array.isArray(payload)) return null;
 
-  const requestId = String(expectedRequestId);
+  const requestId = String(expectedRequestId ?? "").trim();
   const destination = normalizeDestination(expectedDestination);
+  if (!requestId || !destination) return null;
 
   const match = payload.find((item) =>
     item &&
