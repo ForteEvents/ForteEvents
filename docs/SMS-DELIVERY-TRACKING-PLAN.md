@@ -62,7 +62,7 @@ Official documentation:
 
 ## Implementation progress on the isolated branch
 
-- Added `server/beem-delivery-reports.js` with an admin-only, manually triggered batch poller. It uses Basic Auth, the confirmed GET endpoint, exact request ID + destination matching, a five-minute minimum age, and a bounded batch (25 default, 100 max).
+- Added `server/beem-delivery-reports.js` with an admin-only, manually triggered poller. It uses Basic Auth, the confirmed GET endpoint, exact request ID + destination matching, a five-minute minimum age, and a maximum of five rows per customer action. It checks only the selected customer's rows, with at most five provider lookups concurrently.
 - Polling only considers new rows with a stored request ID and `sent` status. It maps only the three confirmed Beem statuses. `PENDING` remains eligible for a later check; `DELIVERED` and `UNDELIVERED` become terminal application statuses.
 - Polling never sends SMS, never retries, never changes customer credits, and never changes legacy rows without request IDs. It avoids overwriting terminal rows through conditional updates.
 - Updated the send-history insert to save Beem's exact `request_id` and a unique ForteEvents attempt UUID for new attempts. The current sending request, recipient loop, and credit logic remain unchanged.
@@ -71,6 +71,9 @@ Official documentation:
 - The live database was inspected read-only: 264 SMS history rows; 0 populated `beem_message_id` values; 256 rows with a `sent` or `pending` status. No rows were modified.
 - The branch remains isolated from `main`. No production migration, Render deploy, SMS send/retry, credit adjustment, or Beem configuration change has occurred.
 - Added customer and admin SMS history labels for Submitted to Beem, Pending, Delivered, and Undelivered, including last-check time when available.
-- Added an admin button to trigger a bounded delivery-report check for up to 100 eligible messages and display a summary; the route is admin-only.
+- Added an admin button on the selected customer's SMS history to check up to five eligible messages for that customer and display a summary; the route is admin-only. It cannot be used to poll all customers in one action.
 - Draft PR: https://github.com/ForteEvents/ForteEvents/pull/102. It is not merged.
-- Remaining before merge: finish CI on the latest commit, review the poller query and transitions, apply the additive migration only after review, verify with a controlled test recipient, and check the admin UI end-to-end.
+- Migration SQL was syntax-tested inside a temporary scratch schema and explicitly rolled back; four new tracking columns were confirmed in the scratch table. The production `sms_history` table was not altered.
+- A read-only privilege review confirmed RLS is enabled on `sms_history`, authenticated SELECT is limited by the existing owner policies, and the backend uses its service-role client for privileged reads/writes. Existing duplicate authenticated SELECT policies and unrelated SECURITY DEFINER advisor findings were observed; no unrelated security policies were changed in this feature.
+- The delivery check was tightened to require the selected customer ID, check at most five messages per click, and use at most five concurrent read-only Beem lookups. Rows without a Beem request ID are shown as tracking unavailable rather than falsely implying they can be checked.
+- Remaining before merge: confirm CI on the latest commit, add route-level tests for authorization, query scoping and status transitions, apply the additive migration only after review, and verify end-to-end with a controlled test recipient. No production migration or Render deploy has been done.
