@@ -35,8 +35,15 @@ export function registerAdminSmsManagementRoutes({
     const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
     const offset = Math.max(0, Number.parseInt(req.query.offset, 10) || 0);
     const status = String(req.query.status || "").trim().toLowerCase();
-    const search = String(req.query.search || "").trim().slice(0, 100);
+    const search = String(req.query.search || "").trim().slice(0, 100).replace(/[(),"]/g, "");
     try {
+      let matchingUserIds = [];
+      if (search) {
+        const profileMatches = await supabaseAdmin.from("profiles").select("id")
+          .or(`full_name.ilike.%${search}%,email.ilike.%${search}%`).limit(100);
+        if (profileMatches.error) throw profileMatches.error;
+        matchingUserIds = (profileMatches.data || []).map(profile => profile.id);
+      }
       let query = supabaseAdmin.from("sms_history")
         .select("id,user_id,recipient,message,sms_count,status,error_message,sent_at,created_at,beem_request_id,beem_status,beem_status_checked_at,resend_of_id,resend_by", { count: "exact" })
         .order("sent_at", { ascending: false })
@@ -45,7 +52,11 @@ export function registerAdminSmsManagementRoutes({
       else if (status === "pending") query = query.or("beem_status.eq.PENDING,and(status.eq.sent,beem_status.is.null)");
       else if (status === "failed") query = query.or("status.eq.failed,beem_status.eq.UNDELIVERED");
       else if (status === "submitted") query = query.eq("status", "sent").is("beem_status", null);
-      if (search) query = query.or(`recipient.ilike.%${search}%,message.ilike.%${search}%`);
+      if (search) {
+        const searchFilters = [`recipient.ilike.%${search}%`, `message.ilike.%${search}%`];
+        if (matchingUserIds.length) searchFilters.push(`user_id.in.(${matchingUserIds.join(",")})`);
+        query = query.or(searchFilters.join(","));
+      }
       const { data, error, count } = await query;
       if (error) throw error;
       const userIds = [...new Set((data || []).map(row => row.user_id).filter(Boolean))];
