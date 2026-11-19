@@ -1,6 +1,7 @@
 import { countSmsParts } from "./sms-utils.js";
 import { randomUUID } from "node:crypto";
 import { registerBeemDeliveryReportRoutes } from "./beem-delivery-reports.js";
+import { registerAdminSmsManagementRoutes } from "./admin-sms-management.js";
 import express from "express";
 import { registerWhatsAppRoutes } from "./whatsapp-service.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
@@ -297,6 +298,15 @@ registerBeemDeliveryReportRoutes({
   supabaseAdmin,
   beemApiKey: BEEM_API_KEY,
   beemSecretKey: BEEM_SECRET_KEY,
+});
+
+registerAdminSmsManagementRoutes({
+  app,
+  requireAdmin,
+  supabaseAdmin,
+  beemApiKey: BEEM_API_KEY,
+  beemSecretKey: BEEM_SECRET_KEY,
+  beemSenderId: BEEM_SENDER_ID,
 });
 
 // ------------------------------------
