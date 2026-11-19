@@ -166,7 +166,7 @@ export function registerAdminSmsManagementRoutes({
     if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "Supabase haijaunganishwa." });
     if (!beemApiKey || !beemSecretKey) return res.status(503).json({ ok: false, error: "Beem credentials hazijawekwa." });
     const messageId = String(req.params.messageId || "");
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(messageId)) {
+    if (!/^[1-9][0-9]*$/.test(messageId)) {
       return res.status(400).json({ ok: false, error: "SMS ID si sahihi." });
     }
     try {
