@@ -1,6 +1,6 @@
 -- Admin SMS management: preserve every resend as a separate SMS attempt.
 alter table public.sms_history
-  add column if not exists resend_of_id uuid references public.sms_history(id) on delete set null,
+  add column if not exists resend_of_id bigint references public.sms_history(id) on delete set null,
   add column if not exists resend_by uuid references public.profiles(id) on delete set null;
 
 create unique index if not exists sms_history_one_resend_per_attempt
