@@ -1,0 +1,24 @@
+name: SMS delivery tracking checks
+
+on:
+  push:
+    branches: [feature/sms-delivery-tracking]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sms-delivery-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm install
+      - run: npm test
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check server/server.js
+          node --check server/beem-delivery-reports.js
+      - run: npm run build

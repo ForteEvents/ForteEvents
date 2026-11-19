@@ -1,4 +1,6 @@
 import { countSmsParts } from "./sms-utils.js";
+import { randomUUID } from "node:crypto";
+import { registerBeemDeliveryReportRoutes } from "./beem-delivery-reports.js";
 import express from "express";
 import { registerWhatsAppRoutes } from "./whatsapp-service.js";
 import { registerScheduledSms } from "./scheduled-sms.js";
@@ -288,6 +290,14 @@ async function requireAdmin(
     }
   );
 }
+
+registerBeemDeliveryReportRoutes({
+  app,
+  requireAdmin,
+  supabaseAdmin,
+  beemApiKey: BEEM_API_KEY,
+  beemSecretKey: BEEM_SECRET_KEY,
+});
 
 // ------------------------------------
 // HOME
@@ -763,11 +773,7 @@ app.delete(
 // ------------------------------------
 // SMS HISTORY
 // ------------------------------------
-// Kwa sasa history ya zamani inabaki memory.
-// Tutaiunganisha na sms_history ya Supabase
-// baada ya kuthibitisha columns zake.
-
-let smsHistory = [];
+// SMS history is persisted in Supabase; legacy records remain readable.
 
 app.get(
   "/api/sms/history",
@@ -780,7 +786,7 @@ app.get(
       } = await supabaseAdmin
         .from("sms_history")
         .select(
-          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at"
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_request_id, beem_status, beem_status_checked_at"
         )
         .eq(
           "user_id",
@@ -1099,7 +1105,7 @@ app.get(
       } = await supabaseAdmin
         .from("sms_history")
         .select(
-          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at"
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_request_id, beem_status, beem_status_checked_at"
         )
         .eq(
           "user_id",
@@ -1564,6 +1570,12 @@ app.post(
           status: "sent",
           error_message: null,
           sent_at: new Date().toISOString(),
+          beem_request_id: item.beemData?.request_id != null
+            ? String(item.beemData.request_id)
+            : null,
+          beem_status: null,
+          beem_status_checked_at: null,
+          forteevents_message_id: randomUUID(),
         })),
         ...failedRecipients.map((item) => ({
           user_id: req.user.id,
@@ -1574,6 +1586,10 @@ app.post(
           status: "failed",
           error_message: JSON.stringify(item.error),
           sent_at: new Date().toISOString(),
+          beem_request_id: null,
+          beem_status: null,
+          beem_status_checked_at: null,
+          forteevents_message_id: randomUUID(),
         })),
       ];
 

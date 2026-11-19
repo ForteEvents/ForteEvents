@@ -444,6 +444,8 @@ function AdminCustomers({ session, onBack }) {
   const [smsHistory, setSmsHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
+  const [deliveryCheckLoading, setDeliveryCheckLoading] = useState(false)
+  const [deliveryCheckMessage, setDeliveryCheckMessage] = useState('')
   const [eCardTransactions, setECardTransactions] = useState([])
   const [eCardHistoryLoading, setECardHistoryLoading] = useState(false)
   const [eCardAmount, setECardAmount] = useState('')
@@ -490,6 +492,30 @@ function AdminCustomers({ session, onBack }) {
       setSmsHistory(result.history || [])
     } catch (error) { setHistoryError(error.message) }
     finally { setHistoryLoading(false) }
+  }
+
+  const checkSmsDeliveryReports = async () => {
+    setDeliveryCheckLoading(true)
+    setDeliveryCheckMessage('')
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/sms/delivery-reports/check', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: selectedCustomer.id, limit: 5 })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Ukaguzi wa delivery reports umeshindikana.')
+      const summary = result.summary || {}
+      setDeliveryCheckMessage(`Ukaguzi umekamilika: ${summary.checked || 0} umeangaliwa, ${summary.delivered || 0} Delivered, ${summary.pending || 0} Pending, ${summary.undelivered || 0} Undelivered. Hakuna SMS iliyotumwa tena wala credits kubadilishwa.`)
+      if (selectedCustomer) await loadSmsHistory(selectedCustomer)
+    } catch (error) {
+      setDeliveryCheckMessage('Hitilafu: ' + error.message)
+    } finally {
+      setDeliveryCheckLoading(false)
+    }
   }
 
   const loadECardTransactions = async (customer) => {
@@ -577,11 +603,20 @@ function AdminCustomers({ session, onBack }) {
       </div>
       <div className="card">
         <h2>SMS History</h2>
+        <button className="secondary-button" onClick={checkSmsDeliveryReports} disabled={deliveryCheckLoading}>
+          {deliveryCheckLoading ? 'Inakagua delivery reports...' : 'Kagua delivery reports (SMS 5)'}
+        </button>
+        {deliveryCheckMessage && <p>{deliveryCheckMessage}</p>}
+        <p style={{fontSize:'13px',color:'#777'}}>Ukaguzi huu unahusu SMS 5 za mteja huyu tu, zenye Beem Request ID na zilizopita angalau dakika 5. SMS za zamani zisizo na Request ID hazitaguswa.</p>
         {historyLoading && <p>Inapakia SMS history...</p>}
         {historyError && <p style={{color:'#b00020'}}>{historyError}</p>}
         {!historyLoading && smsHistory.length === 0 && <p>Hakuna SMS history kwa mteja huyu.</p>}
         {smsHistory.length > 0 && <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Mpokeaji</th><th>Ujumbe</th><th>SMS</th><th>Hali</th></tr></thead><tbody>
-          {smsHistory.map(item => <tr key={item.id}><td>{item.sent_at ? new Date(item.sent_at).toLocaleString() : '-'}</td><td>{item.recipient}</td><td>{item.message}</td><td>{item.sms_count}</td><td>{item.status}</td></tr>)}
+          {smsHistory.map(item => <tr key={item.id}><td>{item.sent_at ? new Date(item.sent_at).toLocaleString() : '-'}</td><td>{item.recipient}</td><td>{item.message}</td><td>{item.sms_count}</td><td>
+            {item.beem_status === 'DELIVERED' ? 'Delivered' : item.beem_status === 'UNDELIVERED' ? 'Undelivered' : item.beem_status === 'PENDING' ? 'Pending' : item.status === 'sent' ? (item.beem_request_id ? 'Submitted to Beem' : 'Tracking unavailable — Beem ID missing') : item.status || '-'}
+            {item.beem_status_checked_at && <div style={{fontSize:'12px',color:'#777'}}>Checked: {new Date(item.beem_status_checked_at).toLocaleString()}</div>}
+            {!item.beem_status && item.status === 'sent' && item.beem_request_id && <div style={{fontSize:'12px',color:'#777'}}>Delivery not yet confirmed</div>}
+          </td></tr>)}
         </tbody></table></div>}
       </div>
       <button className="secondary-button" onClick={() => { setSelectedCustomer(null); setSmsHistory([]); setECardTransactions([]); setHistoryError('') }}>Rudi kwenye wateja</button>{' '}
@@ -3126,7 +3161,11 @@ return (
                         <td>{item.recipient || '-'}</td>
                         <td>{item.message || '-'}</td>
                         <td>{item.sms_count ?? 0}</td>
-                        <td>{item.status || '-'}</td>
+                        <td>
+                          {item.beem_status === 'DELIVERED' ? 'Delivered' : item.beem_status === 'UNDELIVERED' ? 'Undelivered' : item.beem_status === 'PENDING' ? 'Pending' : item.status === 'sent' ? (item.beem_request_id ? 'Submitted to Beem' : 'Tracking unavailable — Beem ID missing') : item.status || '-'}
+                          {item.beem_status_checked_at && <div style={{fontSize:'12px',color:'#777'}}>Checked: {new Date(item.beem_status_checked_at).toLocaleString()}</div>}
+                          {!item.beem_status && item.status === 'sent' && item.beem_request_id && <div style={{fontSize:'12px',color:'#777'}}>Delivery not yet confirmed</div>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
