@@ -58,8 +58,7 @@ export function registerBeemDeliveryReportRoutes({
         .eq("status", "sent")
         .not("beem_request_id", "is", null)
         .lt("sent_at", eligibleSentAt)
-        .or(`beem_status.is.null,beem_status.eq.PENDING`)
-        .or(`beem_status_checked_at.is.null,beem_status_checked_at.lt.${eligibleCheckedAt}`)
+        .or(`and(beem_status.is.null,beem_status_checked_at.is.null),and(beem_status.eq.PENDING,beem_status_checked_at.is.null),and(beem_status.is.null,beem_status_checked_at.lt.${eligibleCheckedAt}),and(beem_status.eq.PENDING,beem_status_checked_at.lt.${eligibleCheckedAt})`)
         .order("sent_at", { ascending: true })
         .limit(limit);
 
