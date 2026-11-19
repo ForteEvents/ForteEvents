@@ -613,9 +613,9 @@ function AdminCustomers({ session, onBack }) {
         {!historyLoading && smsHistory.length === 0 && <p>Hakuna SMS history kwa mteja huyu.</p>}
         {smsHistory.length > 0 && <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Tarehe</th><th>Mpokeaji</th><th>Ujumbe</th><th>SMS</th><th>Hali</th></tr></thead><tbody>
           {smsHistory.map(item => <tr key={item.id}><td>{item.sent_at ? new Date(item.sent_at).toLocaleString() : '-'}</td><td>{item.recipient}</td><td>{item.message}</td><td>{item.sms_count}</td><td>
-            {item.beem_status === 'DELIVERED' ? 'Delivered' : item.beem_status === 'UNDELIVERED' ? 'Undelivered' : item.beem_status === 'PENDING' ? 'Pending' : item.status === 'sent' ? 'Submitted to Beem' : item.status || '-'}
+            {item.beem_status === 'DELIVERED' ? 'Delivered' : item.beem_status === 'UNDELIVERED' ? 'Undelivered' : item.beem_status === 'PENDING' ? 'Pending' : item.status === 'sent' ? (item.beem_request_id ? 'Submitted to Beem' : 'Tracking unavailable — Beem ID missing') : item.status || '-'}
             {item.beem_status_checked_at && <div style={{fontSize:'12px',color:'#777'}}>Checked: {new Date(item.beem_status_checked_at).toLocaleString()}</div>}
-            {!item.beem_status && item.status === 'sent' && <div style={{fontSize:'12px',color:'#777'}}>Delivery not yet confirmed</div>}
+            {!item.beem_status && item.status === 'sent' && item.beem_request_id && <div style={{fontSize:'12px',color:'#777'}}>Delivery not yet confirmed</div>}
           </td></tr>)}
         </tbody></table></div>}
       </div>
@@ -3162,9 +3162,9 @@ return (
                         <td>{item.message || '-'}</td>
                         <td>{item.sms_count ?? 0}</td>
                         <td>
-                          {item.beem_status === 'DELIVERED' ? 'Delivered' : item.beem_status === 'UNDELIVERED' ? 'Undelivered' : item.beem_status === 'PENDING' ? 'Pending' : item.status === 'sent' ? 'Submitted to Beem' : item.status || '-'}
+                          {item.beem_status === 'DELIVERED' ? 'Delivered' : item.beem_status === 'UNDELIVERED' ? 'Undelivered' : item.beem_status === 'PENDING' ? 'Pending' : item.status === 'sent' ? (item.beem_request_id ? 'Submitted to Beem' : 'Tracking unavailable — Beem ID missing') : item.status || '-'}
                           {item.beem_status_checked_at && <div style={{fontSize:'12px',color:'#777'}}>Checked: {new Date(item.beem_status_checked_at).toLocaleString()}</div>}
-                          {!item.beem_status && item.status === 'sent' && <div style={{fontSize:'12px',color:'#777'}}>Delivery not yet confirmed</div>}
+                          {!item.beem_status && item.status === 'sent' && item.beem_request_id && <div style={{fontSize:'12px',color:'#777'}}>Delivery not yet confirmed</div>}
                         </td>
                       </tr>
                     ))}
