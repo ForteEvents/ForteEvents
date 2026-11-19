@@ -122,7 +122,7 @@ export default function AdminSmsManagement({ session, onBack }) {
             <tbody>{history.map(row => {
               const canResend = row.status === 'failed' && row.beem_status === 'UNDELIVERED'
               return <tr key={row.id}>
-                <td>{row.sent_at ? new Date(row.sent_at).toLocaleString() : '-'}</td>
+                <td>{row.sent_at ? new Date(row.sent_at).toLocaleString() : '-'}{row.resend_of_id && <div style={{ fontSize: 11, color: '#8a6d1d' }}>Resend na Admin: {row.resend_admin?.full_name || 'Admin'}</div>}</td>
                 <td>{row.customer?.full_name || row.customer?.email || 'Customer'}</td>
                 <td>{row.recipient}</td>
                 <td style={{ maxWidth: 260, whiteSpace: 'normal', overflowWrap: 'anywhere' }}>{row.message}</td>
