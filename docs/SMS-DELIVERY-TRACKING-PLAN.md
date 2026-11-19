@@ -15,7 +15,7 @@
 - It treats `successful === true`, `code === 100`, and `valid === 1` as provider acceptance.
 - Accepted messages are stored in `sms_history` with status `sent`.
 - The send response includes `request_id`, but current history persistence does not save it.
-- Current `sms_history` read paths expose status and error message, but no provider request identifier or delivery timestamp.
+- The live `sms_history` schema also contains a nullable legacy `beem_message_id` column, but a read-only production check found 0 of 264 rows populated; the current send code does not write it. We are not assuming it is interchangeable with Beem's `request_id`.
 - Therefore, current `sent` means accepted by Beem, not confirmed delivered to the handset.
 
 ## Beem-confirmed Delivery Reports contract
@@ -41,14 +41,14 @@ Official documentation:
 
 ## Important limitation for historical SMS
 
-- Existing `sms_history` rows do not currently persist Beem `request_id`.
+- The live table has 264 history rows; 0 have a value in the existing `beem_message_id` column. The current application code does not populate that column. A separate additive `beem_request_id` field is being introduced to store the exact documented request ID.
 - The Delivery Reports endpoint requires both `request_id` and `dest_addr`; therefore ForteEvents cannot safely query old rows through this endpoint unless the original request IDs can be recovered.
 - Do not fabricate request IDs, match by phone number alone, or resend old messages to test them.
 - For historical messages, use Beem's dashboard/API reports export and ask Beem Support whether they can retrieve historical request IDs/statuses for a specified date range/account. Reconcile those records against ForteEvents history and billing before making any customer-credit adjustment.
 
 ## Implementation sequence
 
-1. Add nullable provider tracking fields to `sms_history` through a reviewed, additive database migration (request ID, provider status, provider status timestamp, unique ForteEvents message ID, and retry-attempt relationship).
+1. Add nullable provider tracking fields to `sms_history` through a reviewed, additive database migration (`beem_request_id`, provider status, status-check timestamp, and unique ForteEvents attempt ID). No existing row is rewritten.
 2. Persist the exact Beem `request_id` from every accepted single-recipient send. Keep the existing sending behavior, recipient loop, and credit reservation/refund rules unchanged in this first step.
 3. Implement an authenticated admin-triggered poller first, using the confirmed GET endpoint and Basic Auth. Query each eligible row individually, no sooner than 5 minutes after submission; use bounded batches and rate limits. Do not poll rows without both request ID and destination.
 4. Make status updates idempotent. Map only the confirmed statuses; preserve the last checked time and safe provider response metadata. Do not downgrade a terminal delivered result because of a stale response.
@@ -60,8 +60,14 @@ Official documentation:
 10. Test using a dedicated test recipient and simulated provider responses: delivered, pending, undelivered, 400/401/404, timeouts, duplicate polls, out-of-order/stale responses, partial batches, and rollback.
 11. Merge/deploy only after review, migration verification, and an explicit production-safety check.
 
-## Current status
+## Implementation progress on the isolated branch
 
-- Beem's official DLR endpoint, parameters, authentication alternatives, statuses, polling interval, no-webhook behavior, and retry guidance are confirmed.
-- The feature branch remains isolated from `main`.
-- Planning and code inspection only. No production files, database rows, SMS records, customer credits, environment variables, Beem settings, or Render deployments have been changed by this plan.
+- Added `server/beem-delivery-reports.js` with an admin-only, manually triggered batch poller. It uses Basic Auth, the confirmed GET endpoint, exact request ID + destination matching, a five-minute minimum age, and a bounded batch (25 default, 100 max).
+- Polling only considers new rows with a stored request ID and `sent` status. It maps only the three confirmed Beem statuses. `PENDING` remains eligible for a later check; `DELIVERED` and `UNDELIVERED` become terminal application statuses.
+- Polling never sends SMS, never retries, never changes customer credits, and never changes legacy rows without request IDs. It avoids overwriting terminal rows through conditional updates.
+- Updated the send-history insert to save Beem's exact `request_id` and a unique ForteEvents attempt UUID for new attempts. The current sending request, recipient loop, and credit logic remain unchanged.
+- Added an additive SQL migration at `supabase/migrations/20261119000100_beem_sms_delivery_tracking.sql`. It has not been applied to production.
+- Added parser unit tests and a branch CI workflow to run tests, JavaScript syntax checks, and the frontend build.
+- The live database was inspected read-only: 264 SMS history rows; 0 populated `beem_message_id` values; 256 rows with a `sent` or `pending` status. No rows were modified.
+- The branch remains isolated from `main`. No production migration, Render deploy, SMS send/retry, credit adjustment, or Beem configuration change has occurred.
+- Remaining before merge: run CI, review poller query behavior and status transitions, apply the additive migration only after review, verify with a controlled test recipient, and then add the admin/customer UI.
