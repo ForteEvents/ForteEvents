@@ -67,9 +67,21 @@ export function registerAdminSmsManagementRoutes({
         profiles = result.data || [];
       }
       const byId = new Map(profiles.map(profile => [profile.id, profile]));
+      const rowIds = (data || []).map(row => row.id);
+      let alreadyRetried = new Set();
+      if (rowIds.length) {
+        const retries = await supabaseAdmin.from("sms_history").select("resend_of_id").in("resend_of_id", rowIds);
+        if (retries.error) throw retries.error;
+        alreadyRetried = new Set((retries.data || []).map(row => row.resend_of_id));
+      }
       return res.json({
         ok: true, total: count || 0,
-        history: (data || []).map(row => ({ ...row, customer: byId.get(row.user_id) || null, resend_admin: row.resend_by ? (byId.get(row.resend_by) || null) : null }))
+        history: (data || []).map(row => ({
+          ...row,
+          customer: byId.get(row.user_id) || null,
+          resend_admin: row.resend_by ? (byId.get(row.resend_by) || null) : null,
+          resend_attempted: alreadyRetried.has(row.id)
+        }))
       });
     } catch (error) {
       console.error("ADMIN SMS HISTORY ERROR:", error?.message || error);
