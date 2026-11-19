@@ -786,7 +786,7 @@ app.get(
       } = await supabaseAdmin
         .from("sms_history")
         .select(
-          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_status, beem_status_checked_at, forteevents_message_id"
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_request_id, beem_status, beem_status_checked_at"
         )
         .eq(
           "user_id",
@@ -1105,7 +1105,7 @@ app.get(
       } = await supabaseAdmin
         .from("sms_history")
         .select(
-          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_status, beem_status_checked_at, forteevents_message_id"
+          "id, user_id, event_id, recipient, message, sms_count, status, error_message, sent_at, created_at, beem_request_id, beem_status, beem_status_checked_at"
         )
         .eq(
           "user_id",
