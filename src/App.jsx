@@ -444,6 +444,8 @@ function AdminCustomers({ session, onBack }) {
   const [smsHistory, setSmsHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
+  const [deliveryCheckLoading, setDeliveryCheckLoading] = useState(false)
+  const [deliveryCheckMessage, setDeliveryCheckMessage] = useState('')
   const [eCardTransactions, setECardTransactions] = useState([])
   const [eCardHistoryLoading, setECardHistoryLoading] = useState(false)
   const [eCardAmount, setECardAmount] = useState('')
@@ -490,6 +492,30 @@ function AdminCustomers({ session, onBack }) {
       setSmsHistory(result.history || [])
     } catch (error) { setHistoryError(error.message) }
     finally { setHistoryLoading(false) }
+  }
+
+  const checkSmsDeliveryReports = async () => {
+    setDeliveryCheckLoading(true)
+    setDeliveryCheckMessage('')
+    try {
+      const response = await fetch('https://forteevents.onrender.com/api/admin/sms/delivery-reports/check', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ limit: 100 })
+      })
+      const result = await response.json()
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Ukaguzi wa delivery reports umeshindikana.')
+      const summary = result.summary || {}
+      setDeliveryCheckMessage(`Ukaguzi umekamilika: ${summary.checked || 0} umeangaliwa, ${summary.delivered || 0} Delivered, ${summary.pending || 0} Pending, ${summary.undelivered || 0} Undelivered. Hakuna SMS iliyotumwa tena wala credits kubadilishwa.`)
+      if (selectedCustomer) await loadSmsHistory(selectedCustomer)
+    } catch (error) {
+      setDeliveryCheckMessage('Hitilafu: ' + error.message)
+    } finally {
+      setDeliveryCheckLoading(false)
+    }
   }
 
   const loadECardTransactions = async (customer) => {
@@ -577,6 +603,11 @@ function AdminCustomers({ session, onBack }) {
       </div>
       <div className="card">
         <h2>SMS History</h2>
+        <button className="secondary-button" onClick={checkSmsDeliveryReports} disabled={deliveryCheckLoading}>
+          {deliveryCheckLoading ? 'Inakagua delivery reports...' : 'Kagua delivery reports (hadi SMS 100)'}
+        </button>
+        {deliveryCheckMessage && <p>{deliveryCheckMessage}</p>}
+        <p style={{fontSize:'13px',color:'#777'}}>Ukaguzi unahusu SMS mpya zenye Beem Request ID na zilizopita angalau dakika 5. SMS za zamani zisizo na Request ID hazitaguswa.</p>
         {historyLoading && <p>Inapakia SMS history...</p>}
         {historyError && <p style={{color:'#b00020'}}>{historyError}</p>}
         {!historyLoading && smsHistory.length === 0 && <p>Hakuna SMS history kwa mteja huyu.</p>}
