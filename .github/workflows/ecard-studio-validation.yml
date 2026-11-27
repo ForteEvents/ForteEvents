@@ -18,7 +18,7 @@ jobs:
           node-version: 24
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       - name: Build frontend
         run: npm run build
       - name: Run existing automated tests
