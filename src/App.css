@@ -3053,3 +3053,12 @@ button[type="submit"] {
 .ecard-studio-object-controls input[type=range]{width:100%}
 .ecard-studio-preview .ecard-luxury-floral-card,.ecard-studio-preview .ecard-professional-preview{position:relative}
 @media(max-width:700px){.ecard-designer-add-actions>*{flex:1 1 100%}.ecard-studio-object-controls{font-size:13px}}
+
+
+/* E-card Studio finishing controls: layer order, duplication and lock state. */
+.ecard-studio-object-actions{display:flex;flex-wrap:wrap;gap:7px}
+.ecard-studio-object-actions button{flex:1 1 42%;min-width:120px}
+.ecard-free-object.is-locked{cursor:default;outline-style:dotted}
+.ecard-free-object.is-locked .ecard-free-object-resize{display:none}
+.ecard-studio-object-list button{display:flex;align-items:center;gap:5px;min-height:38px}
+.ecard-studio-object-list button.active{font-weight:700}
